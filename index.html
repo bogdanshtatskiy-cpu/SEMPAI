@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Size Picker App</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent: #ff003c; /* Яркий красный */
+            --accent-hover: #d60033;
+            --border: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header & Lang Switch */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-left: 4px solid var(--accent);
+            padding-left: 10px;
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+
+        .lang-btn.active {
+            background-color: var(--text-main);
+            color: var(--bg-color);
+            font-weight: bold;
+        }
+
+        /* Tabs (Mode Selection) */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #000;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* Category Selection */
+        .category-selector {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .cat-btn {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        .cat-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .cat-btn.selected {
+            border-color: var(--accent);
+            background-color: rgba(255, 0, 60, 0.1);
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Inputs */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            background-color: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+
+        .cta-btn {
+            width: 100%;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .cta-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Loading & Result */
+        .loading-container {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background-color: #000;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--accent);
+            width: 0%;
+            transition: width 3s linear;
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-size {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--accent);
+            line-height: 1.2;
+        }
+
+        .result-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Footer / Random Quotes */
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #555;
+            font-style: italic;
+            padding: 0 10px;
+            line-height: 1.5;
+        }
+
+        .hidden { display: none; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1 id="app-title">SIZE FINDER</h1>
+        <div class="lang-switch">
+            <button class="lang-btn active" onclick="setLang('ua')">UA</button>
+            <button class="lang-btn" onclick="setLang('ru')">RU</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="setMode('standard')" id="tab-std">Обычный</button>
+        <button class="tab-btn" onclick="setMode('advanced')" id="tab-adv">PRO Замеры</button>
+    </div>
+
+    <div class="category-selector">
+        <button class="cat-btn" onclick="setCategory('men')" id="cat-men">Муж/Unisex</button>
+        <button class="cat-btn" onclick="setCategory('women')" id="cat-women">Женская</button>
+        <button class="cat-btn" onclick="setCategory('kids')" id="cat-kids">Детская</button>
+    </div>
+
+    <div id="inputs-standard">
+        <div class="input-group">
+            <label id="lbl-height">Рост (см)</label>
+            <input type="number" id="val-height" placeholder="175">
+        </div>
+        <div class="input-group" id="group-weight">
+            <label id="lbl-weight">Вес (кг)</label>
+            <input type="number" id="val-weight" placeholder="70">
+        </div>
+    </div>
+
+    <div id="inputs-advanced" class="hidden">
+        <div class="input-group">
+            <label id="lbl-width">Ширина изделия (см)</label>
+            <input type="number" id="val-w" placeholder="52">
+        </div>
+        <div class="input-group">
+            <label id="lbl-len">Длина изделия (см)</label>
+            <input type="number" id="val-l" placeholder="72">
+        </div>
+    </div>
+
+    <button class="cta-btn" onclick="calculate()" id="btn-calc">Узнать размер</button>
+
+    <div class="loading-container" id="loading">
+        <span id="txt-analyzing">Анализируем нейросеть...</span>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress"></div>
+        </div>
+    </div>
+
+    <div class="result-container" id="result">
+        <div class="result-desc" id="res-label">Ваш идеальный размер:</div>
+        <div class="result-size" id="res-val">XL</div>
+    </div>
+
+    <div class="footer" id="random-quote">
+        // Здесь будет шутка
+    </div>
+</div>
+
+<script>
+    // --- DATA from Screenshots ---
+    const SIZE_DATA = {
+        men: [
+            { name: '2XS', w: 43, l: 66 },
+            { name: 'XS',  w: 46, l: 68 },
+            { name: 'S',   w: 49, l: 70 },
+            { name: 'M',   w: 52, l: 72 },
+            { name: 'L',   w: 55, l: 74 },
+            { name: 'XL',  w: 58, l: 76 },
+            { name: '2XL', w: 61, l: 78 },
+            { name: '3XL', w: 64, l: 80 },
+            { name: '4XL', w: 70, l: 82 },
+            { name: '5XL', w: 75, l: 84 }
+        ],
+        women: [
+            { name: 'XS',  w: 42, l: 62 },
+            { name: 'S',   w: 45, l: 64 },
+            { name: 'M',   w: 48, l: 66 },
+            { name: 'L',   w: 51, l: 68 },
+            { name: 'XL',  w: 55, l: 70 },
+            { name: '2XL', w: 59, l: 71 },
+            { name: '3XL', w: 62, l: 71 }
+        ],
+        kids: [
+            // Using max height for threshold
+            { name: '3XS', w: 30, l: 38, maxH: 92 },
+            { name: '2XS', w: 33, l: 42, maxH: 104 },
+            { name: 'XS',  w: 36, l: 44, maxH: 116 },
+            { name: 'S',   w: 39, l: 50, maxH: 128 },
+            { name: 'M',   w: 42, l: 54, maxH: 140 },
+            { name: 'L',   w: 45, l: 60, maxH: 152 },
+            { name: 'XL',  w: 48, l: 64, maxH: 164 }
+        ]
+    };
+
+    // --- TEXTS & HUMOR ---
+    const TEXTS = {
+        ua: {
+            title: "Підбір розміру",
+            std: "Звичайний",
+            adv: "PRO Заміри",
+            men: "Чол/Unisex",
+            women: "Жіноча",
+            kids: "Дитяча",
+            height: "Зріст (см)",
+            weight: "Вага (кг)",
+            width: "Ширина футболки (см)",
+            len: "Довжина від плеча (см)",
+            btn: "Визначити розмір",
+            analyzing: "Скануємо вашу ауру...",
+            result: "Твій розмір:",
+            quotes: [
+                "Цей розмір приховає всі сліди нічних перекусів.",
+                "Сяде ідеально, як влита. (Як твоя колишня на шию, жарт).",
+                "Omae Wa Mou Shindeiru... Але розмір підібрано.",
+                "В цьому ти будеш виглядати як Хокаге свого району.",
+                "Якщо не підійде - значить ти просто занадто потужний.",
+                "Розмір підібрано. Тепер залишилось знайти гроші на карту.",
+                "Для справжнього Dungeon Master'а.",
+                "100% бавовна, 0% проблем (крім емоційних)."
+            ]
+        },
+        ru: {
+            title: "Подбор размера",
+            std: "Обычный",
+            adv: "PRO Замеры",
+            men: "Муж/Unisex",
+            women: "Женская",
+            kids: "Детская",
+            height: "Рост (см)",
+            weight: "Вес (кг)",
+            width: "Ширина футболки (см)",
+            len: "Длина от плеча (см)",
+            btn: "Определить размер",
+            analyzing: "Калибруем под оливье...",
+            result: "Твой размер:",
+            quotes: [
+                "Этот размер скроет все следы ночных дожоров.",
+                "Сядет идеально. Как твои проблемы на голову.",
+                "Nani?! Размер подобран идеально.",
+                "В этом ты будешь выглядеть как гигачад.",
+                "Если не подойдет - это не жир, это харизма не влезает.",
+                "Размер подобран. Осталось подобрать ментальное здоровье.",
+                "Для настоящих SSS-ранговых охотников.",
+                "Шире маминой подруги сына."
+            ]
+        }
+    };
+
+    // --- STATE ---
+    let currentLang = 'ua';
+    let currentMode = 'standard';
+    let currentCategory = 'men'; // men, women, kids
+
+    // --- INITIALIZATION ---
+    function init() {
+        setLang('ua');
+        setCategory('men'); // Default selected
+        updateQuote();
+    }
+
+    // --- LOGIC FUNCTIONS ---
+
+    function setLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+
+        const t = TEXTS[lang];
+        document.getElementById('app-title').innerText = t.title;
+        document.getElementById('tab-std').innerText = t.std;
+        document.getElementById('tab-adv').innerText = t.adv;
+        document.getElementById('cat-men').innerText = t.men;
+        document.getElementById('cat-women').innerText = t.women;
+        document.getElementById('cat-kids').innerText = t.kids;
+        document.getElementById('lbl-height').innerText = t.height;
+        document.getElementById('lbl-weight').innerText = t.weight;
+        document.getElementById('lbl-width').innerText = t.width;
+        document.getElementById('lbl-len').innerText = t.len;
+        document.getElementById('btn-calc').innerText = t.btn;
+        document.getElementById('txt-analyzing').innerText = t.analyzing;
+        document.getElementById('res-label').innerText = t.result;
+        
+        updateQuote();
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('tab-std').className = `tab-btn ${mode === 'standard' ? 'active' : ''}`;
+        document.getElementById('tab-adv').className = `tab-btn ${mode === 'advanced' ? 'active' : ''}`;
+
+        if (mode === 'standard') {
+            document.getElementById('inputs-standard').classList.remove('hidden');
+            document.getElementById('inputs-advanced').classList.add('hidden');
+            // Re-check category to show/hide weight
+            setCategory(currentCategory);
+        } else {
+            document.getElementById('inputs-standard').classList.add('hidden');
+            document.getElementById('inputs-advanced').classList.remove('hidden');
+        }
+        hideResult();
+    }
+
+    function setCategory(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById(`cat-${cat}`).classList.add('selected');
+
+        // Logic: Kids don't need weight in Standard mode based on the chart
+        if (currentMode === 'standard') {
+            const wGroup = document.getElementById('group-weight');
+            if (cat === 'kids') {
+                wGroup.classList.add('hidden');
+            } else {
+                wGroup.classList.remove('hidden');
+            }
+        }
+        hideResult();
+    }
+
+    function hideResult() {
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('progress').style.width = '0%';
+    }
+
+    function updateQuote() {
+        const quotes = TEXTS[currentLang].quotes;
+        const randomQ = quotes[Math.floor(Math.random() * quotes.length)];
+        document.getElementById('random-quote').innerText = randomQ;
+    }
+
+    function calculate() {
+        // Validation
+        if (currentMode === 'standard') {
+            const h = parseFloat(document.getElementById('val-height').value);
+            if (!h) return alert("Введите рост!");
+            if (currentCategory !== 'kids') {
+                const w = parseFloat(document.getElementById('val-weight').value);
+                if (!w) return alert("Введите вес!");
+            }
+        } else {
+            const w = parseFloat(document.getElementById('val-w').value);
+            const l = parseFloat(document.getElementById('val-l').value);
+            if (!w || !l) return alert("Введите замеры!");
+        }
+
+        // UI Animation
+        hideResult();
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+        
+        // Force reflow for animation restart
+        void document.getElementById('progress').offsetWidth;
+        document.getElementById('progress').style.width = '100%';
+
+        setTimeout(() => {
+            const size = determineSize();
+            loading.style.display = 'none';
+            showResult(size);
+        }, 3000);
+    }
+
+    function showResult(size) {
+        const resDiv = document.getElementById('result');
+        const resVal = document.getElementById('res-val');
+        
+        let prefix = "";
+        if (currentCategory === 'men') prefix = (currentLang === 'ua' ? "Чоловічий " : "Мужской ");
+        if (currentCategory === 'women') prefix = (currentLang === 'ua' ? "Жіночий " : "Женский ");
+        if (currentCategory === 'kids') prefix = (currentLang === 'ua' ? "Дитячий " : "Детский ");
+
+        resVal.innerText = prefix + size;
+        resDiv.style.display = 'block';
+        updateQuote();
+    }
+
+    // --- ALGORITHMS ---
+
+    function determineSize() {
+        if (currentMode === 'advanced') {
+            return getAdvancedSize();
+        } else {
+            return getStandardSize();
+        }
+    }
+
+    function getAdvancedSize() {
+        const userW = parseFloat(document.getElementById('val-w').value);
+        const userL = parseFloat(document.getElementById('val-l').value);
+        const chart = SIZE_DATA[currentCategory];
+
+        // Logic: Find the first size that is LARGER or EQUAL to user measurements
+        // To avoid tight fit, we prioritize width.
+        for (let s of chart) {
+            // Allow a small margin of error (e.g. 1cm)
+            if (s.w >= userW - 1 && s.l >= userL - 2) {
+                return s.name;
+            }
+        }
+        // If nothing fits, return the largest
+        return chart[chart.length - 1].name;
+    }
+
+    function getStandardSize() {
+        const h = parseFloat(document.getElementById('val-height').value);
+        
+        // 1. KIDS LOGIC (Pure Height based on chart)
+        if (currentCategory === 'kids') {
+            const chart = SIZE_DATA.kids;
+            for (let s of chart) {
+                if (h <= s.maxH) return s.name;
+            }
+            return "XL+"; // Too big for kids
+        }
+
+        const w = parseFloat(document.getElementById('val-weight').value);
+
+        // 2. MEN LOGIC (Heuristic estimation mapping to supplied Chart)
+        if (currentCategory === 'men') {
+            // Approximate logic for "Oversize/Standard" T-shirts
+            // Based on Weight primarily, checked against Height
+            
+            // Weight thresholds for standard fit
+            if (w < 55) return "2XS";
+            if (w < 62) return "XS";
+            if (w < 70) return "S";
+            if (w < 78) return "M";
+            if (w < 86) return "L";
+            if (w < 95) return "XL";
+            if (w < 105) return "2XL";
+            if (w < 115) return "3XL";
+            if (w < 125) return "4XL";
+            return "5XL";
+        }
+
+        // 3. WOMEN LOGIC
+        if (currentCategory === 'women') {
+            if (w < 45) return "XS";
+            if (w < 52) return "S";
+            if (w < 60) return "M";
+            if (w < 68) return "L";
+            if (w < 76) return "XL";
+            if (w < 85) return "2XL";
+            return "3XL";
+        }
+    }
+
+    // Start
+    init();
+
+</script>
+
+</body>
+</html>
