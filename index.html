@@ -38,22 +38,47 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 10;
+            z-index: 100;
         }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
 
         .logo {
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 32px;
+            font-size: 28px;
             color: var(--text-main);
             text-decoration: none;
             letter-spacing: -1px;
             text-transform: uppercase;
         }
 
+        /* Language Toggle in Header */
+        .lang-switch {
+            display: flex;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 2px;
+        }
+        .lang-btn {
+            background: none;
+            border: none;
+            color: var(--text-sec);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 10px;
+            cursor: pointer;
+            border-radius: 18px;
+            transition: 0.3s;
+        }
+        .lang-btn.active {
+            background: var(--text-main);
+            color: black;
+        }
+
         .tg-link {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             background: rgba(255,255,255,0.1);
             border-radius: 50%;
             display: flex;
@@ -62,8 +87,7 @@
             color: white;
             transition: var(--transition);
         }
-        .tg-link:active { transform: scale(0.9); background: #2AABEE; }
-        .tg-link svg { width: 18px; fill: currentColor; }
+        .tg-link svg { width: 16px; fill: currentColor; }
 
         /* --- SCREENS --- */
         .screen-container {
@@ -107,6 +131,23 @@
             margin: 0 0 10px 0;
             line-height: 1.1;
             text-align: center;
+        }
+        
+        /* Welcome Screen Specifics */
+        .welcome-icon {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-10px);} 100% {transform: translateY(0px);} }
+
+        .welcome-text {
+            text-align: center;
+            font-size: 15px;
+            color: #ccc;
+            line-height: 1.5;
+            margin-bottom: 20px;
         }
 
         /* --- INPUTS & VISUALS --- */
@@ -163,27 +204,12 @@
             border: 1px solid var(--glass-border);
         }
         
-        .guide-icon {
-            width: 70px; /* Чуть больше иконка */
-            height: 70px;
-            flex-shrink: 0;
-        }
-        .guide-icon svg {
-            width: 100%;
-            height: 100%;
-            fill: none;
-        }
-        /* Стиль для контура футболки */
+        .guide-icon { width: 70px; height: 70px; flex-shrink: 0; }
+        .guide-icon svg { width: 100%; height: 100%; fill: none; }
         .t-shirt-outline { stroke: white; stroke-width: 2; stroke-opacity: 0.4; }
-        /* Стиль для стрелок */
         .guide-arrow { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
 
-        .guide-text {
-            font-size: 13px;
-            color: #ccc;
-            line-height: 1.3;
-            text-align: left;
-        }
+        .guide-text { font-size: 13px; color: #ccc; line-height: 1.3; text-align: left; }
         .guide-text strong { color: var(--accent); display: block; margin-bottom: 2px; font-size: 15px; }
 
         /* --- BUTTONS --- */
@@ -194,6 +220,22 @@
         }
         .btn-next { background: var(--accent); color: white; box-shadow: 0 4px 20px rgba(255,0,60,0.4); }
         .btn-back { background: transparent; color: var(--text-sec); }
+        
+        .btn-start {
+            width: 100%;
+            padding: 20px;
+            background: var(--accent);
+            color: white;
+            font-size: 18px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(255, 0, 60, 0.4);} 70% {box-shadow: 0 0 0 10px rgba(255, 0, 60, 0);} 100% {box-shadow: 0 0 0 0 rgba(255, 0, 60, 0);} }
 
         /* --- LOADING & RESULT --- */
         .loading-bar {
@@ -210,8 +252,10 @@
             text-shadow: 0 0 30px rgba(255, 0, 60, 0.3); text-align: center;
         }
         .quote {
-            font-style: italic; color: var(--text-sec);
-            font-size: 14px; line-height: 1.5; text-align: center;
+            font-style: italic; color: #bbb;
+            font-size: 15px; line-height: 1.5; text-align: center;
+            border-top: 1px solid #333;
+            padding-top: 15px; margin-top: 10px;
         }
         .footer { padding: 15px; text-align: center; font-size: 11px; color: #444; }
         .footer a { color: #666; text-decoration: none; }
@@ -220,7 +264,14 @@
 <body>
 
     <div class="header">
-        <a href="https://sempai.com.ua" class="logo">SEMPAI</a>
+        <div class="header-left">
+            <a href="https://sempai.com.ua" class="logo">SEMPAI</a>
+            <div class="lang-switch">
+                <button class="lang-btn active" onclick="selectLang('ua')" id="btn-ua">UA</button>
+                <button class="lang-btn" onclick="selectLang('ru')" id="btn-ru">RU</button>
+            </div>
+        </div>
+        
         <a href="https://t.me/sempai_ua" class="tg-link">
             <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
         </a>
@@ -228,10 +279,16 @@
 
     <div class="screen-container">
         
-        <div class="screen active" id="screen-lang">
-            <h2>Мова / Язык</h2>
-            <div class="btn-option" onclick="selectLang('ua')">🇺🇦 Українська</div>
-            <div class="btn-option" onclick="selectLang('ru')">🏳️ Русский</div>
+        <div class="screen active" id="screen-welcome">
+            <div class="welcome-icon">🤖</div>
+            <h2 id="txt-welcome-title">AI Size Assistant</h2>
+            <div class="welcome-text" id="txt-welcome-desc">
+                Не знаєш, який розмір обрати? <br>
+                Наш розумний алгоритм підбере ідеальний фіт за 5 секунд.
+                <br><br>
+                Оверсайз або класика — ми шаримо.
+            </div>
+            <button class="btn-start" onclick="goTo('screen-cat')" id="btn-start">Погнали 🚀</button>
         </div>
 
         <div class="screen" id="screen-cat">
@@ -335,7 +392,7 @@
         <div class="screen" id="screen-res">
             <div class="subtitle" id="txt-your-size">ТВІЙ РОЗМІР</div>
             <div class="size-display" id="res-val">XL</div>
-            <div class="quote" id="res-quote">"Цей розмір ідеальний."</div>
+            <div class="quote" id="res-quote"></div>
             
             <div class="nav-actions">
                 <button class="btn-next" onclick="location.reload()" style="background: #333;">RESTART ↻</button>
@@ -357,54 +414,58 @@
         stepHistory: []
     };
 
-    // --- TEXTS ---
+    // --- TEXTS & FUNNY COPY ---
     const TEXTS = {
         ua: {
+            welcomeT: "AI Підбір Розміру",
+            welcomeD: "Щоб не виглядати як в мішку (або навпаки).<br>Алгоритм підбере ідеальний фіт за 5 секунд.",
+            start: "ПОГНАЛИ 🚀",
             men: "Чоловіче / Unisex", women: "Жіноче", kids: "Дитяче",
-            chooseCat: "Для кого?",
-            howMeasure: "Метод підбору",
-            modeStdT: "Зріст та вага", modeStdD: "Якщо немає рулетки",
-            modeAdvT: "Точні заміри", modeAdvD: "Використовуй сантиметр",
-            params: "Твої параметри",
+            chooseCat: "Для кого беремо?",
+            howMeasure: "Як будеш міряти?",
+            modeStdT: "Зріст та вага", modeStdD: "Якщо лінь шукати рулетку",
+            modeAdvT: "Є сантиметр", modeAdvD: "Для снайперської точності",
+            params: "Твої дані",
             h: "Зріст (см)", w: "Вага (кг)",
-            measureItem: "Введи заміри",
-            
-            // Advanced Guide Texts
-            wTitle: "Ширина (см)", wDesc: "Міряй під пахвами, від шва до шва",
-            lTitle: "Довжина (см)", lDesc: "Від плечового шва біля шиї до низу",
-
-            analyzing: "Підбираємо...",
-            yourSize: "ТВІЙ ІДЕАЛЬНИЙ РОЗМІР",
+            measureItem: "Впиши цифри",
+            wTitle: "Ширина (см)", wDesc: "Міряй під пахвами, розклавши річ",
+            lTitle: "Довжина (см)", lDesc: "По спині, від шиї до низу",
+            analyzing: "Звертаємось до космосу...",
+            yourSize: "ТВІЙ ІДЕАЛ",
             quotes: [
-                "Сяде як влита. Готуйся до компліментів.",
-                "Ідеально для твого стилю.",
-                "Той самий оверсайз, про який мріють.",
-                "Розмір знайдено. Залишилось замовити.",
-                "Виглядає як план на успіх."
+                "Мама скаже, що ти красунчик.",
+                "Сховає все, що наїв на свята.",
+                "Оверсайз, щоб ховатись від проблем.",
+                "В цьому розмірі ти виглядаєш на мільйон (бітков).",
+                "Сяде так, що колишня напише перша.",
+                "Для справжнього Dungeon Master'а.",
+                "Розмір підібрано. Тепер шукай гроші на карті."
             ]
         },
         ru: {
+            welcomeT: "AI Подбор Размера",
+            welcomeD: "Чтобы не выглядеть как в мешке (или наоборот).<br>Алгоритм подберет идеальный фит за 5 секунд.",
+            start: "ПОГНАЛИ 🚀",
             men: "Мужское / Unisex", women: "Женское", kids: "Детское",
-            chooseCat: "Для кого?",
-            howMeasure: "Метод подбора",
-            modeStdT: "Рост и вес", modeStdD: "Если нет рулетки",
-            modeAdvT: "Точные замеры", modeAdvD: "Используй сантиметр",
-            params: "Твои параметры",
+            chooseCat: "Для кого берем?",
+            howMeasure: "Как будем мерить?",
+            modeStdT: "Рост и вес", modeStdD: "Если лень искать рулетку",
+            modeAdvT: "Есть сантиметр", modeAdvD: "Для снайперской точности",
+            params: "Твои данные",
             h: "Рост (см)", w: "Вес (кг)",
-            measureItem: "Введите замеры",
-
-            // Advanced Guide Texts
-            wTitle: "Ширина (см)", wDesc: "Меряй под мышками, от шва до шва",
-            lTitle: "Длина (см)", lDesc: "От плечевого шва у шеи до самого низа",
-
-            analyzing: "Подбираем...",
-            yourSize: "ТВОЙ ИДЕАЛЬНЫЙ РАЗМЕР",
+            measureItem: "Впиши цифры",
+            wTitle: "Ширина (см)", wDesc: "Меряй под мышками, разложив вещь",
+            lTitle: "Длина (см)", lDesc: "По спине, от шеи до низа",
+            analyzing: "Обращаемся в космос...",
+            yourSize: "ТВОЙ ИДЕАЛ",
             quotes: [
-                "Сядет как влитая. Готовься к комплиментам.",
-                "Идеально для твоего стиля.",
-                "Тот самый оверсайз, о котором мечтают.",
-                "Размер найден. Осталось заказать.",
-                "Выглядит как план на успех."
+                "Мама скажет, что ты красавчик.",
+                "Скроет всё, что наел на праздники.",
+                "Оверсайз, чтобы прятаться от проблем.",
+                "В этом размере ты выглядишь на миллион (битков).",
+                "Сядет так, что бывшая напишет первая.",
+                "Для настоящего Dungeon Master-а.",
+                "Размер подобран. Теперь ищи деньги на карте."
             ]
         }
     };
@@ -441,8 +502,9 @@
     // --- ACTIONS ---
     function selectLang(l) {
         state.lang = l;
+        document.getElementById('btn-ua').classList.toggle('active', l === 'ua');
+        document.getElementById('btn-ru').classList.toggle('active', l === 'ru');
         applyLang();
-        goTo('screen-cat');
     }
 
     function selectCategory(c) {
@@ -466,6 +528,11 @@
 
     function applyLang() {
         const t = TEXTS[state.lang];
+        // Welcome
+        document.getElementById('txt-welcome-title').innerHTML = t.welcomeT;
+        document.getElementById('txt-welcome-desc').innerHTML = t.welcomeD;
+        document.getElementById('btn-start').innerText = t.start;
+
         document.getElementById('txt-choose-cat').innerText = t.chooseCat;
         document.getElementById('txt-men').innerText = t.men;
         document.getElementById('txt-women').innerText = t.women;
@@ -482,8 +549,6 @@
         document.getElementById('lbl-weight').innerText = t.w;
 
         document.getElementById('txt-measure-item').innerText = t.measureItem;
-        
-        // Advanced Labels
         document.getElementById('lbl-w-t').innerText = t.wTitle;
         document.getElementById('lbl-w-d').innerText = t.wDesc;
         document.getElementById('lbl-l-t').innerText = t.lTitle;
@@ -570,6 +635,9 @@
         }
         return "M"; 
     }
+    
+    // Init
+    applyLang();
 </script>
 </body>
 </html>
