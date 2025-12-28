@@ -86,12 +86,10 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            /* Чтобы на маленьких экранах влезало при клавиатуре */
             max-height: 100%; 
             overflow-y: auto;
             padding-bottom: 20px;
         }
-        /* Скрываем скроллбар */
         .screen::-webkit-scrollbar { display: none; }
 
         .screen.active {
@@ -134,7 +132,7 @@
             text-align: center;
             color: var(--text-sec);
             font-size: 14px;
-            margin-top: 8px; /* FIX: отступ от линии инпута */
+            margin-top: 8px;
         }
 
         .input-glass {
@@ -150,7 +148,7 @@
             font-family: 'Outfit', sans-serif;
             border-radius: 0;
             outline: none;
-            margin-bottom: 5px; /* FIX: место под линию */
+            margin-bottom: 5px;
         }
         .input-glass:focus { border-color: var(--accent); }
 
@@ -166,18 +164,19 @@
         }
         
         .guide-icon {
-            width: 60px;
-            height: 60px;
+            width: 70px; /* Чуть больше иконка */
+            height: 70px;
             flex-shrink: 0;
         }
         .guide-icon svg {
             width: 100%;
             height: 100%;
-            stroke: var(--text-main);
-            stroke-width: 2;
             fill: none;
         }
-        .guide-arrow { stroke: var(--accent); stroke-width: 3; }
+        /* Стиль для контура футболки */
+        .t-shirt-outline { stroke: white; stroke-width: 2; stroke-opacity: 0.4; }
+        /* Стиль для стрелок */
+        .guide-arrow { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
 
         .guide-text {
             font-size: 13px;
@@ -185,7 +184,7 @@
             line-height: 1.3;
             text-align: left;
         }
-        .guide-text strong { color: var(--accent); display: block; margin-bottom: 2px; }
+        .guide-text strong { color: var(--accent); display: block; margin-bottom: 2px; font-size: 15px; }
 
         /* --- BUTTONS --- */
         .nav-actions { display: flex; gap: 15px; margin-top: 10px; }
@@ -289,35 +288,34 @@
             <div class="guide-card">
                 <div class="guide-icon">
                     <svg viewBox="0 0 100 100">
-                        <path d="M20 30 L40 30 L45 35 L85 35 L90 30 L110 30" stroke="white" stroke-opacity="0.2" />
-                        <path d="M25 35 L15 50 L25 50 L25 90 L75 90 L75 50 L85 50 L75 35" stroke="white" />
-                        <line x1="28" y1="60" x2="72" y2="60" class="guide-arrow" />
-                        <path d="M28 60 L32 57 M28 60 L32 63 M72 60 L68 57 M72 60 L68 63" class="guide-arrow" stroke-width="2"/>
+                        <path class="t-shirt-outline" d="M 35 10 Q 50 20 65 10 L 85 10 L 95 35 L 80 45 L 80 90 L 20 90 L 20 45 L 5 35 L 15 10 Z" />
+                        <line x1="22" y1="55" x2="78" y2="55" class="guide-arrow" />
+                        <path d="M22 55 L28 52 M22 55 L28 58 M78 55 L72 52 M78 55 L72 58" class="guide-arrow" stroke-width="2"/>
                     </svg>
                 </div>
                 <div class="guide-text">
                     <strong id="lbl-w-t">Ширина</strong>
                     <span id="lbl-w-d">Від шва до шва під пахвами</span>
                 </div>
-                <div style="width: 70px;">
-                    <input type="number" class="input-glass" id="in-w" placeholder="52" style="font-size: 24px;">
+                <div style="width: 75px;">
+                    <input type="number" class="input-glass" id="in-w" placeholder="52" style="font-size: 28px; padding: 0;">
                 </div>
             </div>
 
             <div class="guide-card">
                 <div class="guide-icon">
                     <svg viewBox="0 0 100 100">
-                        <path d="M25 35 L15 50 L25 50 L25 90 L75 90 L75 50 L85 50 L75 35" stroke="white" stroke-opacity="0.5"/>
-                        <line x1="50" y1="35" x2="50" y2="90" class="guide-arrow" />
-                        <path d="M50 35 L47 39 M50 35 L53 39 M50 90 L47 86 M50 90 L53 86" class="guide-arrow" stroke-width="2"/>
+                        <path class="t-shirt-outline" d="M 35 10 Q 50 20 65 10 L 85 10 L 95 35 L 80 45 L 80 90 L 20 90 L 20 45 L 5 35 L 15 10 Z" />
+                        <line x1="50" y1="10" x2="50" y2="90" class="guide-arrow" />
+                        <path d="M50 10 L46 16 M50 10 L54 16 M50 90 L46 84 M50 90 L54 84" class="guide-arrow" stroke-width="2"/>
                     </svg>
                 </div>
                 <div class="guide-text">
                     <strong id="lbl-l-t">Довжина</strong>
                     <span id="lbl-l-d">Від верху плеча до низу</span>
                 </div>
-                <div style="width: 70px;">
-                    <input type="number" class="input-glass" id="in-l" placeholder="72" style="font-size: 24px;">
+                <div style="width: 75px;">
+                    <input type="number" class="input-glass" id="in-l" placeholder="72" style="font-size: 28px; padding: 0;">
                 </div>
             </div>
 
@@ -531,7 +529,6 @@
             const chart = SIZE_DATA[state.cat];
 
             if(state.cat === 'kids') {
-                 // For kids advanced, use w/l logic from combined data
                  for(let s of chart) if(s.w >= w-1 && s.l >= l-2) return s.n;
                  return "XL+";
             }
