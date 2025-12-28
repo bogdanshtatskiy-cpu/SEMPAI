@@ -1,608 +1,656 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Size Picker App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Future Size ID</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-main: #ffffff;
-            --text-secondary: #b0b0b0;
-            --accent: #ff003c; /* Яркий красный */
-            --accent-hover: #d60033;
-            --border: #333;
+            --bg-gradient: radial-gradient(circle at top right, #2b2b2b, #000000);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --accent: #ff3b30; /* iOS Red */
+            --accent-glow: rgba(255, 59, 48, 0.4);
+            --radius: 28px;
+            --anim-speed: 0.4s;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-primary);
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
             min-height: 100vh;
+            display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden; /* Чтобы не скроллилось во время анимаций */
         }
 
-        .container {
-            width: 90%;
-            max-width: 500px;
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border);
+        /* Декоративные пятна на фоне */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.6;
+        }
+        .orb-1 { width: 300px; height: 300px; background: #ff003c; top: -50px; left: -50px; }
+        .orb-2 { width: 400px; height: 400px; background: #222; bottom: -100px; right: -100px; }
+
+        /* Основной контейнер */
+        .app-card {
+            width: 100%;
+            max-width: 420px;
+            height: 90vh;
+            max-height: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
             position: relative;
             overflow: hidden;
+            transition: all var(--anim-speed);
         }
 
-        /* Header & Lang Switch */
+        /* Header */
         .header {
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            z-index: 10;
         }
 
-        h1 {
-            font-size: 24px;
-            margin: 0;
-            text-transform: uppercase;
+        .brand {
+            font-weight: 800;
+            font-size: 18px;
             letter-spacing: 1px;
-            border-left: 4px solid var(--accent);
-            padding-left: 10px;
+            text-transform: uppercase;
         }
+        .brand span { color: var(--accent); }
 
         .lang-switch {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 4px;
             display: flex;
-            gap: 10px;
         }
 
         .lang-btn {
             background: none;
-            border: 1px solid var(--border);
+            border: none;
             color: var(--text-secondary);
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 4px;
+            padding: 5px 12px;
             font-size: 12px;
+            border-radius: 16px;
+            cursor: pointer;
             transition: 0.3s;
+            font-weight: 700;
         }
 
         .lang-btn.active {
-            background-color: var(--text-main);
-            color: var(--bg-color);
-            font-weight: bold;
+            background: var(--text-primary);
+            color: black;
         }
 
-        /* Tabs (Mode Selection) */
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            background: #000;
-            border-radius: 8px;
-            padding: 4px;
-        }
-
-        .tab-btn {
+        /* Content Area (Wizard) */
+        .screen {
             flex: 1;
-            padding: 12px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-radius: 6px;
-            transition: 0.3s;
-            font-weight: 500;
-        }
-
-        .tab-btn.active {
-            background-color: var(--accent);
-            color: white;
-        }
-
-        /* Category Selection */
-        .category-selector {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            gap: 10px;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            position: absolute;
+            top: 60px; /* отступ под хедер */
+            bottom: 0;
+            width: calc(100% - 60px); /* padding учтен */
+            pointer-events: none;
         }
 
-        .cat-btn {
-            flex: 1;
-            background: var(--bg-color);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 14px;
+        .screen.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+            z-index: 5;
         }
 
-        .cat-btn:hover {
-            border-color: var(--accent);
+        h2 {
+            font-size: 32px;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            font-weight: 700;
         }
 
-        .cat-btn.selected {
-            border-color: var(--accent);
-            background-color: rgba(255, 0, 60, 0.1);
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        /* Inputs */
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
+        p {
             color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            background-color: #000;
-            border: 1px solid var(--border);
-            padding: 15px;
-            color: white;
-            border-radius: 8px;
             font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-        }
-
-        input[type="number"]:focus {
-            border-color: var(--accent);
-        }
-
-        .cta-btn {
-            width: 100%;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            margin-top: 10px;
-            transition: 0.3s;
-        }
-
-        .cta-btn:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-2px);
-        }
-
-        /* Loading & Result */
-        .loading-container {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 10px;
-            background-color: #000;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background-color: var(--accent);
-            width: 0%;
-            transition: width 3s linear;
-        }
-
-        .result-container {
-            display: none;
-            margin-top: 30px;
-            text-align: center;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .result-size {
-            font-size: 48px;
-            font-weight: 900;
-            color: var(--accent);
-            line-height: 1.2;
-        }
-
-        .result-desc {
-            font-size: 16px;
-            color: var(--text-secondary);
-            margin-top: 5px;
-        }
-
-        /* Footer / Random Quotes */
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 13px;
-            color: #555;
-            font-style: italic;
-            padding: 0 10px;
+            margin-bottom: 30px;
             line-height: 1.5;
         }
 
-        .hidden { display: none; }
+        /* Buttons & Inputs */
+        .btn-option {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            text-align: left;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .btn-option:hover, .btn-option:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.02);
+            border-color: var(--accent);
+        }
+
+        .btn-option .icon { font-size: 24px; }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px var(--accent-glow);
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px var(--accent-glow);
+        }
+
+        .big-input {
+            width: 100%;
+            background: none;
+            border: none;
+            border-bottom: 2px solid #444;
+            font-size: 48px;
+            color: white;
+            font-weight: 800;
+            text-align: center;
+            padding: 10px 0;
+            outline: none;
+            transition: 0.3s;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .big-input:focus {
+            border-color: var(--accent);
+        }
+
+        .big-input::placeholder { color: #333; }
+
+        /* Instruction Visual */
+        .instruction-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .shirt-visual {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #666;
+            margin: 0 auto 10px;
+            position: relative;
+            border-radius: 10px;
+        }
+        .measure-line {
+            position: absolute;
+            background: var(--accent);
+        }
+        .line-h { width: 2px; height: 100%; left: 50%; top: 0; }
+        .line-w { width: 100%; height: 2px; top: 50%; left: 0; }
+
+        /* Progress Bar */
+        .progress-container {
+            text-align: center;
+        }
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            transition: width 3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Result */
+        .result-size {
+            font-size: 80px;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            text-shadow: 0 0 30px var(--accent-glow);
+            margin: 10px 0;
+        }
+        .quote {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
         }
 
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1 id="app-title">SIZE FINDER</h1>
-        <div class="lang-switch">
-            <button class="lang-btn active" onclick="setLang('ua')">UA</button>
-            <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="app-card">
+        <div class="header">
+            <div class="brand">SIZE<span>ID</span></div>
+            <div class="lang-switch">
+                <button class="lang-btn active" onclick="setLang('ua')">UA</button>
+                <button class="lang-btn" onclick="setLang('ru')">RU</button>
+            </div>
         </div>
-    </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="setMode('standard')" id="tab-std">Обычный</button>
-        <button class="tab-btn" onclick="setMode('advanced')" id="tab-adv">PRO Замеры</button>
-    </div>
-
-    <div class="category-selector">
-        <button class="cat-btn" onclick="setCategory('men')" id="cat-men">Муж/Unisex</button>
-        <button class="cat-btn" onclick="setCategory('women')" id="cat-women">Женская</button>
-        <button class="cat-btn" onclick="setCategory('kids')" id="cat-kids">Детская</button>
-    </div>
-
-    <div id="inputs-standard">
-        <div class="input-group">
-            <label id="lbl-height">Рост (см)</label>
-            <input type="number" id="val-height" placeholder="175">
+        <div id="scene-mode" class="screen active">
+            <h2 id="txt-mode-title">Какой режим?</h2>
+            <p id="txt-mode-desc">Выбери свой путь, самурай.</p>
+            
+            <button class="btn-option" onclick="selectMode('standard')">
+                <span id="btn-std">Обычный</span> <span class="icon">🚀</span>
+            </button>
+            <button class="btn-option" onclick="selectMode('advanced')">
+                <span id="btn-adv">PRO Замеры</span> <span class="icon">📏</span>
+            </button>
         </div>
-        <div class="input-group" id="group-weight">
-            <label id="lbl-weight">Вес (кг)</label>
-            <input type="number" id="val-weight" placeholder="70">
+
+        <div id="scene-cat" class="screen">
+            <button class="back-btn" onclick="goBack('scene-mode')">←</button>
+            <h2 id="txt-cat-title">Для кого шьем?</h2>
+            <p id="txt-cat-desc">Определимся с лекалами.</p>
+
+            <button class="btn-option" onclick="selectCategory('men')">
+                <span id="btn-men">Мужское / Unisex</span> <span class="icon">👕</span>
+            </button>
+            <button class="btn-option" onclick="selectCategory('women')">
+                <span id="btn-women">Женское</span> <span class="icon">👗</span>
+            </button>
+            <button class="btn-option" onclick="selectCategory('kids')">
+                <span id="btn-kids">Детское</span> <span class="icon">👶</span>
+            </button>
         </div>
-    </div>
 
-    <div id="inputs-advanced" class="hidden">
-        <div class="input-group">
-            <label id="lbl-width">Ширина изделия (см)</label>
-            <input type="number" id="val-w" placeholder="52">
+        <div id="scene-height" class="screen">
+            <button class="back-btn" onclick="goBack('scene-cat')">←</button>
+            <h2 id="txt-height-title">Твой рост?</h2>
+            <p id="txt-height-desc">В сантиметрах. Не прибавляй, мы проверим.</p>
+            
+            <input type="number" id="val-height" class="big-input" placeholder="175" onkeydown="if(event.key === 'Enter') nextFromHeight()">
+            <button class="btn-primary" onclick="nextFromHeight()" id="btn-next-h">Далее</button>
         </div>
-        <div class="input-group">
-            <label id="lbl-len">Длина изделия (см)</label>
-            <input type="number" id="val-l" placeholder="72">
+
+        <div id="scene-weight" class="screen">
+            <button class="back-btn" onclick="goBack('scene-height')">←</button>
+            <h2 id="txt-weight-title">А вес?</h2>
+            <p id="txt-weight-desc">Только честно. Я никому не скажу.</p>
+            
+            <input type="number" id="val-weight" class="big-input" placeholder="70" onkeydown="if(event.key === 'Enter') calculateStandard()">
+            <button class="btn-primary" onclick="calculateStandard()" id="btn-calc-std">Узнать размер</button>
         </div>
-    </div>
 
-    <button class="cta-btn" onclick="calculate()" id="btn-calc">Узнать размер</button>
-
-    <div class="loading-container" id="loading">
-        <span id="txt-analyzing">Анализируем нейросеть...</span>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress"></div>
+        <div id="scene-adv-intro" class="screen">
+            <button class="back-btn" onclick="goBack('scene-cat')">←</button>
+            <h2 id="txt-adv-title">Инструкция</h2>
+            <p id="txt-adv-desc">Возьми любимую футболку и положи на стол.</p>
+            
+            <div class="instruction-box">
+                <div class="shirt-visual"></div>
+                <div style="font-size:14px; color:#bbb;" id="txt-adv-tip">Меряем плоскую вещь, не на теле!</div>
+            </div>
+            
+            <button class="btn-primary" onclick="goToScene('scene-adv-len')" id="btn-start-measure">Понятно, погнали</button>
         </div>
-    </div>
 
-    <div class="result-container" id="result">
-        <div class="result-desc" id="res-label">Ваш идеальный размер:</div>
-        <div class="result-size" id="res-val">XL</div>
-    </div>
+        <div id="scene-adv-len" class="screen">
+            <button class="back-btn" onclick="goBack('scene-adv-intro')">←</button>
+            <h2 id="txt-len-title">Высота (A)</h2>
+            <p id="txt-len-desc">От самой верхней точки плеча до самого низа.</p>
+            
+            <div class="instruction-box" style="padding:10px;">
+                <div class="shirt-visual"><div class="measure-line line-h"></div></div>
+            </div>
 
-    <div class="footer" id="random-quote">
-        // Здесь будет шутка
+            <input type="number" id="val-l" class="big-input" placeholder="72" onkeydown="if(event.key === 'Enter') goToScene('scene-adv-wid')">
+            <button class="btn-primary" onclick="goToScene('scene-adv-wid')" id="btn-next-len">Далее</button>
+        </div>
+
+        <div id="scene-adv-wid" class="screen">
+            <button class="back-btn" onclick="goBack('scene-adv-len')">←</button>
+            <h2 id="txt-wid-title">Ширина (B)</h2>
+            <p id="txt-wid-desc">От подмышки до подмышки. Самая широкая часть.</p>
+            
+            <div class="instruction-box" style="padding:10px;">
+                <div class="shirt-visual"><div class="measure-line line-w"></div></div>
+            </div>
+
+            <input type="number" id="val-w" class="big-input" placeholder="52" onkeydown="if(event.key === 'Enter') calculateAdvanced()">
+            <button class="btn-primary" onclick="calculateAdvanced()" id="btn-calc-adv">Финиш</button>
+        </div>
+
+        <div id="scene-loading" class="screen">
+            <div class="progress-container">
+                <h2 id="txt-loading">Анализ данных...</h2>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scene-result" class="screen">
+            <h2 style="text-align:center;" id="txt-res-title">Твой размер</h2>
+            <div class="result-size" id="res-val">XL</div>
+            <p class="quote" id="res-quote">"Цитата..."</p>
+            
+            <button class="btn-primary" onclick="location.reload()" style="background:transparent; border:1px solid #444;" id="btn-restart">Заново</button>
+        </div>
+
     </div>
-</div>
 
 <script>
-    // --- DATA from Screenshots ---
-    const SIZE_DATA = {
-        men: [
-            { name: '2XS', w: 43, l: 66 },
-            { name: 'XS',  w: 46, l: 68 },
-            { name: 'S',   w: 49, l: 70 },
-            { name: 'M',   w: 52, l: 72 },
-            { name: 'L',   w: 55, l: 74 },
-            { name: 'XL',  w: 58, l: 76 },
-            { name: '2XL', w: 61, l: 78 },
-            { name: '3XL', w: 64, l: 80 },
-            { name: '4XL', w: 70, l: 82 },
-            { name: '5XL', w: 75, l: 84 }
-        ],
-        women: [
-            { name: 'XS',  w: 42, l: 62 },
-            { name: 'S',   w: 45, l: 64 },
-            { name: 'M',   w: 48, l: 66 },
-            { name: 'L',   w: 51, l: 68 },
-            { name: 'XL',  w: 55, l: 70 },
-            { name: '2XL', w: 59, l: 71 },
-            { name: '3XL', w: 62, l: 71 }
-        ],
-        kids: [
-            // Using max height for threshold
-            { name: '3XS', w: 30, l: 38, maxH: 92 },
-            { name: '2XS', w: 33, l: 42, maxH: 104 },
-            { name: 'XS',  w: 36, l: 44, maxH: 116 },
-            { name: 'S',   w: 39, l: 50, maxH: 128 },
-            { name: 'M',   w: 42, l: 54, maxH: 140 },
-            { name: 'L',   w: 45, l: 60, maxH: 152 },
-            { name: 'XL',  w: 48, l: 64, maxH: 164 }
-        ]
-    };
-
-    // --- TEXTS & HUMOR ---
+    // --- TEXTS & LOCALIZATION ---
     const TEXTS = {
         ua: {
-            title: "Підбір розміру",
-            std: "Звичайний",
-            adv: "PRO Заміри",
-            men: "Чол/Unisex",
-            women: "Жіноча",
-            kids: "Дитяча",
-            height: "Зріст (см)",
-            weight: "Вага (кг)",
-            width: "Ширина футболки (см)",
-            len: "Довжина від плеча (см)",
-            btn: "Визначити розмір",
-            analyzing: "Скануємо вашу ауру...",
-            result: "Твій розмір:",
+            modeT: "Який режим?", modeD: "Обери свій шлях.",
+            std: "Простий (Зріст/Вага)", adv: "PRO (Заміри)",
+            catT: "Для кого?", catD: "Обери категорію.",
+            men: "Чоловіча / Unisex", women: "Жіноча", kids: "Дитяча",
+            hT: "Твій зріст?", hD: "В сантиметрах. Не завищуй :)",
+            wT: "А вага?", wD: "Тільки чесно, я нікому не скажу.",
+            advT: "Інструкція", advD: "Візьми улюблену футболку та поклади на стіл.",
+            tip: "Міряємо річ на столі, а не на собі!",
+            startM: "Зрозуміло, поїхали",
+            lenT: "Висота (A)", lenD: "Від плеча до самого низу.",
+            widT: "Ширина (B)", widD: "Від пахви до пахви.",
+            next: "Далі", calc: "Дізнатись розмір",
+            load: "Нейромережа думає...",
+            resT: "Твій ідеальний:",
+            restart: "Спробувати ще",
             quotes: [
-                "Цей розмір приховає всі сліди нічних перекусів.",
-                "Сяде ідеально, як влита. (Як твоя колишня на шию, жарт).",
-                "Omae Wa Mou Shindeiru... Але розмір підібрано.",
-                "В цьому ти будеш виглядати як Хокаге свого району.",
-                "Якщо не підійде - значить ти просто занадто потужний.",
-                "Розмір підібрано. Тепер залишилось знайти гроші на карту.",
-                "Для справжнього Dungeon Master'а.",
-                "100% бавовна, 0% проблем (крім емоційних)."
+                "Сяде як влита. Готуйся до уваги.",
+                "Цей розмір приховає всі сліди смачних обідів.",
+                "Для справжнього боса.",
+                "Ідеально для твого аутфіту.",
+                "В цьому ти підкориш цей світ.",
+                "Якщо не підійде - це не жир, це харизма."
             ]
         },
         ru: {
-            title: "Подбор размера",
-            std: "Обычный",
-            adv: "PRO Замеры",
-            men: "Муж/Unisex",
-            women: "Женская",
-            kids: "Детская",
-            height: "Рост (см)",
-            weight: "Вес (кг)",
-            width: "Ширина футболки (см)",
-            len: "Длина от плеча (см)",
-            btn: "Определить размер",
-            analyzing: "Калибруем под оливье...",
-            result: "Твой размер:",
+            modeT: "Какой режим?", modeD: "Выбери свой путь.",
+            std: "Простой (Рост/Вес)", adv: "PRO (Замеры)",
+            catT: "Для кого?", catD: "Выбери категорию.",
+            men: "Мужская / Unisex", women: "Женская", kids: "Детская",
+            hT: "Твой рост?", hD: "В сантиметрах. Только честно :)",
+            wT: "А вес?", wD: "Аккуратно, я никому не скажу.",
+            advT: "Инструкция", advD: "Возьми любимую футболку и положи на стол.",
+            tip: "Меряем вещь на столе, а не на себе!",
+            startM: "Понятно, погнали",
+            lenT: "Высота (A)", lenD: "От плеча до самого низа.",
+            widT: "Ширина (B)", widD: "От подмышки до подмышки.",
+            next: "Далее", calc: "Узнать размер",
+            load: "Анализируем данные...",
+            resT: "Твой идеал:",
+            restart: "Заново",
             quotes: [
-                "Этот размер скроет все следы ночных дожоров.",
                 "Сядет идеально. Как твои проблемы на голову.",
-                "Nani?! Размер подобран идеально.",
-                "В этом ты будешь выглядеть как гигачад.",
-                "Если не подойдет - это не жир, это харизма не влезает.",
-                "Размер подобран. Осталось подобрать ментальное здоровье.",
-                "Для настоящих SSS-ранговых охотников.",
-                "Шире маминой подруги сына."
+                "Этот размер скроет все следы ночных перекусов.",
+                "В этом ты будешь выглядеть на миллион.",
+                "Размер подобран. Осталось найти деньги.",
+                "100% стиль, 0% осуждения.",
+                "Если мало - значит ты просто слишком мощный."
             ]
         }
     };
 
+    // --- DATA ---
+    const SIZE_DATA = {
+        men: [
+            { name: '2XS', w: 43, l: 66 }, { name: 'XS', w: 46, l: 68 },
+            { name: 'S', w: 49, l: 70 }, { name: 'M', w: 52, l: 72 },
+            { name: 'L', w: 55, l: 74 }, { name: 'XL', w: 58, l: 76 },
+            { name: '2XL', w: 61, l: 78 }, { name: '3XL', w: 64, l: 80 },
+            { name: '4XL', w: 70, l: 82 }, { name: '5XL', w: 75, l: 84 }
+        ],
+        women: [
+            { name: 'XS', w: 42, l: 62 }, { name: 'S', w: 45, l: 64 },
+            { name: 'M', w: 48, l: 66 }, { name: 'L', w: 51, l: 68 },
+            { name: 'XL', w: 55, l: 70 }, { name: '2XL', w: 59, l: 71 },
+            { name: '3XL', w: 62, l: 71 }
+        ],
+        kids: [
+            { name: '3XS', w: 30, l: 38, maxH: 92 },
+            { name: '2XS', w: 33, l: 42, maxH: 104 },
+            { name: 'XS', w: 36, l: 44, maxH: 116 },
+            { name: 'S', w: 39, l: 50, maxH: 128 },
+            { name: 'M', w: 42, l: 54, maxH: 140 },
+            { name: 'L', w: 45, l: 60, maxH: 152 },
+            { name: 'XL', w: 48, l: 64, maxH: 164 }
+        ]
+    };
+
     // --- STATE ---
-    let currentLang = 'ua';
-    let currentMode = 'standard';
-    let currentCategory = 'men'; // men, women, kids
+    let state = {
+        lang: 'ua',
+        mode: null,
+        category: null
+    };
 
-    // --- INITIALIZATION ---
-    function init() {
-        setLang('ua');
-        setCategory('men'); // Default selected
-        updateQuote();
+    // --- NAVIGATION ---
+    function goToScene(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        
+        // Auto-focus input if exists
+        const inp = document.getElementById(id).querySelector('input');
+        if(inp) setTimeout(() => inp.focus(), 500);
     }
 
-    // --- LOGIC FUNCTIONS ---
+    function goBack(id) {
+        goToScene(id);
+    }
 
-    function setLang(lang) {
-        currentLang = lang;
+    // --- ACTIONS ---
+    function setLang(l) {
+        state.lang = l;
         document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
-
-        const t = TEXTS[lang];
-        document.getElementById('app-title').innerText = t.title;
-        document.getElementById('tab-std').innerText = t.std;
-        document.getElementById('tab-adv').innerText = t.adv;
-        document.getElementById('cat-men').innerText = t.men;
-        document.getElementById('cat-women').innerText = t.women;
-        document.getElementById('cat-kids').innerText = t.kids;
-        document.getElementById('lbl-height').innerText = t.height;
-        document.getElementById('lbl-weight').innerText = t.weight;
-        document.getElementById('lbl-width').innerText = t.width;
-        document.getElementById('lbl-len').innerText = t.len;
-        document.getElementById('btn-calc').innerText = t.btn;
-        document.getElementById('txt-analyzing').innerText = t.analyzing;
-        document.getElementById('res-label').innerText = t.result;
-        
-        updateQuote();
+        document.querySelector(`.lang-btn[onclick="setLang('${l}')"]`).classList.add('active');
+        updateTexts();
     }
 
-    function setMode(mode) {
-        currentMode = mode;
-        document.getElementById('tab-std').className = `tab-btn ${mode === 'standard' ? 'active' : ''}`;
-        document.getElementById('tab-adv').className = `tab-btn ${mode === 'advanced' ? 'active' : ''}`;
+    function selectMode(m) {
+        state.mode = m;
+        goToScene('scene-cat');
+    }
 
-        if (mode === 'standard') {
-            document.getElementById('inputs-standard').classList.remove('hidden');
-            document.getElementById('inputs-advanced').classList.add('hidden');
-            // Re-check category to show/hide weight
-            setCategory(currentCategory);
+    function selectCategory(c) {
+        state.category = c;
+        if (state.mode === 'standard') {
+            goToScene('scene-height');
         } else {
-            document.getElementById('inputs-standard').classList.add('hidden');
-            document.getElementById('inputs-advanced').classList.remove('hidden');
+            goToScene('scene-adv-intro');
         }
-        hideResult();
     }
 
-    function setCategory(cat) {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-        document.getElementById(`cat-${cat}`).classList.add('selected');
+    function nextFromHeight() {
+        const h = document.getElementById('val-height').value;
+        if (!h) return alert(state.lang === 'ua' ? "Введи зріст!" : "Введи рост!");
 
-        // Logic: Kids don't need weight in Standard mode based on the chart
-        if (currentMode === 'standard') {
-            const wGroup = document.getElementById('group-weight');
-            if (cat === 'kids') {
-                wGroup.classList.add('hidden');
-            } else {
-                wGroup.classList.remove('hidden');
-            }
-        }
-        hideResult();
-    }
-
-    function hideResult() {
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('progress').style.width = '0%';
-    }
-
-    function updateQuote() {
-        const quotes = TEXTS[currentLang].quotes;
-        const randomQ = quotes[Math.floor(Math.random() * quotes.length)];
-        document.getElementById('random-quote').innerText = randomQ;
-    }
-
-    function calculate() {
-        // Validation
-        if (currentMode === 'standard') {
-            const h = parseFloat(document.getElementById('val-height').value);
-            if (!h) return alert("Введите рост!");
-            if (currentCategory !== 'kids') {
-                const w = parseFloat(document.getElementById('val-weight').value);
-                if (!w) return alert("Введите вес!");
-            }
+        if (state.category === 'kids') {
+            calculateStandard(); // Kids skip weight
         } else {
-            const w = parseFloat(document.getElementById('val-w').value);
-            const l = parseFloat(document.getElementById('val-l').value);
-            if (!w || !l) return alert("Введите замеры!");
+            goToScene('scene-weight');
+        }
+    }
+
+    // --- CALCULATION & RESULT ---
+    function startLoading(callback) {
+        goToScene('scene-loading');
+        document.getElementById('progress-bar').style.width = '0%';
+        // Force reflow
+        void document.getElementById('progress-bar').offsetWidth;
+        document.getElementById('progress-bar').style.width = '100%';
+        
+        setTimeout(callback, 3000);
+    }
+
+    function calculateStandard() {
+        const h = parseFloat(document.getElementById('val-height').value);
+        let w = 0;
+        if (state.category !== 'kids') {
+            w = parseFloat(document.getElementById('val-weight').value);
+            if (!w) return alert("Вес?");
         }
 
-        // UI Animation
-        hideResult();
-        const loading = document.getElementById('loading');
-        loading.style.display = 'block';
-        
-        // Force reflow for animation restart
-        void document.getElementById('progress').offsetWidth;
-        document.getElementById('progress').style.width = '100%';
-
-        setTimeout(() => {
-            const size = determineSize();
-            loading.style.display = 'none';
+        startLoading(() => {
+            let size = "L";
+            // Logic
+            if (state.category === 'kids') {
+                const chart = SIZE_DATA.kids;
+                size = "XL+";
+                for (let s of chart) { if (h <= s.maxH) { size = s.name; break; } }
+            } else if (state.category === 'men') {
+                if (w < 55) size = "2XS";
+                else if (w < 62) size = "XS";
+                else if (w < 70) size = "S";
+                else if (w < 78) size = "M";
+                else if (w < 86) size = "L";
+                else if (w < 95) size = "XL";
+                else if (w < 105) size = "2XL";
+                else if (w < 115) size = "3XL";
+                else if (w < 125) size = "4XL";
+                else size = "5XL";
+            } else { // women
+                if (w < 45) size = "XS";
+                else if (w < 52) size = "S";
+                else if (w < 60) size = "M";
+                else if (w < 68) size = "L";
+                else if (w < 76) size = "XL";
+                else if (w < 85) size = "2XL";
+                else size = "3XL";
+            }
             showResult(size);
-        }, 3000);
+        });
+    }
+
+    function calculateAdvanced() {
+        const l = parseFloat(document.getElementById('val-l').value);
+        const w = parseFloat(document.getElementById('val-w').value);
+        if (!l || !w) return alert("Данные?");
+
+        startLoading(() => {
+            const chart = SIZE_DATA[state.category];
+            let size = chart[chart.length-1].name;
+            for (let s of chart) {
+                if (s.w >= w - 1 && s.l >= l - 2) {
+                    size = s.name;
+                    break;
+                }
+            }
+            showResult(size);
+        });
     }
 
     function showResult(size) {
-        const resDiv = document.getElementById('result');
-        const resVal = document.getElementById('res-val');
-        
-        let prefix = "";
-        if (currentCategory === 'men') prefix = (currentLang === 'ua' ? "Чоловічий " : "Мужской ");
-        if (currentCategory === 'women') prefix = (currentLang === 'ua' ? "Жіночий " : "Женский ");
-        if (currentCategory === 'kids') prefix = (currentLang === 'ua' ? "Дитячий " : "Детский ");
-
-        resVal.innerText = prefix + size;
-        resDiv.style.display = 'block';
-        updateQuote();
+        document.getElementById('res-val').innerText = size;
+        const quotes = TEXTS[state.lang].quotes;
+        document.getElementById('res-quote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        goToScene('scene-result');
     }
 
-    // --- ALGORITHMS ---
-
-    function determineSize() {
-        if (currentMode === 'advanced') {
-            return getAdvancedSize();
-        } else {
-            return getStandardSize();
-        }
+    function updateTexts() {
+        const t = TEXTS[state.lang];
+        // Mode
+        document.getElementById('txt-mode-title').innerText = t.modeT;
+        document.getElementById('txt-mode-desc').innerText = t.modeD;
+        document.getElementById('btn-std').innerText = t.std;
+        document.getElementById('btn-adv').innerText = t.adv;
+        // Cat
+        document.getElementById('txt-cat-title').innerText = t.catT;
+        document.getElementById('txt-cat-desc').innerText = t.catD;
+        document.getElementById('btn-men').innerText = t.men;
+        document.getElementById('btn-women').innerText = t.women;
+        document.getElementById('btn-kids').innerText = t.kids;
+        // Height
+        document.getElementById('txt-height-title').innerText = t.hT;
+        document.getElementById('txt-height-desc').innerText = t.hD;
+        document.getElementById('btn-next-h').innerText = t.next;
+        // Weight
+        document.getElementById('txt-weight-title').innerText = t.wT;
+        document.getElementById('txt-weight-desc').innerText = t.wD;
+        document.getElementById('btn-calc-std').innerText = t.calc;
+        // Adv Intro
+        document.getElementById('txt-adv-title').innerText = t.advT;
+        document.getElementById('txt-adv-desc').innerText = t.advD;
+        document.getElementById('txt-adv-tip').innerText = t.tip;
+        document.getElementById('btn-start-measure').innerText = t.startM;
+        // Len
+        document.getElementById('txt-len-title').innerText = t.lenT;
+        document.getElementById('txt-len-desc').innerText = t.lenD;
+        document.getElementById('btn-next-len').innerText = t.next;
+        // Wid
+        document.getElementById('txt-wid-title').innerText = t.widT;
+        document.getElementById('txt-wid-desc').innerText = t.widD;
+        document.getElementById('btn-calc-adv').innerText = t.calc;
+        // Result
+        document.getElementById('txt-loading').innerText = t.load;
+        document.getElementById('txt-res-title').innerText = t.resT;
+        document.getElementById('btn-restart').innerText = t.restart;
     }
 
-    function getAdvancedSize() {
-        const userW = parseFloat(document.getElementById('val-w').value);
-        const userL = parseFloat(document.getElementById('val-l').value);
-        const chart = SIZE_DATA[currentCategory];
-
-        // Logic: Find the first size that is LARGER or EQUAL to user measurements
-        // To avoid tight fit, we prioritize width.
-        for (let s of chart) {
-            // Allow a small margin of error (e.g. 1cm)
-            if (s.w >= userW - 1 && s.l >= userL - 2) {
-                return s.name;
-            }
-        }
-        // If nothing fits, return the largest
-        return chart[chart.length - 1].name;
-    }
-
-    function getStandardSize() {
-        const h = parseFloat(document.getElementById('val-height').value);
-        
-        // 1. KIDS LOGIC (Pure Height based on chart)
-        if (currentCategory === 'kids') {
-            const chart = SIZE_DATA.kids;
-            for (let s of chart) {
-                if (h <= s.maxH) return s.name;
-            }
-            return "XL+"; // Too big for kids
-        }
-
-        const w = parseFloat(document.getElementById('val-weight').value);
-
-        // 2. MEN LOGIC (Heuristic estimation mapping to supplied Chart)
-        if (currentCategory === 'men') {
-            // Approximate logic for "Oversize/Standard" T-shirts
-            // Based on Weight primarily, checked against Height
-            
-            // Weight thresholds for standard fit
-            if (w < 55) return "2XS";
-            if (w < 62) return "XS";
-            if (w < 70) return "S";
-            if (w < 78) return "M";
-            if (w < 86) return "L";
-            if (w < 95) return "XL";
-            if (w < 105) return "2XL";
-            if (w < 115) return "3XL";
-            if (w < 125) return "4XL";
-            return "5XL";
-        }
-
-        // 3. WOMEN LOGIC
-        if (currentCategory === 'women') {
-            if (w < 45) return "XS";
-            if (w < 52) return "S";
-            if (w < 60) return "M";
-            if (w < 68) return "L";
-            if (w < 76) return "XL";
-            if (w < 85) return "2XL";
-            return "3XL";
-        }
-    }
-
-    // Start
-    init();
+    // Init
+    updateTexts();
 
 </script>
-
 </body>
 </html>
