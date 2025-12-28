@@ -26,7 +26,7 @@
             color: var(--text-main);
             margin: 0;
             height: 100vh;
-            overflow: hidden; /* Блокируем скролл, у нас SPA */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -42,16 +42,14 @@
         }
 
         .logo {
-            font-family: 'Montserrat', sans-serif; /* Похож на Laqonic */
+            font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            font-size: 36px; /* Крупный жирный */
+            font-size: 32px;
             color: var(--text-main);
             text-decoration: none;
             letter-spacing: -1px;
             text-transform: uppercase;
         }
-
-        .logo span { color: var(--accent); }
 
         .tg-link {
             width: 36px;
@@ -67,7 +65,7 @@
         .tg-link:active { transform: scale(0.9); background: #2AABEE; }
         .tg-link svg { width: 18px; fill: currentColor; }
 
-        /* --- MAIN CONTAINER (SCREEN MANAGER) --- */
+        /* --- SCREENS --- */
         .screen-container {
             flex: 1;
             position: relative;
@@ -87,37 +85,33 @@
             transition: var(--transition);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            /* Чтобы на маленьких экранах влезало при клавиатуре */
+            max-height: 100%; 
+            overflow-y: auto;
+            padding-bottom: 20px;
         }
+        /* Скрываем скроллбар */
+        .screen::-webkit-scrollbar { display: none; }
 
         .screen.active {
             opacity: 1;
             transform: translateY(0) scale(1);
             pointer-events: all;
         }
-
         .screen.prev {
             opacity: 0;
             transform: translateY(-20px) scale(0.95);
         }
 
-        /* --- UI ELEMENTS --- */
         h2 {
-            font-size: 28px;
-            margin: 0;
+            font-size: 26px;
+            margin: 0 0 10px 0;
             line-height: 1.1;
             text-align: center;
         }
 
-        .subtitle {
-            text-align: center;
-            color: var(--text-sec);
-            font-size: 15px;
-            margin-top: -10px;
-            margin-bottom: 10px;
-        }
-
-        /* Glass Cards / Buttons */
+        /* --- INPUTS & VISUALS --- */
         .btn-option {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -129,131 +123,98 @@
             font-size: 18px;
             font-weight: 500;
             cursor: pointer;
-            text-align: left;
-            transition: var(--transition);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: 0.2s;
+        }
+        .btn-option:active { transform: scale(0.98); background: rgba(255,255,255,0.15); }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-sec);
+            font-size: 14px;
+            margin-top: 8px; /* FIX: отступ от линии инпута */
         }
 
-        .btn-option:active {
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(0.98);
-        }
-
-        .btn-option.selected {
-            border-color: var(--accent);
-            background: rgba(255, 0, 60, 0.15);
-            color: var(--accent);
-        }
-
-        /* Inputs */
         .input-glass {
             background: transparent;
             border: none;
             border-bottom: 2px solid var(--glass-border);
-            font-size: 48px;
+            font-size: 40px;
             color: white;
             text-align: center;
             width: 100%;
-            padding: 10px 0;
+            padding: 5px 0;
             font-weight: 700;
             font-family: 'Outfit', sans-serif;
             border-radius: 0;
             outline: none;
+            margin-bottom: 5px; /* FIX: место под линию */
         }
         .input-glass:focus { border-color: var(--accent); }
-        .input-glass::placeholder { color: #333; }
 
-        /* Navigation Buttons */
-        .nav-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .btn-next, .btn-back {
-            flex: 1;
-            padding: 18px;
-            border-radius: 16px;
-            border: none;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-next {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 4px 20px rgba(255, 0, 60, 0.4);
-        }
-        
-        .btn-back {
-            background: transparent;
-            color: var(--text-sec);
-        }
-
-        /* --- PRO MODE GUIDE --- */
-        .measure-guide {
+        /* --- VISUAL GUIDES (SVG) --- */
+        .guide-card {
             background: rgba(255,255,255,0.05);
             border-radius: 16px;
             padding: 15px;
-            font-size: 13px;
-            color: var(--text-sec);
-            text-align: center;
-            border: 1px dashed var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid var(--glass-border);
         }
         
-        .guide-visual {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
+        .guide-icon {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
         }
-        .visual-item { width: 45%; border: 1px solid #444; height: 60px; position: relative; border-radius: 8px;}
-        .line-w { position: absolute; bottom: 10px; left: 5px; right: 5px; height: 1px; background: var(--accent); }
-        .line-h { position: absolute; top: 5px; bottom: 5px; left: 50%; width: 1px; background: var(--accent); }
+        .guide-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--text-main);
+            stroke-width: 2;
+            fill: none;
+        }
+        .guide-arrow { stroke: var(--accent); stroke-width: 3; }
+
+        .guide-text {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.3;
+            text-align: left;
+        }
+        .guide-text strong { color: var(--accent); display: block; margin-bottom: 2px; }
+
+        /* --- BUTTONS --- */
+        .nav-actions { display: flex; gap: 15px; margin-top: 10px; }
+        .btn-next, .btn-back {
+            flex: 1; padding: 16px; border-radius: 16px; border: none;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+        }
+        .btn-next { background: var(--accent); color: white; box-shadow: 0 4px 20px rgba(255,0,60,0.4); }
+        .btn-back { background: transparent; color: var(--text-sec); }
 
         /* --- LOADING & RESULT --- */
         .loading-bar {
-            width: 100%;
-            height: 6px;
-            background: #222;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 20px;
+            width: 100%; height: 6px; background: #222;
+            border-radius: 3px; overflow: hidden; margin-top: 20px;
         }
         .loading-fill {
-            height: 100%;
-            background: var(--accent);
-            width: 0%;
+            height: 100%; background: var(--accent); width: 0%;
             transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .result-box {
-            text-align: center;
-        }
         .size-display {
-            font-size: 80px;
-            font-weight: 900;
-            color: transparent;
-            -webkit-text-stroke: 2px var(--accent);
-            margin: 10px 0;
-            text-shadow: 0 0 30px rgba(255, 0, 60, 0.3);
+            font-size: 80px; font-weight: 900; color: transparent;
+            -webkit-text-stroke: 2px var(--accent); margin: 10px 0;
+            text-shadow: 0 0 30px rgba(255, 0, 60, 0.3); text-align: center;
         }
         .quote {
-            font-style: italic;
-            color: var(--text-sec);
-            font-size: 14px;
-            line-height: 1.5;
+            font-style: italic; color: var(--text-sec);
+            font-size: 14px; line-height: 1.5; text-align: center;
         }
-
-        /* --- FOOTER --- */
-        .footer {
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #444;
-        }
+        .footer { padding: 15px; text-align: center; font-size: 11px; color: #444; }
         .footer a { color: #666; text-decoration: none; }
     </style>
 </head>
@@ -276,9 +237,9 @@
 
         <div class="screen" id="screen-cat">
             <h2 id="txt-choose-cat">Для кого?</h2>
-            <div class="btn-option" onclick="selectCategory('men')"><span id="txt-men">Чоловіче / Unisex</span> 👕</div>
-            <div class="btn-option" onclick="selectCategory('women')"><span id="txt-women">Жіноче</span> 👚</div>
-            <div class="btn-option" onclick="selectCategory('kids')"><span id="txt-kids">Дитяче</span> 👶</div>
+            <div class="btn-option" onclick="selectCategory('men')"><span id="txt-men">Чоловіче / Unisex</span></div>
+            <div class="btn-option" onclick="selectCategory('women')"><span id="txt-women">Жіноче</span></div>
+            <div class="btn-option" onclick="selectCategory('kids')"><span id="txt-kids">Дитяче</span></div>
             <div class="nav-actions">
                 <button class="btn-back" onclick="prevStep()">←</button>
             </div>
@@ -289,13 +250,13 @@
             <div class="btn-option" onclick="selectMode('std')">
                 <div>
                     <div id="txt-mode-std-t">Зріст та вага</div>
-                    <div class="subtitle" id="txt-mode-std-d" style="text-align: left; margin:0;">Швидкий підбір</div>
+                    <div class="subtitle" id="txt-mode-std-d" style="text-align:left; margin:0; opacity:0.7;">Швидко і просто</div>
                 </div>
             </div>
             <div class="btn-option" onclick="selectMode('adv')">
                 <div>
                     <div id="txt-mode-adv-t">Заміри речі</div>
-                    <div class="subtitle" id="txt-mode-adv-d" style="text-align: left; margin:0;">Точність 99%</div>
+                    <div class="subtitle" id="txt-mode-adv-d" style="text-align:left; margin:0; opacity:0.7;">Точність 99%</div>
                 </div>
             </div>
             <div class="nav-actions">
@@ -306,11 +267,13 @@
         <div class="screen" id="screen-input-std">
             <h2 id="txt-params">Твої параметри</h2>
             
-            <input type="number" class="input-glass" id="in-height" placeholder="175" inputmode="numeric">
-            <div class="subtitle" id="lbl-height">Зріст (см)</div>
+            <div style="margin-bottom: 20px;">
+                <input type="number" class="input-glass" id="in-height" placeholder="175" inputmode="numeric">
+                <div class="subtitle" id="lbl-height">Зріст (см)</div>
+            </div>
             
             <div id="block-weight">
-                <input type="number" class="input-glass" id="in-weight" placeholder="70" inputmode="numeric" style="margin-top: 15px;">
+                <input type="number" class="input-glass" id="in-weight" placeholder="70" inputmode="numeric">
                 <div class="subtitle" id="lbl-weight">Вага (кг)</div>
             </div>
 
@@ -321,19 +284,42 @@
         </div>
 
         <div class="screen" id="screen-input-adv">
-            <h2 id="txt-measure-item">Заміри футболки</h2>
+            <h2 id="txt-measure-item">Заміри</h2>
             
-            <div class="measure-guide">
-                <div class="guide-visual">
-                    <div class="visual-item"><div class="line-h"></div></div> <div class="visual-item"><div class="line-w"></div></div> </div>
-                <span id="txt-guide">Поклади свою улюблену футболку на стіл і заміряй.</span>
+            <div class="guide-card">
+                <div class="guide-icon">
+                    <svg viewBox="0 0 100 100">
+                        <path d="M20 30 L40 30 L45 35 L85 35 L90 30 L110 30" stroke="white" stroke-opacity="0.2" />
+                        <path d="M25 35 L15 50 L25 50 L25 90 L75 90 L75 50 L85 50 L75 35" stroke="white" />
+                        <line x1="28" y1="60" x2="72" y2="60" class="guide-arrow" />
+                        <path d="M28 60 L32 57 M28 60 L32 63 M72 60 L68 57 M72 60 L68 63" class="guide-arrow" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="guide-text">
+                    <strong id="lbl-w-t">Ширина</strong>
+                    <span id="lbl-w-d">Від шва до шва під пахвами</span>
+                </div>
+                <div style="width: 70px;">
+                    <input type="number" class="input-glass" id="in-w" placeholder="52" style="font-size: 24px;">
+                </div>
             </div>
 
-            <input type="number" class="input-glass" id="in-w" placeholder="52" inputmode="numeric">
-            <div class="subtitle" id="lbl-w">Ширина (см)</div>
-
-            <input type="number" class="input-glass" id="in-l" placeholder="72" inputmode="numeric">
-            <div class="subtitle" id="lbl-l">Довжина (см)</div>
+            <div class="guide-card">
+                <div class="guide-icon">
+                    <svg viewBox="0 0 100 100">
+                        <path d="M25 35 L15 50 L25 50 L25 90 L75 90 L75 50 L85 50 L75 35" stroke="white" stroke-opacity="0.5"/>
+                        <line x1="50" y1="35" x2="50" y2="90" class="guide-arrow" />
+                        <path d="M50 35 L47 39 M50 35 L53 39 M50 90 L47 86 M50 90 L53 86" class="guide-arrow" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="guide-text">
+                    <strong id="lbl-l-t">Довжина</strong>
+                    <span id="lbl-l-d">Від верху плеча до низу</span>
+                </div>
+                <div style="width: 70px;">
+                    <input type="number" class="input-glass" id="in-l" placeholder="72" style="font-size: 24px;">
+                </div>
+            </div>
 
             <div class="nav-actions">
                 <button class="btn-back" onclick="prevStep()">←</button>
@@ -379,14 +365,17 @@
             men: "Чоловіче / Unisex", women: "Жіноче", kids: "Дитяче",
             chooseCat: "Для кого?",
             howMeasure: "Метод підбору",
-            modeStdT: "Зріст та вага", modeStdD: "Швидко і просто",
-            modeAdvT: "Заміри речі", modeAdvD: "Максимальна точність",
-            params: "Параметри",
+            modeStdT: "Зріст та вага", modeStdD: "Якщо немає рулетки",
+            modeAdvT: "Точні заміри", modeAdvD: "Використовуй сантиметр",
+            params: "Твої параметри",
             h: "Зріст (см)", w: "Вага (кг)",
-            measureItem: "Заміри виробу",
-            guide: "Поклади річ на рівну поверхню. Ширина - під пахвами, Довжина - по спині.",
-            width: "Ширина (см)", len: "Довжина (см)",
-            analyzing: "Скануємо базу...",
+            measureItem: "Введи заміри",
+            
+            // Advanced Guide Texts
+            wTitle: "Ширина (см)", wDesc: "Міряй під пахвами, від шва до шва",
+            lTitle: "Довжина (см)", lDesc: "Від плечового шва біля шиї до низу",
+
+            analyzing: "Підбираємо...",
             yourSize: "ТВІЙ ІДЕАЛЬНИЙ РОЗМІР",
             quotes: [
                 "Сяде як влита. Готуйся до компліментів.",
@@ -400,14 +389,17 @@
             men: "Мужское / Unisex", women: "Женское", kids: "Детское",
             chooseCat: "Для кого?",
             howMeasure: "Метод подбора",
-            modeStdT: "Рост и вес", modeStdD: "Быстро и просто",
-            modeAdvT: "Замеры вещи", modeAdvD: "Максимальная точность",
-            params: "Параметры",
+            modeStdT: "Рост и вес", modeStdD: "Если нет рулетки",
+            modeAdvT: "Точные замеры", modeAdvD: "Используй сантиметр",
+            params: "Твои параметры",
             h: "Рост (см)", w: "Вес (кг)",
-            measureItem: "Замеры изделия",
-            guide: "Положи вещь на ровную поверхность. Ширина - под мышками, Длина - по спине.",
-            width: "Ширина (см)", len: "Длина (см)",
-            analyzing: "Сканируем базу...",
+            measureItem: "Введите замеры",
+
+            // Advanced Guide Texts
+            wTitle: "Ширина (см)", wDesc: "Меряй под мышками, от шва до шва",
+            lTitle: "Длина (см)", lDesc: "От плечевого шва у шеи до самого низа",
+
+            analyzing: "Подбираем...",
             yourSize: "ТВОЙ ИДЕАЛЬНЫЙ РАЗМЕР",
             quotes: [
                 "Сядет как влитая. Готовься к комплиментам.",
@@ -423,20 +415,17 @@
     const SIZE_DATA = {
         men: [ {n:'2XS',w:43,l:66},{n:'XS',w:46,l:68},{n:'S',w:49,l:70},{n:'M',w:52,l:72},{n:'L',w:55,l:74},{n:'XL',w:58,l:76},{n:'2XL',w:61,l:78},{n:'3XL',w:64,l:80},{n:'4XL',w:70,l:82},{n:'5XL',w:75,l:84} ],
         women: [ {n:'XS',w:42,l:62},{n:'S',w:45,l:64},{n:'M',w:48,l:66},{n:'L',w:51,l:68},{n:'XL',w:55,l:70},{n:'2XL',w:59,l:71},{n:'3XL',w:62,l:71} ],
-        kids: [ {n:'3XS',maxH:92},{n:'2XS',maxH:104},{n:'XS',maxH:116},{n:'S',maxH:128},{n:'M',maxH:140},{n:'L',maxH:152},{n:'XL',maxH:164} ]
+        kids: [ {n:'3XS',maxH:92,w:30,l:38},{n:'2XS',maxH:104,w:33,l:42},{n:'XS',maxH:116,w:36,l:44},{n:'S',maxH:128,w:39,l:50},{n:'M',maxH:140,w:42,l:54},{n:'L',maxH:152,w:45,l:60},{n:'XL',maxH:164,w:48,l:64} ]
     };
 
     // --- NAVIGATION ---
     function goTo(id) {
-        // Find current active
         const current = document.querySelector('.screen.active');
         if (current) {
             current.classList.remove('active');
             current.classList.add('prev');
             state.stepHistory.push(current.id);
         }
-        
-        // Activate new
         const next = document.getElementById(id);
         next.classList.remove('prev');
         next.classList.add('active');
@@ -445,7 +434,6 @@
     function prevStep() {
         if (state.stepHistory.length === 0) return;
         const prevId = state.stepHistory.pop();
-        
         document.querySelector('.screen.active').classList.remove('active');
         const prevScreen = document.getElementById(prevId);
         prevScreen.classList.remove('prev');
@@ -467,7 +455,6 @@
     function selectMode(m) {
         state.mode = m;
         if (m === 'std') {
-            // Check smart input (Kids logic)
             if (state.cat === 'kids') {
                 document.getElementById('block-weight').style.display = 'none';
             } else {
@@ -497,9 +484,12 @@
         document.getElementById('lbl-weight').innerText = t.w;
 
         document.getElementById('txt-measure-item').innerText = t.measureItem;
-        document.getElementById('txt-guide').innerText = t.guide;
-        document.getElementById('lbl-w').innerText = t.width;
-        document.getElementById('lbl-l').innerText = t.len;
+        
+        // Advanced Labels
+        document.getElementById('lbl-w-t').innerText = t.wTitle;
+        document.getElementById('lbl-w-d').innerText = t.wDesc;
+        document.getElementById('lbl-l-t').innerText = t.lTitle;
+        document.getElementById('lbl-l-d').innerText = t.lDesc;
 
         document.getElementById('txt-analyzing').innerText = t.analyzing;
         document.getElementById('txt-your-size').innerText = t.yourSize;
@@ -528,10 +518,8 @@
         setTimeout(() => {
             const result = calculateSize();
             document.getElementById('res-val').innerText = result;
-            
             const quotes = TEXTS[state.lang].quotes;
             document.getElementById('res-quote').innerText = quotes[Math.floor(Math.random()*quotes.length)];
-            
             goTo('screen-res');
         }, 3000);
     }
@@ -541,19 +529,10 @@
             const w = parseFloat(document.getElementById('in-w').value);
             const l = parseFloat(document.getElementById('in-l').value);
             const chart = SIZE_DATA[state.cat];
-            
-            // Kids dont have width/len data in your screenshots for advanced check, 
-            // assuming only height for kids. But if user selected ADV and KIDS, we fallback or use heuristic.
-            // Screenshot 3 (Kids) only shows Height/Age mapping basically.
-            // Wait, Screenshot 3 DOES show Width/Length. Okay using it.
-            // Kids Chart: 3XS(30/38) ... XL(48/64)
-            // Need to Map SIZE_DATA for kids to include W/L for ADV mode
+
             if(state.cat === 'kids') {
-                 const kData = [
-                    {n:'3XS',w:30,l:38},{n:'2XS',w:33,l:42},{n:'XS',w:36,l:44},
-                    {n:'S',w:39,l:50},{n:'M',w:42,l:54},{n:'L',w:45,l:60},{n:'XL',w:48,l:64}
-                 ];
-                 for(let s of kData) if(s.w >= w-1 && s.l >= l-2) return s.n;
+                 // For kids advanced, use w/l logic from combined data
+                 for(let s of chart) if(s.w >= w-1 && s.l >= l-2) return s.n;
                  return "XL+";
             }
 
@@ -561,7 +540,6 @@
             return chart[chart.length-1].n;
         } 
         else {
-            // STANDARD
             const h = parseFloat(document.getElementById('in-height').value);
             
             if (state.cat === 'kids') {
@@ -593,9 +571,8 @@
                 return "3XL";
             }
         }
-        return "M"; // fallback
+        return "M"; 
     }
-
 </script>
 </body>
 </html>
