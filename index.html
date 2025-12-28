@@ -2,646 +2,600 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SEMPAI Size Picker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SEMPAI Size App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
+            --bg-color: #000000;
+            --glass-bg: rgba(30, 30, 30, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #ff003c;
             --text-main: #ffffff;
-            --text-secondary: #b0b0b0;
-            --accent: #ff003c; /* Яркий красный */
-            --accent-hover: #d60033;
-            --border: #333;
-            /* Используем Permanent Marker как замену Tan Buster */
-            --brand-font: 'Permanent Marker', cursive, sans-serif; 
+            --text-sec: #888888;
+            --radius: 24px;
+            --transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Outfit', sans-serif;
             background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(255, 0, 60, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 90% 90%, rgba(40, 40, 40, 0.5) 0%, transparent 50%);
             color: var(--text-main);
             margin: 0;
-            padding: 20px 10px;
+            height: 100vh;
+            overflow: hidden; /* Блокируем скролл, у нас SPA */
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            align-items: center;
-            justify-content: center;
-            box-sizing: border-box;
+            justify-content: space-between;
         }
 
-        .container {
-            width: 100%;
-            max-width: 480px; /* Чуть уже для мобилок */
-            background-color: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        /* ---- Header & Branding ---- */
+        /* --- HEADER --- */
         .header {
+            padding: 20px 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 15px;
+            z-index: 10;
         }
 
-        .brand-block {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-link {
-            font-family: var(--brand-font);
-            font-size: 32px;
-            color: var(--accent);
+        .logo {
+            font-family: 'Montserrat', sans-serif; /* Похож на Laqonic */
+            font-weight: 900;
+            font-size: 36px; /* Крупный жирный */
+            color: var(--text-main);
             text-decoration: none;
-            letter-spacing: 1px;
-            transition: 0.3s;
+            letter-spacing: -1px;
+            text-transform: uppercase;
         }
 
-        .logo-link:hover {
-            text-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
-        }
+        .logo span { color: var(--accent); }
 
         .tg-link {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            background: #2AABEE;
-            border-radius: 50%;
             color: white;
-            text-decoration: none;
-            transition: 0.3s;
+            transition: var(--transition);
         }
-        
-        .tg-link:hover { transform: scale(1.1); }
-        .tg-link svg { width: 18px; height: 18px; fill: currentColor; }
+        .tg-link:active { transform: scale(0.9); background: #2AABEE; }
+        .tg-link svg { width: 18px; fill: currentColor; }
 
-        .lang-switch {
-            display: flex;
-            gap: 8px;
-        }
-
-        .lang-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 6px 10px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 12px;
-            transition: 0.3s;
-        }
-
-        .lang-btn.active {
-            background-color: var(--accent);
-            border-color: var(--accent);
-            color: white;
-            font-weight: bold;
-        }
-
-        /* ---- Controls ---- */
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            background: #111;
-            border-radius: 8px;
-            padding: 4px;
-        }
-
-        .tab-btn {
+        /* --- MAIN CONTAINER (SCREEN MANAGER) --- */
+        .screen-container {
             flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-radius: 6px;
-            transition: 0.3s;
-            font-weight: 500;
-            font-size: 14px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
-        .tab-btn.active {
-            background-color: var(--accent);
+        .screen {
+            position: absolute;
+            width: 100%;
+            max-width: 400px;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+
+        .screen.prev {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+
+        /* --- UI ELEMENTS --- */
+        h2 {
+            font-size: 28px;
+            margin: 0;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-sec);
+            font-size: 15px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+
+        /* Glass Cards / Buttons */
+        .btn-option {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: var(--radius);
             color: white;
-        }
-
-        .category-selector {
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: var(--transition);
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            gap: 8px;
+            align-items: center;
         }
 
-        .cat-btn {
-            flex: 1;
-            background: var(--bg-color);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 10px 5px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 13px;
-            white-space: nowrap;
-            text-align: center;
+        .btn-option:active {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(0.98);
         }
 
-        .cat-btn.selected {
+        .btn-option.selected {
             border-color: var(--accent);
-            background-color: rgba(255, 0, 60, 0.1);
+            background: rgba(255, 0, 60, 0.15);
             color: var(--accent);
-            font-weight: bold;
         }
 
-        /* ---- Inputs ---- */
-        .input-group { margin-bottom: 15px; }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            background-color: #111;
-            border: 1px solid var(--border);
-            padding: 14px;
-            color: white;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-            /* Убираем стрелочки на мобилках */
-            -moz-appearance: textfield; 
-        }
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-        input[type="number"]:focus { border-color: var(--accent); }
-
-        .cta-btn {
-            width: 100%;
-            background-color: var(--accent);
-            color: white;
+        /* Inputs */
+        .input-glass {
+            background: transparent;
             border: none;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            margin-top: 10px;
-            transition: 0.3s;
-            letter-spacing: 1px;
-        }
-        .cta-btn:hover { background-color: var(--accent-hover); }
-        .cta-btn:active { transform: scale(0.98); }
-
-        /* ---- Loading & Result ---- */
-        .loading-container {
-            display: none;
-            margin-top: 25px;
+            border-bottom: 2px solid var(--glass-border);
+            font-size: 48px;
+            color: white;
             text-align: center;
-        }
-        #txt-analyzing { font-size: 14px; color: var(--text-secondary); }
-
-        .progress-bar-bg {
             width: 100%;
-            height: 8px;
-            background-color: #111;
-            border-radius: 4px;
+            padding: 10px 0;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            border-radius: 0;
+            outline: none;
+        }
+        .input-glass:focus { border-color: var(--accent); }
+        .input-glass::placeholder { color: #333; }
+
+        /* Navigation Buttons */
+        .nav-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-next, .btn-back {
+            flex: 1;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-next {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255, 0, 60, 0.4);
+        }
+        
+        .btn-back {
+            background: transparent;
+            color: var(--text-sec);
+        }
+
+        /* --- PRO MODE GUIDE --- */
+        .measure-guide {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            font-size: 13px;
+            color: var(--text-sec);
+            text-align: center;
+            border: 1px dashed var(--glass-border);
+        }
+        
+        .guide-visual {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+        .visual-item { width: 45%; border: 1px solid #444; height: 60px; position: relative; border-radius: 8px;}
+        .line-w { position: absolute; bottom: 10px; left: 5px; right: 5px; height: 1px; background: var(--accent); }
+        .line-h { position: absolute; top: 5px; bottom: 5px; left: 50%; width: 1px; background: var(--accent); }
+
+        /* --- LOADING & RESULT --- */
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
             overflow: hidden;
-            margin-top: 12px;
+            margin-top: 20px;
         }
-
-        .progress-bar-fill {
+        .loading-fill {
             height: 100%;
-            background-color: var(--accent);
+            background: var(--accent);
             width: 0%;
-            transition: width 3s linear;
+            transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .result-container {
-            display: none;
-            margin-top: 30px;
+        .result-box {
             text-align: center;
-            animation: fadeIn 0.5s ease;
-            padding: 20px;
-            background: rgba(255,0,60,0.05);
-            border-radius: 12px;
-            border: 1px solid var(--accent);
         }
-
-        .result-size {
-            font-size: 42px;
+        .size-display {
+            font-size: 80px;
             font-weight: 900;
-            color: var(--accent);
-            line-height: 1.2;
+            color: transparent;
+            -webkit-text-stroke: 2px var(--accent);
             margin: 10px 0;
+            text-shadow: 0 0 30px rgba(255, 0, 60, 0.3);
         }
-
-        .result-desc { font-size: 14px; color: var(--text-secondary); }
-
-        /* ---- Footers ---- */
-        .quote-footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
+        .quote {
             font-style: italic;
-            padding: 0 10px;
+            color: var(--text-sec);
+            font-size: 14px;
             line-height: 1.5;
         }
 
-        .dev-credits {
-            margin-top: 20px;
+        /* --- FOOTER --- */
+        .footer {
+            padding: 20px;
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             color: #444;
-            border-top: 1px solid #222;
-            padding-top: 15px;
         }
-        .dev-credits a { color: #666; text-decoration: none; transition: 0.3s;}
-        .dev-credits a:hover { color: var(--accent); }
-
-        .hidden { display: none; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ---- MOBILE TWEAKS ---- */
-        @media (max-width: 380px) {
-            .container { padding: 20px 15px; }
-            .logo-link { font-size: 28px; }
-            .cat-btn { font-size: 11px; padding: 10px 2px; }
-            .result-size { font-size: 36px; }
-        }
+        .footer a { color: #666; text-decoration: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
     <div class="header">
-        <div class="brand-block">
-            <a href="https://sempai.com.ua" target="_blank" class="logo-link">SEMPAI</a>
-            <a href="https://t.me/sempai_ua" target="_blank" class="tg-link" title="Telegram channel">
-                <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-            </a>
+        <a href="https://sempai.com.ua" class="logo">SEMPAI</a>
+        <a href="https://t.me/sempai_ua" class="tg-link">
+            <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        </a>
+    </div>
+
+    <div class="screen-container">
+        
+        <div class="screen active" id="screen-lang">
+            <h2>Мова / Язык</h2>
+            <div class="btn-option" onclick="selectLang('ua')">🇺🇦 Українська</div>
+            <div class="btn-option" onclick="selectLang('ru')">🏳️ Русский</div>
         </div>
-        <div class="lang-switch">
-            <button class="lang-btn active" onclick="setLang('ua')">UA</button>
-            <button class="lang-btn" onclick="setLang('ru')">RU</button>
+
+        <div class="screen" id="screen-cat">
+            <h2 id="txt-choose-cat">Для кого?</h2>
+            <div class="btn-option" onclick="selectCategory('men')"><span id="txt-men">Чоловіче / Unisex</span> 👕</div>
+            <div class="btn-option" onclick="selectCategory('women')"><span id="txt-women">Жіноче</span> 👚</div>
+            <div class="btn-option" onclick="selectCategory('kids')"><span id="txt-kids">Дитяче</span> 👶</div>
+            <div class="nav-actions">
+                <button class="btn-back" onclick="prevStep()">←</button>
+            </div>
         </div>
-    </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="setMode('standard')" id="tab-std">Обычный</button>
-        <button class="tab-btn" onclick="setMode('advanced')" id="tab-adv">PRO Замеры</button>
-    </div>
-
-    <div class="category-selector">
-        <button class="cat-btn" onclick="setCategory('men')" id="cat-men">Муж/Unisex</button>
-        <button class="cat-btn" onclick="setCategory('women')" id="cat-women">Женская</button>
-        <button class="cat-btn" onclick="setCategory('kids')" id="cat-kids">Детская</button>
-    </div>
-
-    <div id="inputs-standard">
-        <div class="input-group">
-            <label id="lbl-height">Рост (см)</label>
-            <input type="number" id="val-height" placeholder="175" inputmode="numeric">
+        <div class="screen" id="screen-mode">
+            <h2 id="txt-how-measure">Як міряємо?</h2>
+            <div class="btn-option" onclick="selectMode('std')">
+                <div>
+                    <div id="txt-mode-std-t">Зріст та вага</div>
+                    <div class="subtitle" id="txt-mode-std-d" style="text-align: left; margin:0;">Швидкий підбір</div>
+                </div>
+            </div>
+            <div class="btn-option" onclick="selectMode('adv')">
+                <div>
+                    <div id="txt-mode-adv-t">Заміри речі</div>
+                    <div class="subtitle" id="txt-mode-adv-d" style="text-align: left; margin:0;">Точність 99%</div>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-back" onclick="prevStep()">←</button>
+            </div>
         </div>
-        <div class="input-group" id="group-weight">
-            <label id="lbl-weight">Вес (кг)</label>
-            <input type="number" id="val-weight" placeholder="70" inputmode="numeric">
+
+        <div class="screen" id="screen-input-std">
+            <h2 id="txt-params">Твої параметри</h2>
+            
+            <input type="number" class="input-glass" id="in-height" placeholder="175" inputmode="numeric">
+            <div class="subtitle" id="lbl-height">Зріст (см)</div>
+            
+            <div id="block-weight">
+                <input type="number" class="input-glass" id="in-weight" placeholder="70" inputmode="numeric" style="margin-top: 15px;">
+                <div class="subtitle" id="lbl-weight">Вага (кг)</div>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn-back" onclick="prevStep()">←</button>
+                <button class="btn-next" onclick="processCalc()">NEXT →</button>
+            </div>
         </div>
-    </div>
 
-    <div id="inputs-advanced" class="hidden">
-        <div class="input-group">
-            <label id="lbl-width">Ширина изделия (см)</label>
-            <input type="number" id="val-w" placeholder="52" inputmode="numeric">
+        <div class="screen" id="screen-input-adv">
+            <h2 id="txt-measure-item">Заміри футболки</h2>
+            
+            <div class="measure-guide">
+                <div class="guide-visual">
+                    <div class="visual-item"><div class="line-h"></div></div> <div class="visual-item"><div class="line-w"></div></div> </div>
+                <span id="txt-guide">Поклади свою улюблену футболку на стіл і заміряй.</span>
+            </div>
+
+            <input type="number" class="input-glass" id="in-w" placeholder="52" inputmode="numeric">
+            <div class="subtitle" id="lbl-w">Ширина (см)</div>
+
+            <input type="number" class="input-glass" id="in-l" placeholder="72" inputmode="numeric">
+            <div class="subtitle" id="lbl-l">Довжина (см)</div>
+
+            <div class="nav-actions">
+                <button class="btn-back" onclick="prevStep()">←</button>
+                <button class="btn-next" onclick="processCalc()">NEXT →</button>
+            </div>
         </div>
-        <div class="input-group">
-            <label id="lbl-len">Длина изделия (см)</label>
-            <input type="number" id="val-l" placeholder="72" inputmode="numeric">
+
+        <div class="screen" id="screen-load">
+            <h2 id="txt-analyzing">Analyzing...</h2>
+            <div class="loading-bar">
+                <div class="loading-fill" id="load-bar"></div>
+            </div>
         </div>
-    </div>
 
-    <button class="cta-btn" onclick="calculate()" id="btn-calc">Узнать размер</button>
-
-    <div class="loading-container" id="loading">
-        <span id="txt-analyzing">Анализируем нейросеть...</span>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress"></div>
+        <div class="screen" id="screen-res">
+            <div class="subtitle" id="txt-your-size">ТВІЙ РОЗМІР</div>
+            <div class="size-display" id="res-val">XL</div>
+            <div class="quote" id="res-quote">"Цей розмір ідеальний."</div>
+            
+            <div class="nav-actions">
+                <button class="btn-next" onclick="location.reload()" style="background: #333;">RESTART ↻</button>
+            </div>
         </div>
+
     </div>
 
-    <div class="result-container" id="result">
-        <div class="result-desc" id="res-label">Ваш идеальный размер:</div>
-        <div class="result-size" id="res-val">XL</div>
+    <div class="footer">
+        DesOope Dev. <a href="https://t.me/desoope">Contact</a>
     </div>
-
-    <div class="quote-footer" id="random-quote">
-        // Здесь будет шутка
-    </div>
-    
-    <div class="dev-credits">
-        Developer: <a href="https://t.me/desoope" target="_blank">DesOope</a>
-    </div>
-</div>
 
 <script>
-    // --- DATA from Screenshots (Оставляем как есть) ---
-    const SIZE_DATA = {
-        men: [
-            { name: '2XS', w: 43, l: 66 },
-            { name: 'XS',  w: 46, l: 68 },
-            { name: 'S',   w: 49, l: 70 },
-            { name: 'M',   w: 52, l: 72 },
-            { name: 'L',   w: 55, l: 74 },
-            { name: 'XL',  w: 58, l: 76 },
-            { name: '2XL', w: 61, l: 78 },
-            { name: '3XL', w: 64, l: 80 },
-            { name: '4XL', w: 70, l: 82 },
-            { name: '5XL', w: 75, l: 84 }
-        ],
-        women: [
-            { name: 'XS',  w: 42, l: 62 },
-            { name: 'S',   w: 45, l: 64 },
-            { name: 'M',   w: 48, l: 66 },
-            { name: 'L',   w: 51, l: 68 },
-            { name: 'XL',  w: 55, l: 70 },
-            { name: '2XL', w: 59, l: 71 },
-            { name: '3XL', w: 62, l: 71 }
-        ],
-        kids: [
-            { name: '3XS', w: 30, l: 38, maxH: 92 },
-            { name: '2XS', w: 33, l: 42, maxH: 104 },
-            { name: 'XS',  w: 36, l: 44, maxH: 116 },
-            { name: 'S',   w: 39, l: 50, maxH: 128 },
-            { name: 'M',   w: 42, l: 54, maxH: 140 },
-            { name: 'L',   w: 45, l: 60, maxH: 152 },
-            { name: 'XL',  w: 48, l: 64, maxH: 164 }
-        ]
+    // --- STATE ---
+    let state = {
+        lang: 'ua',
+        cat: 'men',
+        mode: 'std',
+        stepHistory: []
     };
 
-    // --- TEXTS & HUMOR ---
+    // --- TEXTS ---
     const TEXTS = {
         ua: {
-            std: "Звичайний",
-            adv: "PRO Заміри",
-            men: "Чол/Unisex",
-            women: "Жіноча",
-            kids: "Дитяча",
-            height: "Зріст (см)",
-            weight: "Вага (кг)",
-            width: "Ширина футболки (см)",
-            len: "Довжина від плеча (см)",
-            btn: "Визначити розмір",
-            analyzing: "Скануємо вашу ауру...",
-            result: "Твій ідеальний розмір:",
+            men: "Чоловіче / Unisex", women: "Жіноче", kids: "Дитяче",
+            chooseCat: "Для кого?",
+            howMeasure: "Метод підбору",
+            modeStdT: "Зріст та вага", modeStdD: "Швидко і просто",
+            modeAdvT: "Заміри речі", modeAdvD: "Максимальна точність",
+            params: "Параметри",
+            h: "Зріст (см)", w: "Вага (кг)",
+            measureItem: "Заміри виробу",
+            guide: "Поклади річ на рівну поверхню. Ширина - під пахвами, Довжина - по спині.",
+            width: "Ширина (см)", len: "Довжина (см)",
+            analyzing: "Скануємо базу...",
+            yourSize: "ТВІЙ ІДЕАЛЬНИЙ РОЗМІР",
             quotes: [
-                "Цей розмір приховає всі сліди нічних перекусів.",
-                "Сяде ідеально, як влита. (Як твоя колишня на шию, жарт).",
-                "Omae Wa Mou Shindeiru... Але розмір підібрано.",
-                "В цьому ти будеш виглядати як Хокаге свого району.",
-                "Якщо не підійде - значить ти просто занадто потужний.",
-                "Розмір підібрано. Тепер залишилось знайти гроші на карту.",
-                "Для справжнього Dungeon Master'а.",
-                "100% бавовна, 0% проблем (крім емоційних)."
+                "Сяде як влита. Готуйся до компліментів.",
+                "Ідеально для твого стилю.",
+                "Той самий оверсайз, про який мріють.",
+                "Розмір знайдено. Залишилось замовити.",
+                "Виглядає як план на успіх."
             ]
         },
         ru: {
-            std: "Обычный",
-            adv: "PRO Замеры",
-            men: "Муж/Unisex",
-            women: "Женская",
-            kids: "Детская",
-            height: "Рост (см)",
-            weight: "Вес (кг)",
-            width: "Ширина футболки (см)",
-            len: "Длина от плеча (см)",
-            btn: "Определить размер",
-            analyzing: "Калибруем под оливье...",
-            result: "Твой идеальный размер:",
+            men: "Мужское / Unisex", women: "Женское", kids: "Детское",
+            chooseCat: "Для кого?",
+            howMeasure: "Метод подбора",
+            modeStdT: "Рост и вес", modeStdD: "Быстро и просто",
+            modeAdvT: "Замеры вещи", modeAdvD: "Максимальная точность",
+            params: "Параметры",
+            h: "Рост (см)", w: "Вес (кг)",
+            measureItem: "Замеры изделия",
+            guide: "Положи вещь на ровную поверхность. Ширина - под мышками, Длина - по спине.",
+            width: "Ширина (см)", len: "Длина (см)",
+            analyzing: "Сканируем базу...",
+            yourSize: "ТВОЙ ИДЕАЛЬНЫЙ РАЗМЕР",
             quotes: [
-                "Этот размер скроет все следы ночных дожоров.",
-                "Сядет идеально. Как твои проблемы на голову.",
-                "Nani?! Размер подобран идеально.",
-                "В этом ты будешь выглядеть как гигачад.",
-                "Если не подойдет - это не жир, это харизма не влезает.",
-                "Размер подобран. Осталось подобрать ментальное здоровье.",
-                "Для настоящих SSS-ранговых охотников.",
-                "Шире маминой подруги сына."
+                "Сядет как влитая. Готовься к комплиментам.",
+                "Идеально для твоего стиля.",
+                "Тот самый оверсайз, о котором мечтают.",
+                "Размер найден. Осталось заказать.",
+                "Выглядит как план на успех."
             ]
         }
     };
 
-    // --- STATE ---
-    let currentLang = 'ua';
-    let currentMode = 'standard';
-    let currentCategory = 'men';
+    // --- DATA ---
+    const SIZE_DATA = {
+        men: [ {n:'2XS',w:43,l:66},{n:'XS',w:46,l:68},{n:'S',w:49,l:70},{n:'M',w:52,l:72},{n:'L',w:55,l:74},{n:'XL',w:58,l:76},{n:'2XL',w:61,l:78},{n:'3XL',w:64,l:80},{n:'4XL',w:70,l:82},{n:'5XL',w:75,l:84} ],
+        women: [ {n:'XS',w:42,l:62},{n:'S',w:45,l:64},{n:'M',w:48,l:66},{n:'L',w:51,l:68},{n:'XL',w:55,l:70},{n:'2XL',w:59,l:71},{n:'3XL',w:62,l:71} ],
+        kids: [ {n:'3XS',maxH:92},{n:'2XS',maxH:104},{n:'XS',maxH:116},{n:'S',maxH:128},{n:'M',maxH:140},{n:'L',maxH:152},{n:'XL',maxH:164} ]
+    };
 
-    // --- INITIALIZATION ---
-    function init() {
-        setLang('ua');
-        setCategory('men');
-        updateQuote();
-    }
-
-    // --- LOGIC FUNCTIONS ---
-
-    function setLang(lang) {
-        currentLang = lang;
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
-
-        const t = TEXTS[lang];
-        // document.getElementById('app-title').innerText = t.title; // Removed title from JS
-        document.getElementById('tab-std').innerText = t.std;
-        document.getElementById('tab-adv').innerText = t.adv;
-        document.getElementById('cat-men').innerText = t.men;
-        document.getElementById('cat-women').innerText = t.women;
-        document.getElementById('cat-kids').innerText = t.kids;
-        document.getElementById('lbl-height').innerText = t.height;
-        document.getElementById('lbl-weight').innerText = t.weight;
-        document.getElementById('lbl-width').innerText = t.width;
-        document.getElementById('lbl-len').innerText = t.len;
-        document.getElementById('btn-calc').innerText = t.btn;
-        document.getElementById('txt-analyzing').innerText = t.analyzing;
-        document.getElementById('res-label').innerText = t.result;
-        
-        updateQuote();
-    }
-
-    function setMode(mode) {
-        currentMode = mode;
-        document.getElementById('tab-std').className = `tab-btn ${mode === 'standard' ? 'active' : ''}`;
-        document.getElementById('tab-adv').className = `tab-btn ${mode === 'advanced' ? 'active' : ''}`;
-
-        if (mode === 'standard') {
-            document.getElementById('inputs-standard').classList.remove('hidden');
-            document.getElementById('inputs-advanced').classList.add('hidden');
-            setCategory(currentCategory);
-        } else {
-            document.getElementById('inputs-standard').classList.add('hidden');
-            document.getElementById('inputs-advanced').classList.remove('hidden');
+    // --- NAVIGATION ---
+    function goTo(id) {
+        // Find current active
+        const current = document.querySelector('.screen.active');
+        if (current) {
+            current.classList.remove('active');
+            current.classList.add('prev');
+            state.stepHistory.push(current.id);
         }
-        hideResult();
+        
+        // Activate new
+        const next = document.getElementById(id);
+        next.classList.remove('prev');
+        next.classList.add('active');
     }
 
-    function setCategory(cat) {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-        document.getElementById(`cat-${cat}`).classList.add('selected');
+    function prevStep() {
+        if (state.stepHistory.length === 0) return;
+        const prevId = state.stepHistory.pop();
+        
+        document.querySelector('.screen.active').classList.remove('active');
+        const prevScreen = document.getElementById(prevId);
+        prevScreen.classList.remove('prev');
+        prevScreen.classList.add('active');
+    }
 
-        if (currentMode === 'standard') {
-            const wGroup = document.getElementById('group-weight');
-            if (cat === 'kids') {
-                wGroup.classList.add('hidden');
+    // --- ACTIONS ---
+    function selectLang(l) {
+        state.lang = l;
+        applyLang();
+        goTo('screen-cat');
+    }
+
+    function selectCategory(c) {
+        state.cat = c;
+        goTo('screen-mode');
+    }
+
+    function selectMode(m) {
+        state.mode = m;
+        if (m === 'std') {
+            // Check smart input (Kids logic)
+            if (state.cat === 'kids') {
+                document.getElementById('block-weight').style.display = 'none';
             } else {
-                wGroup.classList.remove('hidden');
+                document.getElementById('block-weight').style.display = 'block';
             }
+            goTo('screen-input-std');
+        } else {
+            goTo('screen-input-adv');
         }
-        hideResult();
     }
 
-    function hideResult() {
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('progress').style.width = '0%';
+    function applyLang() {
+        const t = TEXTS[state.lang];
+        document.getElementById('txt-choose-cat').innerText = t.chooseCat;
+        document.getElementById('txt-men').innerText = t.men;
+        document.getElementById('txt-women').innerText = t.women;
+        document.getElementById('txt-kids').innerText = t.kids;
+        
+        document.getElementById('txt-how-measure').innerText = t.howMeasure;
+        document.getElementById('txt-mode-std-t').innerText = t.modeStdT;
+        document.getElementById('txt-mode-std-d').innerText = t.modeStdD;
+        document.getElementById('txt-mode-adv-t').innerText = t.modeAdvT;
+        document.getElementById('txt-mode-adv-d').innerText = t.modeAdvD;
+
+        document.getElementById('txt-params').innerText = t.params;
+        document.getElementById('lbl-height').innerText = t.h;
+        document.getElementById('lbl-weight').innerText = t.w;
+
+        document.getElementById('txt-measure-item').innerText = t.measureItem;
+        document.getElementById('txt-guide').innerText = t.guide;
+        document.getElementById('lbl-w').innerText = t.width;
+        document.getElementById('lbl-l').innerText = t.len;
+
+        document.getElementById('txt-analyzing').innerText = t.analyzing;
+        document.getElementById('txt-your-size').innerText = t.yourSize;
     }
 
-    function updateQuote() {
-        const quotes = TEXTS[currentLang].quotes;
-        const randomQ = quotes[Math.floor(Math.random() * quotes.length)];
-        document.getElementById('random-quote').innerText = randomQ;
-    }
-
-    function calculate() {
-        if (currentMode === 'standard') {
-            const h = parseFloat(document.getElementById('val-height').value);
-            if (!h) return alert(currentLang === 'ua' ? "Введіть зріст!" : "Введите рост!");
-            if (currentCategory !== 'kids') {
-                const w = parseFloat(document.getElementById('val-weight').value);
-                if (!w) return alert(currentLang === 'ua' ? "Введіть вагу!" : "Введите вес!");
+    // --- CALCULATION ---
+    function processCalc() {
+        // Validation
+        if (state.mode === 'std') {
+            const h = document.getElementById('in-height').value;
+            if (!h) return alert('Input Height!');
+            if (state.cat !== 'kids') {
+                const w = document.getElementById('in-weight').value;
+                if (!w) return alert('Input Weight!');
             }
         } else {
-            const w = parseFloat(document.getElementById('val-w').value);
-            const l = parseFloat(document.getElementById('val-l').value);
-            if (!w || !l) return alert(currentLang === 'ua' ? "Введіть заміри!" : "Введите замеры!");
+            const w = document.getElementById('in-w').value;
+            const l = document.getElementById('in-l').value;
+            if (!w || !l) return alert('Input measurements!');
         }
 
-        hideResult();
-        const loading = document.getElementById('loading');
-        loading.style.display = 'block';
-        
-        void document.getElementById('progress').offsetWidth;
-        document.getElementById('progress').style.width = '100%';
+        // Go to load
+        goTo('screen-load');
+        setTimeout(() => { document.getElementById('load-bar').style.width = '100%'; }, 100);
 
         setTimeout(() => {
-            const size = determineSize();
-            loading.style.display = 'none';
-            showResult(size);
+            const result = calculateSize();
+            document.getElementById('res-val').innerText = result;
+            
+            const quotes = TEXTS[state.lang].quotes;
+            document.getElementById('res-quote').innerText = quotes[Math.floor(Math.random()*quotes.length)];
+            
+            goTo('screen-res');
         }, 3000);
     }
 
-    function showResult(size) {
-        const resDiv = document.getElementById('result');
-        const resVal = document.getElementById('res-val');
-        
-        let prefix = "";
-        // Optional prefixes removed for cleaner look in new design
-        // if (currentCategory === 'men') prefix = (currentLang === 'ua' ? "Чол. " : "Муж. ");
+    function calculateSize() {
+        if (state.mode === 'adv') {
+            const w = parseFloat(document.getElementById('in-w').value);
+            const l = parseFloat(document.getElementById('in-l').value);
+            const chart = SIZE_DATA[state.cat];
+            
+            // Kids dont have width/len data in your screenshots for advanced check, 
+            // assuming only height for kids. But if user selected ADV and KIDS, we fallback or use heuristic.
+            // Screenshot 3 (Kids) only shows Height/Age mapping basically.
+            // Wait, Screenshot 3 DOES show Width/Length. Okay using it.
+            // Kids Chart: 3XS(30/38) ... XL(48/64)
+            // Need to Map SIZE_DATA for kids to include W/L for ADV mode
+            if(state.cat === 'kids') {
+                 const kData = [
+                    {n:'3XS',w:30,l:38},{n:'2XS',w:33,l:42},{n:'XS',w:36,l:44},
+                    {n:'S',w:39,l:50},{n:'M',w:42,l:54},{n:'L',w:45,l:60},{n:'XL',w:48,l:64}
+                 ];
+                 for(let s of kData) if(s.w >= w-1 && s.l >= l-2) return s.n;
+                 return "XL+";
+            }
 
-        resVal.innerText = prefix + size;
-        resDiv.style.display = 'block';
-        updateQuote();
-    }
+            for(let s of chart) if(s.w >= w-1 && s.l >= l-2) return s.n;
+            return chart[chart.length-1].n;
+        } 
+        else {
+            // STANDARD
+            const h = parseFloat(document.getElementById('in-height').value);
+            
+            if (state.cat === 'kids') {
+                for(let s of SIZE_DATA.kids) if(h <= s.maxH) return s.n;
+                return "XL+";
+            }
 
-    // --- ALGORITHMS (Оставляем как есть) ---
-
-    function determineSize() {
-        if (currentMode === 'advanced') {
-            return getAdvancedSize();
-        } else {
-            return getStandardSize();
-        }
-    }
-
-    function getAdvancedSize() {
-        const userW = parseFloat(document.getElementById('val-w').value);
-        const userL = parseFloat(document.getElementById('val-l').value);
-        const chart = SIZE_DATA[currentCategory];
-
-        for (let s of chart) {
-            if (s.w >= userW - 1 && s.l >= userL - 2) {
-                return s.name;
+            const w = parseFloat(document.getElementById('in-weight').value);
+            
+            if (state.cat === 'men') {
+                if (w < 55) return "2XS";
+                if (w < 62) return "XS";
+                if (w < 70) return "S";
+                if (w < 78) return "M";
+                if (w < 86) return "L";
+                if (w < 95) return "XL";
+                if (w < 105) return "2XL";
+                if (w < 115) return "3XL";
+                if (w < 125) return "4XL";
+                return "5XL";
+            }
+            if (state.cat === 'women') {
+                if (w < 45) return "XS";
+                if (w < 52) return "S";
+                if (w < 60) return "M";
+                if (w < 68) return "L";
+                if (w < 76) return "XL";
+                if (w < 85) return "2XL";
+                return "3XL";
             }
         }
-        return chart[chart.length - 1].name;
+        return "M"; // fallback
     }
-
-    function getStandardSize() {
-        const h = parseFloat(document.getElementById('val-height').value);
-        
-        if (currentCategory === 'kids') {
-            const chart = SIZE_DATA.kids;
-            for (let s of chart) {
-                if (h <= s.maxH) return s.name;
-            }
-            return "XL+ (Слишком большой)";
-        }
-
-        const w = parseFloat(document.getElementById('val-weight').value);
-
-        if (currentCategory === 'men') {
-            if (w < 55) return "2XS";
-            if (w < 62) return "XS";
-            if (w < 70) return "S";
-            if (w < 78) return "M";
-            if (w < 86) return "L";
-            if (w < 95) return "XL";
-            if (w < 105) return "2XL";
-            if (w < 115) return "3XL";
-            if (w < 125) return "4XL";
-            return "5XL";
-        }
-
-        if (currentCategory === 'women') {
-            if (w < 45) return "XS";
-            if (w < 52) return "S";
-            if (w < 60) return "M";
-            if (w < 68) return "L";
-            if (w < 76) return "XL";
-            if (w < 85) return "2XL";
-            return "3XL";
-        }
-    }
-
-    // Start
-    init();
 
 </script>
-
 </body>
 </html>
