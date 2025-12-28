@@ -46,17 +46,17 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- GLITCH EFFECT --- */
+        /* --- GLITCH EFFECT FOR TEXT --- */
         .glitch-text { position: relative; animation: glitch-skew 1s infinite linear alternate-reverse; }
         .glitch-text::before, .glitch-text::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
         }
         .glitch-text::before {
-            left: 2px; text-shadow: -1px 0 #00ffff; clip: rect(44px, 450px, 56px, 0);
+            left: 2px; text-shadow: -2px 0 #00ffff; clip: rect(44px, 450px, 56px, 0);
             animation: glitch-anim 5s infinite linear alternate-reverse;
         }
         .glitch-text::after {
-            left: -2px; text-shadow: -1px 0 #ff003c; clip: rect(44px, 450px, 56px, 0);
+            left: -2px; text-shadow: -2px 0 #ff003c; clip: rect(44px, 450px, 56px, 0);
             animation: glitch-anim2 5s infinite linear alternate-reverse;
         }
         @keyframes glitch-anim {
@@ -213,9 +213,36 @@
         }
         .btn-share svg { width: 18px; fill: white; }
 
-        /* LOADING BAR */
-        .loading-bar { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 20px; }
-        .loading-fill { height: 100%; background: var(--accent); width: 0%; transition: width 3s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* --- NEW LOADING EFFECTS --- */
+        /* Container for the loading screen content to apply scanlines over */
+        #screen-load {
+            justify-content: center;
+        }
+        /* Scanline overlay */
+        #screen-load::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 3px);
+            pointer-events: none; opacity: 0.5; animation: scanlineMove 10s linear infinite;
+        }
+        @keyframes scanlineMove { from {background-position: 0 0;} to {background-position: 0 100%;} }
+
+        /* Tech decorations around loading bar */
+        .loading-bar-container {
+            position: relative; width: 100%; margin-top: 40px;
+        }
+        .loading-bar-container::before, .loading-bar-container::after {
+            content: ""; position: absolute; width: 10px; height: 10px;
+            border: 2px solid var(--accent); opacity: 0.5;
+        }
+        .loading-bar-container::before { top: -5px; left: -5px; border-right: none; border-bottom: none; }
+        .loading-bar-container::after { bottom: -5px; right: -5px; border-left: none; border-top: none; }
+
+        .loading-bar { width: 100%; height: 8px; background: #111; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #333; }
+        .loading-fill {
+            height: 100%; background: var(--accent); width: 0%;
+            transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 15px var(--accent);
+        }
 
         /* --- FOOTER --- */
         .footer {
@@ -352,8 +379,11 @@
 
         <div class="screen" id="screen-load">
             <h2 id="txt-analyzing" class="glitch-text" data-text="ANALYZING..."></h2>
-            <div class="loading-bar">
-                <div class="loading-fill" id="load-bar"></div>
+            
+            <div class="loading-bar-container">
+                <div class="loading-bar">
+                    <div class="loading-fill" id="load-bar"></div>
+                </div>
             </div>
         </div>
 
@@ -380,11 +410,7 @@
         <div class="footer-links">
             <a href="https://sempai.com.ua" class="f-link" target="_blank">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                Sempai.com.ua
-            </a>
-            <a href="https://t.me/sempai_ua" class="f-link" target="_blank">
-                <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 11.944 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                Канал Sempai
+                sempai.com.ua
             </a>
         </div>
         <div class="dev-credit">
@@ -442,9 +468,14 @@
             measureItem: "Впиши цифри",
             wTitle: "Ширина (см)", wDesc: "Міряй під пахвами",
             lTitle: "Довжина (см)", lDesc: "Від шиї до низу",
-            analyzing: "ЗЛАМУЄМО ПЕНТАГОН...",
+            // Array of loading phrases
+            analyzing: [
+                "ЗЛАМУЄМО ПЕНТАГОН...", "СКАЛУЄМО АУРУ...", "ПІДБИРАЄМО ЛУК...", "СИНХРОНІЗАЦІЯ З ЄВОЮ-01...",
+                "РАХУЄМО КАЛОРІЇ...", "ВИКЛИКАЄМО ДУХІВ МОДИ...", "ЗАВАНТАЖУЄМО СКІЛИ...", "ШУКАЄМО ІДЕАЛЬНИЙ ФІТ...",
+                "ЗВЕРТАЄМОСЬ ДО КОСМОСУ...", "ОНОВЛЮЄМО ДРАЙВЕРИ СТИЛЮ...", "ЗАПИТУЄМО У CHAT GPT...", "АНАЛІЗУЄМО ВАЙБ..."
+            ],
             shareBtn: "Скинути натяк мамі/другу",
-            shareMsg: "Мам, це натяк! 🎁 Я хочу футболку Sempai. Мій ідеальний розмір: [SIZE]. Ось посилання: sempai.com.ua",
+            shareMsg: "Офіційна заява: я хочу футболку Sempai. 🎁 Мій розмір: [SIZE]. Це дуже товстий натяк. Лінк тут: sempai.com.ua",
             titles: {
                 xs: "🏆 Ачівка: Скритний Ніндзя",
                 m: "🏆 Ачівка: Головний Герой",
@@ -472,9 +503,14 @@
             measureItem: "Впиши цифры",
             wTitle: "Ширина (см)", wDesc: "Меряй под мышками",
             lTitle: "Длина (см)", lDesc: "От шеи до низа",
-            analyzing: "ВЗЛАМЫВАЕМ ПЕНТАГОН...",
+            // Array of loading phrases
+            analyzing: [
+                "ВЗЛАМЫВАЕМ ПЕНТАГОН...", "СКАНИРУЕМ АУРУ...", "ПОДБИРАЕМ ЛУК...", "СИНХРОНИЗАЦИЯ С ЕВОЙ-01...",
+                "СЧИТАЕМ КАЛОРИИ...", "ВЫЗЫВАЕМ ДУХОВ МОДЫ...", "ЗАГРУЖАЕМ СКИЛЛЫ...", "ИЩЕМ ИДЕАЛЬНЫЙ ФИТ...",
+                "ОБРАЩАЕМСЯ В КОСМОС...", "ОБНОВЛЯЕМ ДРАЙВЕРЫ СТИЛЯ...", "СПРАШИВАЕМ У CHAT GPT...", "АНАЛИЗИРУЕМ ВАЙБ..."
+            ],
             shareBtn: "Скинуть намёк маме/другу",
-            shareMsg: "Мам, это намёк! 🎁 Я хочу футболку Sempai. Мой идеальный размер: [SIZE]. Вот ссылка: sempai.com.ua",
+            shareMsg: "Официальное заявление: я хочу футболку Sempai. 🎁 Мой размер: [SIZE]. Это очень толстый намёк. Ссылка тут: sempai.com.ua",
             titles: {
                 xs: "🏆 Ачивка: Скрытный Ниндзя",
                 m: "🏆 Ачивка: Главный Герой",
@@ -579,8 +615,6 @@
         document.getElementById('lbl-w-d').innerText = t.wDesc;
         document.getElementById('lbl-l-t').innerText = t.lTitle;
         document.getElementById('lbl-l-d').innerText = t.lDesc;
-        document.getElementById('txt-analyzing').innerText = t.analyzing;
-        document.getElementById('txt-analyzing').setAttribute('data-text', t.analyzing);
         document.getElementById('btn-share-txt').innerText = t.shareBtn;
     }
 
@@ -597,6 +631,13 @@
             const l = document.getElementById('in-l').value;
             if (!w || !l) return alert('Error!');
         }
+
+        // Randomize Loading phrase before showing
+        const phrases = TEXTS[state.lang].analyzing;
+        const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+        const loadTxt = document.getElementById('txt-analyzing');
+        loadTxt.innerText = phrase;
+        loadTxt.setAttribute('data-text', phrase);
 
         goTo('screen-load');
         setTimeout(() => { document.getElementById('load-bar').style.width = '100%'; }, 100);
