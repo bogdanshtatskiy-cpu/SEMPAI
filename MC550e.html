@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HK & Pride Embroidery Vault</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <div id="auth-screen" class="glass-panel auth-panel">
+        <i class="ph-fill ph-cat" style="font-size: 4rem; color: #ff6b9e;"></i>
+        <h2>Вход в хранилище</h2>
+        <input type="password" id="secret-password" placeholder="Секретный пароль">
+        <button onclick="checkPassword()" class="btn-rainbow">Войти</button>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        <header class="glass-header">
+            <h1>Мои Принты <i class="ph-fill ph-rainbow"></i></h1>
+            <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить</button>
+        </header>
+
+        <main id="prints-grid" class="grid-container">
+            </main>
+    </div>
+
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <button class="close-btn" onclick="closeModal('add-modal')"><i class="ph ph-x"></i></button>
+            <h2>Новый принт</h2>
+            
+            <div class="form-group">
+                <label>Обложка принта</label>
+                <input type="file" id="cover-image" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label>Файлы для вышивки (.jef)</label>
+                <div id="files-container">
+                    </div>
+                <button class="btn-secondary" onclick="addFileRow()"><i class="ph ph-plus-circle"></i> Добавить размер и файл</button>
+            </div>
+
+            <div class="form-group color-section">
+                <label>Палитра цветов</label>
+                <div class="eyedropper-box glass-panel-inner">
+                    <p>Загрузи фото ниток, чтобы взять цвет пипеткой (фото не сохраняется)</p>
+                    <input type="file" id="photo-for-color" accept="image/*">
+                    <canvas id="color-canvas" style="display:none; max-width: 100%; border-radius: 12px; margin-top: 10px; cursor: crosshair;"></canvas>
+                    <div id="picked-color-preview" style="width: 30px; height: 30px; border-radius: 50%; margin-top: 10px; border: 2px solid white;"></div>
+                </div>
+                
+                <div id="colors-container" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+                    </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="color" id="manual-color" value="#ffb6c1">
+                    <input type="text" id="color-code" placeholder="Код нити (напр. Madeira 1001)">
+                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> Добавить цвет</button>
+                </div>
+            </div>
+
+            <button class="btn-rainbow full-width" onclick="savePrint()">Сохранить принт</button>
+        </div>
+    </div>
+
+    <div id="view-modal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <button class="close-btn" onclick="closeModal('view-modal')"><i class="ph ph-x"></i></button>
+            <h2 id="view-title">Просмотр</h2>
+            <img id="view-image" src="" style="width: 100%; border-radius: 15px; margin-bottom: 20px;">
+            
+            <div class="glass-panel-inner">
+                <h3>Необходимые цвета</h3>
+                <div id="view-colors" class="view-colors-list"></div>
+            </div>
+
+            <div class="glass-panel-inner" style="margin-top: 15px;">
+                <h3>Файлы для скачивания</h3>
+                <div id="view-files" class="view-files-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
