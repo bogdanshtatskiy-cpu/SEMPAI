@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>База дизайнов вышивки</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -17,14 +17,22 @@
         <button onclick="checkPassword()" class="btn-rainbow full-width">Войти</button>
     </div>
 
+    <div id="joke-modal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width: 320px; text-align: center; padding: 40px 20px;">
+            <h2 style="margin-bottom: 25px; font-size: 1.8rem;">Сасал ?</h2>
+            <button class="btn-primary full-width" onclick="confirmJoke()" style="font-size: 1.2rem; padding: 15px;">Да</button>
+        </div>
+    </div>
+
     <div id="app-container" style="display: none;">
         <header class="glass-header">
             <div class="header-text">
                 <h1>Мои Принты <i class="ph-fill ph-rainbow"></i></h1>
-                <span class="subtitle">База для Janome 550e LE</span>
+                <span class="subtitle">База для MC Janome 550e LE</span>
             </div>
             <div class="header-actions">
                 <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить</button>
+                <button class="btn-icon" onclick="toggleTheme()" title="Сменить тему"><i class="ph ph-moon" id="theme-icon"></i></button>
                 <button class="btn-icon" onclick="logout()" title="Выйти"><i class="ph ph-sign-out"></i></button>
             </div>
         </header>
