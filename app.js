@@ -1,35 +1,32 @@
-// Импортируем Firebase из интернета (без установки через npm)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // !!! ВСТАВЬ СВОИ ДАННЫЕ СЮДА !!!
 const firebaseConfig = {
-    apiKey: "AIzaSyDhElZXZz6wdjwR6DRIIqyfwfrCdRK-JZc",
-    authDomain: "mc550e.firebaseapp.com",
-    projectId: "mc550e",
-    storageBucket: "mc550e.firebasestorage.app",
-    messagingSenderId: "772399307357",
-    appId: "1:772399307357:web:b4adec6deed9e1ab96cbb4"
+  apiKey: "AIzaSyDhElZXZz6wdjwR6DRIIqyfwfrCdRK-JZc",
+  authDomain: "mc550e.firebaseapp.com",
+  projectId: "mc550e",
+  storageBucket: "mc550e.firebasestorage.app",
+  messagingSenderId: "772399307357",
+  appId: "1:772399307357:web:b4adec6deed9e1ab96cbb4"
 };
 
-// Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Пароль для входа (визуальная защита)
 const SECRET_PASS = "1234"; 
 
 let currentColors = [];
+let allPrints = []; // Глобальный массив загруженных принтов
 
-// Делаем функции глобальными, чтобы HTML мог их вызывать
 window.checkPassword = function() {
     const input = document.getElementById('secret-password').value;
     if(input === SECRET_PASS) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-container').style.display = 'block';
-        loadPrints(); // Загружаем дизайны при входе
+        loadPrints(); 
     } else {
         alert("Неверный ключ доступа 💅");
     }
@@ -42,6 +39,17 @@ window.openAddModal = function() {
     currentColors = [];
     document.getElementById('colors-container').innerHTML = '';
     document.getElementById('files-container').innerHTML = '';
+    
+    // Сброс файла обложки и фото
+    document.getElementById('cover-image').value = '';
+    document.getElementById('photo-for-color').value = '';
+    document.querySelectorAll('.file-name').forEach(el => {
+        if(el.parentElement.getAttribute('for') !== 'jef-file') {
+             el.innerHTML = `<i class="ph ph-file"></i> Выберите файл...`;
+        }
+    });
+    document.getElementById('color-canvas').style.display = 'none';
+    
     window.addFileRow(); 
     window.openModal('add-modal');
 }
@@ -81,13 +89,10 @@ window.addFileRow = function() {
     container.appendChild(row);
 }
 
-// Пипетка и цвета (Оставляем как было, просто привязываем к window)
+// --- Пипетка ---
 const canvas = document.getElementById('color-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
-const colorPreview = document.getElementById('picked-color-preview');
 const manualColorInput = document.getElementById('manual-color');
-
-manualColorInput.addEventListener('input', (e) => colorPreview.style.backgroundColor = e.target.value);
 
 document.getElementById('photo-for-color').addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -115,7 +120,6 @@ canvas.addEventListener('click', (e) => {
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const hex = "#" + ("000000" + ((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16)).slice(-6);
     manualColorInput.value = hex;
-    colorPreview.style.backgroundColor = hex;
 });
 
 window.addColor = function() {
@@ -131,11 +135,12 @@ window.addColor = function() {
 }
 
 // --- ОТПРАВКА ДАННЫХ В FIREBASE ---
-window.savePrint = async function() {
+window.savePrint = async function(event) {
     const coverInput = document.getElementById('cover-image');
     if (!coverInput.files[0]) return alert("Загрузи обложку дизайна!");
 
     const btn = event.target;
+    const originalText = btn.innerHTML;
     btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i> Сохраняем...";
     btn.disabled = true;
 
@@ -168,7 +173,7 @@ window.savePrint = async function() {
             }
         }
 
-        // 3. Сохраняем все данные в базу Firestore
+        // 3. Сохраняем в Firestore
         await addDoc(collection(db, "prints"), {
             coverUrl: coverUrl,
             colors: currentColors,
@@ -177,12 +182,12 @@ window.savePrint = async function() {
         });
 
         window.closeModal('add-modal');
-        loadPrints(); // Перезагружаем сетку
+        loadPrints(); 
     } catch (error) {
         console.error("Ошибка при сохранении:", error);
         alert("Произошла ошибка! Проверь консоль F12.");
     } finally {
-        btn.innerHTML = "Сохранить в базу";
+        btn.innerHTML = originalText;
         btn.disabled = false;
     }
 }
@@ -190,35 +195,52 @@ window.savePrint = async function() {
 // --- ЗАГРУЗКА ИЗ FIREBASE ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
-    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Загрузка дизайнов...</p>';
+    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
     
     try {
         const querySnapshot = await getDocs(collection(db, "prints"));
         grid.innerHTML = '';
+        allPrints = []; 
         
-        querySnapshot.forEach((doc) => {
-            const print = doc.data();
-            const tile = document.createElement('div');
+        querySnapshot.forEach((document) => {
+            const print = document.data();
+            print.id = document.id; 
+            allPrints.push(print);
+            
+            const tile = window.document.createElement('div');
             tile.className = 'print-tile glass-panel';
-            // Передаем данные в модалку через дата-атрибуты или создаем функцию на лету
-            tile.onclick = () => showViewModal(print);
             
             tile.innerHTML = `
                 <img src="${print.coverUrl}" alt="Print">
                 <div class="tile-overlay">
-                    <div>Цветов: ${print.colors ? print.colors.length : 0}</div>
-                    <div style="font-size: 0.8em; margin-top: 5px;">Размеров: ${print.files ? print.files.length : 0}</div>
+                    <div class="tile-stats">
+                        <span><i class="ph ph-palette"></i> Цветов: ${print.colors ? print.colors.length : 0}</span>
+                        <span><i class="ph ph-ruler"></i> Размеров: ${print.files ? print.files.length : 0}</span>
+                    </div>
+                    <div class="tile-actions">
+                        <button class="btn-action view" title="Просмотр" onclick="showViewModal('${print.id}')"><i class="ph ph-eye"></i></button>
+                        <button class="btn-action edit" title="Редактировать" onclick="editPrint('${print.id}')"><i class="ph ph-pencil-simple"></i></button>
+                        <button class="btn-action delete" title="Удалить" onclick="deletePrint('${print.id}')"><i class="ph ph-trash"></i></button>
+                    </div>
                 </div>
             `;
             grid.appendChild(tile);
         });
+
+        if(allPrints.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Пока нет ни одного дизайна. Добавьте первый!</p>';
+        }
     } catch (error) {
         console.error("Ошибка загрузки:", error);
         grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения к базе. Проверь правила Firestore!</p>';
     }
 }
 
-window.showViewModal = function(print) {
+// --- ПРОСМОТР ---
+window.showViewModal = function(id) {
+    const print = allPrints.find(p => p.id === id);
+    if(!print) return;
+
     document.getElementById('view-image').src = print.coverUrl;
     
     const colorsDiv = document.getElementById('view-colors');
@@ -235,4 +257,22 @@ window.showViewModal = function(print) {
     `).join('');
 
     window.openModal('view-modal');
+}
+
+// --- УДАЛЕНИЕ ---
+window.deletePrint = async function(id) {
+    if (confirm("Точно удалить этот дизайн? Восстановить будет невозможно.")) {
+        try {
+            await deleteDoc(doc(db, "prints", id));
+            loadPrints(); 
+        } catch (error) {
+            console.error("Ошибка удаления:", error);
+            alert("Не удалось удалить файл.");
+        }
+    }
+}
+
+// --- РЕДАКТИРОВАНИЕ ---
+window.editPrint = function(id) {
+    alert("Кнопка редактирования работает! Чтобы реализовать полное автозаполнение формы старыми данными, потребуется дописать еще один блок кода.");
 }
