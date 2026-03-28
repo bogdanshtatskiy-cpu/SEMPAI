@@ -19,11 +19,14 @@
 
     <div id="app-container" style="display: none;">
         <header class="glass-header">
-            <div>
+            <div class="header-text">
                 <h1>Мои Принты <i class="ph-fill ph-rainbow"></i></h1>
-                <span class="subtitle">База дизайнов для Janome 550e LE</span>
+                <span class="subtitle">База для Janome 550e LE</span>
             </div>
-            <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить дизайн</button>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить</button>
+                <button class="btn-icon" onclick="logout()" title="Выйти"><i class="ph ph-sign-out"></i></button>
+            </div>
         </header>
 
         <main id="prints-grid" class="grid-container"></main>
@@ -34,32 +37,31 @@
             <button class="close-btn" onclick="closeModal('add-modal')"><i class="ph ph-x"></i></button>
             
             <div class="modal-header">
-                <h2>Новый дизайн вышивки</h2>
+                <h2 id="modal-title">Новый дизайн вышивки</h2>
                 <div class="janome-info glass-panel-inner">
                     <i class="ph ph-info"></i> 
-                    <small><b>Инструкция для Janome 550e LE:</b> Загружайте файлы строго в формате <b>.jef</b>. Поддерживаемые пяльцы машины: RE36b (200x360), SQ20b (200x200), RE20b (140x200), SQ14b (140x140).</small>
+                    <small><b>Инструкция:</b> Загружайте файлы <b>.jef</b>. Пяльцы машины: RE36b, SQ20b, RE20b, SQ14b.</small>
                 </div>
             </div>
             
             <div class="form-group">
-                <label>Обложка дизайна (превью)</label>
+                <label>Обложка дизайна</label>
                 <label class="custom-file-upload full-width">
                     <input type="file" id="cover-image" accept="image/*" onchange="updateFileName(this)">
-                    <span class="file-name"><i class="ph ph-image"></i> Выберите изображение для обложки...</span>
+                    <span class="file-name" id="cover-file-name"><i class="ph ph-image"></i> Выберите изображение...</span>
                 </label>
             </div>
 
             <div class="form-group">
                 <label>Файлы для вышивки (.jef)</label>
-                <div id="files-container" class="files-grid-container">
-                    </div>
+                <div id="files-container" class="files-grid-container"></div>
                 <button class="btn-secondary" onclick="addFileRow()"><i class="ph ph-plus-circle"></i> Добавить размер</button>
             </div>
 
             <div class="form-group color-section">
                 <label>Палитра цветов нитей</label>
                 <div class="eyedropper-box glass-panel-inner">
-                    <p style="margin-bottom: 10px; font-size: 0.9rem;">1. Загрузите фото ниток для работы с пипеткой:</p>
+                    <p style="margin-bottom: 10px; font-size: 0.85rem;">Загрузите фото ниток для работы с пипеткой:</p>
                     <label class="custom-file-upload full-width">
                         <input type="file" id="photo-for-color" accept="image/*" onchange="updateFileName(this)">
                         <span class="file-name"><i class="ph ph-camera"></i> Выбрать фото катушек...</span>
@@ -70,30 +72,35 @@
                 <div class="color-picker-controls" style="margin-top: 15px; display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center;">
                     <input type="color" id="manual-color" value="#ffb6c1" title="Ручной выбор цвета">
                     <input type="text" id="color-code" placeholder="Код нити (напр. Madeira 1001)" style="margin-bottom: 0;">
-                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> Добавить</button>
+                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i></button>
                 </div>
 
                 <div id="colors-container" class="colors-tags-container"></div>
             </div>
 
-            <button class="btn-rainbow full-width" onclick="savePrint(event)" style="margin-top: 20px; font-size: 1.1rem; padding: 15px;">Сохранить в базу</button>
+            <button class="btn-rainbow full-width" onclick="savePrint(event)" id="save-btn" style="margin-top: 20px; font-size: 1.1rem; padding: 15px;">Сохранить в базу</button>
         </div>
     </div>
 
     <div id="view-modal" class="modal-overlay">
-        <div class="modal-content glass-panel">
+        <div class="modal-content glass-panel view-modal-content">
             <button class="close-btn" onclick="closeModal('view-modal')"><i class="ph ph-x"></i></button>
-            <h2>Просмотр дизайна</h2>
-            <img id="view-image" src="" style="width: 100%; border-radius: 15px; margin-bottom: 20px; margin-top: 15px;">
+            
+            <div class="view-header-actions">
+                <button class="btn-action edit" id="btn-edit-print" title="Редактировать"><i class="ph ph-pencil-simple"></i></button>
+                <button class="btn-action delete" id="btn-delete-print" title="Удалить"><i class="ph ph-trash"></i></button>
+            </div>
+
+            <img id="view-image" src="" class="view-cover-img">
             
             <div class="glass-panel-inner">
-                <h3>Необходимые цвета</h3>
-                <div id="view-colors" class="colors-tags-container"></div>
+                <h3 style="margin-bottom: 10px;">Палитра нитей</h3>
+                <div id="view-colors" class="colors-list-vertical"></div>
             </div>
 
             <div class="glass-panel-inner" style="margin-top: 15px;">
-                <h3>Файлы для вышивки</h3>
-                <div id="view-files" style="margin-top: 10px;"></div>
+                <h3 style="margin-bottom: 10px;">Файлы для вышивки</h3>
+                <div id="view-files" class="files-list-vertical"></div>
             </div>
         </div>
     </div>
