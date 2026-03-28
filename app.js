@@ -20,6 +20,39 @@ let currentColors = [];
 let allPrints = []; 
 let editingId = null; 
 
+// --- ЛОГИКА МУЗЫКИ И ТАЙМЕРА ---
+let soundTimerStarted = false;
+
+function startMusicWithTimer() {
+    const bgMusic = document.getElementById('bg-music');
+    if (!bgMusic.paused) return; // Если уже играет, ничего не делаем
+
+    bgMusic.play().then(() => {
+        // Запускаем таймер на 20 секунд только если музыка успешно начала играть
+        if (!soundTimerStarted) {
+            soundTimerStarted = true;
+            setTimeout(() => {
+                document.getElementById('sound-btn').style.display = 'inline-flex';
+            }, 20000); // 20000 мс = 20 секунд
+        }
+    }).catch(e => {
+        console.log("Браузер ждет взаимодействия пользователя для запуска музыки.");
+    });
+}
+
+window.toggleSound = function() {
+    const bgMusic = document.getElementById('bg-music');
+    const icon = document.getElementById('sound-icon');
+    if (bgMusic.muted) {
+        bgMusic.muted = false;
+        icon.classList.replace('ph-speaker-slash', 'ph-speaker-high');
+    } else {
+        bgMusic.muted = true;
+        icon.classList.replace('ph-speaker-high', 'ph-speaker-slash');
+    }
+}
+
+
 // --- ТЕМНАЯ ТЕМА ---
 function applyTheme(isDark) {
     if (isDark) {
@@ -37,7 +70,6 @@ window.toggleTheme = function() {
     applyTheme(!isDarkNow);
 }
 
-// Инициализация темы при загрузке
 if (localStorage.getItem('hk_vault_theme') === 'true') applyTheme(true);
 
 // --- АВТОРИЗАЦИЯ И ШУТКА ---
@@ -45,6 +77,12 @@ if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
     loadPrints();
+    
+    // При авто-входе музыка ждет первого клика по экрану
+    document.body.addEventListener('click', function playAudioOnFirstClick() {
+        startMusicWithTimer();
+        document.body.removeEventListener('click', playAudioOnFirstClick);
+    }, { once: true });
 }
 
 window.checkPassword = async function() {
@@ -55,7 +93,6 @@ window.checkPassword = async function() {
     try {
         const docSnap = await getDoc(doc(db, "settings", "auth"));
         if (docSnap.exists() && input === docSnap.data().password) {
-            // Если пароль верный - показываем шуточное окно
             document.getElementById('auth-screen').style.display = 'none';
             window.openModal('joke-modal');
         } else {
@@ -68,27 +105,31 @@ window.checkPassword = async function() {
     btn.innerHTML = "Войти";
 }
 
-// Кнопка "Да" в шуточном окне
 window.confirmJoke = function() {
     localStorage.setItem('hk_vault_auth', 'true');
     window.closeModal('joke-modal');
     document.getElementById('app-container').style.display = 'block';
+    
+    // Клик по кнопке "Да" - это взаимодействие, музыка заиграет сразу
+    startMusicWithTimer();
+    
     loadPrints();
 }
 
 window.logout = function() {
     localStorage.removeItem('hk_vault_auth');
+    document.getElementById('bg-music').pause();
     location.reload();
 }
 
-// --- УПРАВЛЕНИЕ ОКНАМИ (С БЛОКИРОВКОЙ СКРОЛЛА) ---
+// --- УПРАВЛЕНИЕ ОКНАМИ ---
 window.openModal = (id) => {
     document.getElementById(id).style.display = 'flex';
-    document.body.classList.add('no-scroll'); // Блокируем фон
+    document.body.classList.add('no-scroll'); 
 };
 window.closeModal = (id) => {
     document.getElementById(id).style.display = 'none';
-    document.body.classList.remove('no-scroll'); // Разблокируем фон
+    document.body.classList.remove('no-scroll'); 
 };
 
 window.openAddModal = function() {
