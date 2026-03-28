@@ -28,10 +28,15 @@
         <header class="glass-header">
             <div class="header-text">
                 <h1>Мои Принты <i class="ph-fill ph-rainbow"></i></h1>
-                <span class="subtitle">База для MC Janome 550e LE</span>
+                <span class="subtitle">База для Janome 550e LE</span>
             </div>
             <div class="header-actions">
                 <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить</button>
+                
+                <button class="btn-icon" id="sound-btn" onclick="toggleSound()" title="Вкл/Выкл звук" style="display: none; animation: fadeIn 1s ease;">
+                    <i class="ph ph-speaker-high" id="sound-icon"></i>
+                </button>
+                
                 <button class="btn-icon" onclick="toggleTheme()" title="Сменить тему"><i class="ph ph-moon" id="theme-icon"></i></button>
                 <button class="btn-icon" onclick="logout()" title="Выйти"><i class="ph ph-sign-out"></i></button>
             </div>
@@ -112,6 +117,10 @@
             </div>
         </div>
     </div>
+
+    <audio id="bg-music" loop>
+        <source src="bg-music.mp3" type="audio/mpeg">
+    </audio>
 
     <script type="module" src="app.js"></script>
 </body>
