@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HK & Pride Embroidery Vault</title>
+    <title>База дизайнов вышивки</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
@@ -67,8 +67,7 @@
                     <canvas id="color-canvas" style="display:none; max-width: 100%; border-radius: 12px; margin-top: 10px; cursor: crosshair;"></canvas>
                 </div>
                 
-                <div class="color-picker-controls" style="margin-top: 15px;">
-                    <div id="picked-color-preview" class="color-preview-circle"></div>
+                <div class="color-picker-controls" style="margin-top: 15px; display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center;">
                     <input type="color" id="manual-color" value="#ffb6c1" title="Ручной выбор цвета">
                     <input type="text" id="color-code" placeholder="Код нити (напр. Madeira 1001)" style="margin-bottom: 0;">
                     <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> Добавить</button>
@@ -77,12 +76,27 @@
                 <div id="colors-container" class="colors-tags-container"></div>
             </div>
 
-            <button class="btn-rainbow full-width" onclick="savePrint()" style="margin-top: 20px; font-size: 1.1rem; padding: 15px;">Сохранить в базу</button>
+            <button class="btn-rainbow full-width" onclick="savePrint(event)" style="margin-top: 20px; font-size: 1.1rem; padding: 15px;">Сохранить в базу</button>
         </div>
     </div>
 
     <div id="view-modal" class="modal-overlay">
+        <div class="modal-content glass-panel">
+            <button class="close-btn" onclick="closeModal('view-modal')"><i class="ph ph-x"></i></button>
+            <h2>Просмотр дизайна</h2>
+            <img id="view-image" src="" style="width: 100%; border-radius: 15px; margin-bottom: 20px; margin-top: 15px;">
+            
+            <div class="glass-panel-inner">
+                <h3>Необходимые цвета</h3>
+                <div id="view-colors" class="colors-tags-container"></div>
+            </div>
+
+            <div class="glass-panel-inner" style="margin-top: 15px;">
+                <h3>Файлы для вышивки</h3>
+                <div id="view-files" style="margin-top: 10px;"></div>
+            </div>
         </div>
+    </div>
 
     <script type="module" src="app.js"></script>
 </body>
