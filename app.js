@@ -18,9 +18,29 @@ const storage = getStorage(app);
 
 let currentColors = [];
 let allPrints = []; 
-let editingId = null; // Флаг редактирования
+let editingId = null; 
 
-// --- АВТОРИЗАЦИЯ И СОХРАНЕНИЕ СЕССИИ ---
+// --- ТЕМНАЯ ТЕМА ---
+function applyTheme(isDark) {
+    if (isDark) {
+        document.body.classList.add('dark-theme');
+        document.getElementById('theme-icon')?.classList.replace('ph-moon', 'ph-sun');
+    } else {
+        document.body.classList.remove('dark-theme');
+        document.getElementById('theme-icon')?.classList.replace('ph-sun', 'ph-moon');
+    }
+}
+
+window.toggleTheme = function() {
+    const isDarkNow = document.body.classList.contains('dark-theme');
+    localStorage.setItem('hk_vault_theme', !isDarkNow);
+    applyTheme(!isDarkNow);
+}
+
+// Инициализация темы при загрузке
+if (localStorage.getItem('hk_vault_theme') === 'true') applyTheme(true);
+
+// --- АВТОРИЗАЦИЯ И ШУТКА ---
 if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
@@ -35,10 +55,9 @@ window.checkPassword = async function() {
     try {
         const docSnap = await getDoc(doc(db, "settings", "auth"));
         if (docSnap.exists() && input === docSnap.data().password) {
-            localStorage.setItem('hk_vault_auth', 'true');
+            // Если пароль верный - показываем шуточное окно
             document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('app-container').style.display = 'block';
-            loadPrints();
+            window.openModal('joke-modal');
         } else {
             alert("Неверный пароль 💅");
         }
@@ -49,14 +68,28 @@ window.checkPassword = async function() {
     btn.innerHTML = "Войти";
 }
 
+// Кнопка "Да" в шуточном окне
+window.confirmJoke = function() {
+    localStorage.setItem('hk_vault_auth', 'true');
+    window.closeModal('joke-modal');
+    document.getElementById('app-container').style.display = 'block';
+    loadPrints();
+}
+
 window.logout = function() {
     localStorage.removeItem('hk_vault_auth');
     location.reload();
 }
 
-// --- УПРАВЛЕНИЕ ОКНАМИ И РЕНДЕР ---
-window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+// --- УПРАВЛЕНИЕ ОКНАМИ (С БЛОКИРОВКОЙ СКРОЛЛА) ---
+window.openModal = (id) => {
+    document.getElementById(id).style.display = 'flex';
+    document.body.classList.add('no-scroll'); // Блокируем фон
+};
+window.closeModal = (id) => {
+    document.getElementById(id).style.display = 'none';
+    document.body.classList.remove('no-scroll'); // Разблокируем фон
+};
 
 window.openAddModal = function() {
     editingId = null;
@@ -69,7 +102,7 @@ window.openAddModal = function() {
     
     document.getElementById('cover-image').value = '';
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Выберите изображение...`;
-    document.getElementById('cover-file-name').removeAttribute('data-url'); // очистка старого url
+    document.getElementById('cover-file-name').removeAttribute('data-url'); 
     
     document.getElementById('color-canvas').style.display = 'none';
     window.addFileRow(); 
@@ -85,7 +118,6 @@ window.updateFileName = function(input) {
     }
 }
 
-// Функция добавления строки (с поддержкой старых данных при редактировании)
 window.addFileRow = function(existingData = null) {
     const container = document.getElementById('files-container');
     const row = document.createElement('div');
@@ -95,7 +127,7 @@ window.addFileRow = function(existingData = null) {
     let fileNameHtml = `<i class="ph ph-file-arrow-up"></i> Загрузить .jef`;
     let dataUrlAttr = "";
     if(existingData) {
-        fileNameHtml = `<i class="ph ph-file-jef"></i> Оставить старый: ${existingData.name}`;
+        fileNameHtml = `<i class="ph ph-file-jef"></i> Старый: ${existingData.name}`;
         dataUrlAttr = `data-url="${existingData.url}" data-name="${existingData.name}"`;
     }
 
@@ -116,9 +148,7 @@ window.addFileRow = function(existingData = null) {
         </label>
         <button class="btn-danger" style="height:46px" title="Удалить" onclick="this.parentElement.remove()"><i class="ph ph-trash"></i></button>
     `;
-    if(existingData) {
-        row.querySelector('.hoop-size').value = existingData.hoop;
-    }
+    if(existingData) row.querySelector('.hoop-size').value = existingData.hoop;
     container.appendChild(row);
 }
 
@@ -166,7 +196,7 @@ window.addColor = function() {
 function renderColors() {
     const container = document.getElementById('colors-container');
     container.innerHTML = currentColors.map((c, i) => `
-        <div class="color-badge" onclick="removeColor(${i})" style="cursor:pointer" title="Нажми, чтобы удалить">
+        <div class="color-badge" onclick="removeColor(${i})" style="cursor:pointer" title="Удалить">
             <div class="color-circle" style="background:${c.hex}"></div> ${c.code}
         </div>
     `).join('');
@@ -177,7 +207,7 @@ window.removeColor = function(index) {
     renderColors();
 }
 
-// --- СОХРАНЕНИЕ (И РЕДАКТИРОВАНИЕ) В FIREBASE ---
+// --- СОХРАНЕНИЕ ---
 window.savePrint = async function(event) {
     const coverInput = document.getElementById('cover-image');
     const oldCoverUrl = document.getElementById('cover-file-name').getAttribute('data-url');
@@ -191,7 +221,6 @@ window.savePrint = async function(event) {
     try {
         const printId = editingId ? editingId : Date.now().toString();
         
-        // 1. Обложка
         let coverUrl = oldCoverUrl;
         if (coverInput.files[0]) {
             const coverRef = ref(storage, `covers/${printId}_${coverInput.files[0].name}`);
@@ -199,7 +228,6 @@ window.savePrint = async function(event) {
             coverUrl = await getDownloadURL(coverRef);
         }
 
-        // 2. Файлы .jef
         const fileRows = document.querySelectorAll('.file-row');
         let filesData = [];
         
@@ -209,38 +237,34 @@ window.savePrint = async function(event) {
             const oldUrl = spanData.getAttribute('data-url');
             const oldName = spanData.getAttribute('data-name');
             
-            if (jefInput.files[0]) { // Новый файл
+            if (jefInput.files[0]) { 
                 const file = jefInput.files[0];
                 const fileRef = ref(storage, `jef_files/${printId}_${file.name}`);
                 await uploadBytes(fileRef, file);
                 const fileUrl = await getDownloadURL(fileRef);
-                
                 filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value || 'Не указан', name: file.name, url: fileUrl });
-            } else if (oldUrl) { // Оставляем старый файл
+            } else if (oldUrl) { 
                 filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value || 'Не указан', name: oldName, url: oldUrl });
             }
         }
 
         const dataToSave = { coverUrl, colors: currentColors, files: filesData, updatedAt: new Date() };
 
-        if (editingId) {
-            await updateDoc(doc(db, "prints", editingId), dataToSave);
-        } else {
-            await addDoc(collection(db, "prints"), dataToSave);
-        }
+        if (editingId) await updateDoc(doc(db, "prints", editingId), dataToSave);
+        else await addDoc(collection(db, "prints"), dataToSave);
 
         window.closeModal('add-modal');
         loadPrints(); 
     } catch (error) {
-        console.error("Ошибка:", error);
-        alert("Произошла ошибка! Проверь консоль.");
+        console.error(error);
+        alert("Произошла ошибка!");
     } finally {
         btn.innerHTML = "Сохранить в базу";
         btn.disabled = false;
     }
 }
 
-// --- ЗАГРУЗКА И ВЫВОД ---
+// --- ЗАГРУЗКА ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
@@ -257,12 +281,12 @@ async function loadPrints() {
             
             const tile = window.document.createElement('div');
             tile.className = 'print-tile';
-            tile.onclick = () => showViewModal(print.id); // Клик открывает модалку
+            tile.onclick = () => showViewModal(print.id); 
             tile.innerHTML = `<img src="${print.coverUrl}">`;
             grid.appendChild(tile);
         });
 
-        if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Дизайнов пока нет.</p>';
+        if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Дизайнов пока нет.</p>';
     } catch (error) {
         console.error(error);
         grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>';
@@ -287,7 +311,6 @@ window.showViewModal = function(id) {
         </div>
     `).join('');
 
-    // Привязываем кнопки действий
     document.getElementById('btn-edit-print').onclick = () => editPrint(id);
     document.getElementById('btn-delete-print').onclick = () => deletePrint(id);
 
@@ -314,15 +337,12 @@ window.editPrint = function(id) {
     document.getElementById('modal-title').innerText = "Редактирование дизайна";
     document.getElementById('save-btn').innerText = "Обновить дизайн";
     
-    // Подгружаем обложку
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Оставить старую обложку`;
     document.getElementById('cover-file-name').setAttribute('data-url', print.coverUrl);
     
-    // Подгружаем цвета
     currentColors = [...(print.colors || [])];
     renderColors();
     
-    // Подгружаем файлы
     const filesContainer = document.getElementById('files-container');
     filesContainer.innerHTML = '';
     (print.files || []).forEach(f => window.addFileRow(f));
