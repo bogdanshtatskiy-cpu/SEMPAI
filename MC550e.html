@@ -10,78 +10,79 @@
 <body>
 
     <div id="auth-screen" class="glass-panel auth-panel">
-        <i class="ph-fill ph-cat" style="font-size: 4rem; color: #ff6b9e;"></i>
+        <i class="ph-fill ph-cat" style="font-size: 4rem; color: var(--hk-hot-pink);"></i>
         <h2>Вход в хранилище</h2>
-        <input type="password" id="secret-password" placeholder="Секретный пароль">
-        <button onclick="checkPassword()" class="btn-rainbow">Войти</button>
+        <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.7;">Только для администратора</p>
+        <input type="password" id="secret-password" placeholder="Введите ключ доступа">
+        <button onclick="checkPassword()" class="btn-rainbow full-width">Войти</button>
     </div>
 
     <div id="app-container" style="display: none;">
         <header class="glass-header">
-            <h1>Мои Принты <i class="ph-fill ph-rainbow"></i></h1>
-            <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить</button>
+            <div>
+                <h1>Мои Принты <i class="ph-fill ph-rainbow"></i></h1>
+                <span class="subtitle">База дизайнов для Janome 550e LE</span>
+            </div>
+            <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить дизайн</button>
         </header>
 
-        <main id="prints-grid" class="grid-container">
-            </main>
+        <main id="prints-grid" class="grid-container"></main>
     </div>
 
     <div id="add-modal" class="modal-overlay">
         <div class="modal-content glass-panel">
             <button class="close-btn" onclick="closeModal('add-modal')"><i class="ph ph-x"></i></button>
-            <h2>Новый принт</h2>
+            
+            <div class="modal-header">
+                <h2>Новый дизайн вышивки</h2>
+                <div class="janome-info glass-panel-inner">
+                    <i class="ph ph-info"></i> 
+                    <small><b>Инструкция для Janome 550e LE:</b> Загружайте файлы строго в формате <b>.jef</b>. Поддерживаемые пяльцы машины: RE36b (200x360), SQ20b (200x200), RE20b (140x200), SQ14b (140x140).</small>
+                </div>
+            </div>
             
             <div class="form-group">
-                <label>Обложка принта</label>
-                <input type="file" id="cover-image" accept="image/*">
+                <label>Обложка дизайна (превью)</label>
+                <label class="custom-file-upload full-width">
+                    <input type="file" id="cover-image" accept="image/*" onchange="updateFileName(this)">
+                    <span class="file-name"><i class="ph ph-image"></i> Выберите изображение для обложки...</span>
+                </label>
             </div>
 
             <div class="form-group">
                 <label>Файлы для вышивки (.jef)</label>
-                <div id="files-container">
+                <div id="files-container" class="files-grid-container">
                     </div>
-                <button class="btn-secondary" onclick="addFileRow()"><i class="ph ph-plus-circle"></i> Добавить размер и файл</button>
+                <button class="btn-secondary" onclick="addFileRow()"><i class="ph ph-plus-circle"></i> Добавить размер</button>
             </div>
 
             <div class="form-group color-section">
-                <label>Палитра цветов</label>
+                <label>Палитра цветов нитей</label>
                 <div class="eyedropper-box glass-panel-inner">
-                    <p>Загрузи фото ниток, чтобы взять цвет пипеткой (фото не сохраняется)</p>
-                    <input type="file" id="photo-for-color" accept="image/*">
+                    <p style="margin-bottom: 10px; font-size: 0.9rem;">1. Загрузите фото ниток для работы с пипеткой:</p>
+                    <label class="custom-file-upload full-width">
+                        <input type="file" id="photo-for-color" accept="image/*" onchange="updateFileName(this)">
+                        <span class="file-name"><i class="ph ph-camera"></i> Выбрать фото катушек...</span>
+                    </label>
                     <canvas id="color-canvas" style="display:none; max-width: 100%; border-radius: 12px; margin-top: 10px; cursor: crosshair;"></canvas>
-                    <div id="picked-color-preview" style="width: 30px; height: 30px; border-radius: 50%; margin-top: 10px; border: 2px solid white;"></div>
                 </div>
                 
-                <div id="colors-container" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
-                    </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <input type="color" id="manual-color" value="#ffb6c1">
-                    <input type="text" id="color-code" placeholder="Код нити (напр. Madeira 1001)">
-                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> Добавить цвет</button>
+                <div class="color-picker-controls" style="margin-top: 15px;">
+                    <div id="picked-color-preview" class="color-preview-circle"></div>
+                    <input type="color" id="manual-color" value="#ffb6c1" title="Ручной выбор цвета">
+                    <input type="text" id="color-code" placeholder="Код нити (напр. Madeira 1001)" style="margin-bottom: 0;">
+                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> Добавить</button>
                 </div>
+
+                <div id="colors-container" class="colors-tags-container"></div>
             </div>
 
-            <button class="btn-rainbow full-width" onclick="savePrint()">Сохранить принт</button>
+            <button class="btn-rainbow full-width" onclick="savePrint()" style="margin-top: 20px; font-size: 1.1rem; padding: 15px;">Сохранить в базу</button>
         </div>
     </div>
 
     <div id="view-modal" class="modal-overlay">
-        <div class="modal-content glass-panel">
-            <button class="close-btn" onclick="closeModal('view-modal')"><i class="ph ph-x"></i></button>
-            <h2 id="view-title">Просмотр</h2>
-            <img id="view-image" src="" style="width: 100%; border-radius: 15px; margin-bottom: 20px;">
-            
-            <div class="glass-panel-inner">
-                <h3>Необходимые цвета</h3>
-                <div id="view-colors" class="view-colors-list"></div>
-            </div>
-
-            <div class="glass-panel-inner" style="margin-top: 15px;">
-                <h3>Файлы для скачивания</h3>
-                <div id="view-files" class="view-files-list"></div>
-            </div>
         </div>
-    </div>
 
     <script src="app.js"></script>
 </body>
