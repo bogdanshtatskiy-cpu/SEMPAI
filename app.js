@@ -4,12 +4,12 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } f
 
 // !!! ВСТАВЬ СВОИ ДАННЫЕ СЮДА !!!
 const firebaseConfig = {
-    apiKey: "ТВОЙ_API_KEY",
-    authDomain: "ТВОЙ_ПРОЕКТ.firebaseapp.com",
-    projectId: "ТВОЙ_ПРОЕКТ",
-    storageBucket: "ТВОЙ_ПРОЕКТ.appspot.com",
-    messagingSenderId: "ТВОЙ_ID",
-    appId: "ТВОЙ_APP_ID"
+  apiKey: "AIzaSyDhElZXZz6wdjwR6DRIIqyfwfrCdRK-JZc",
+  authDomain: "mc550e.firebaseapp.com",
+  projectId: "mc550e",
+  storageBucket: "mc550e.firebasestorage.app",
+  messagingSenderId: "772399307357",
+  appId: "1:772399307357:web:b4adec6deed9e1ab96cbb4"
 };
 
 const app = initializeApp(firebaseConfig);
