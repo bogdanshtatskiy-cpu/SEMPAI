@@ -35,13 +35,28 @@
     </div>
 
     <div id="stash-modal" class="modal-overlay">
-        <div class="modal-content glass-panel" style="max-width: 600px;">
+        <div class="modal-content glass-panel" style="max-width: 820px;">
             <button class="close-btn" onclick="closeModal('stash-modal')"><i class="ph ph-x"></i></button>
-            <h2 style="margin-bottom: 20px;"><i class="ph-fill ph-yarn" style="color: var(--hk-hot-pink);"></i> Склад нитей</h2>
+            <h2 style="margin-bottom: 20px; text-align: center;"><i class="ph-fill ph-yarn" style="color: var(--hk-hot-pink);"></i> Склад нитей</h2>
             
+            <div class="eyedropper-box glass-panel-inner" style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <label class="custom-file-upload" style="flex: 1;">
+                        <input type="file" id="stash-photo-for-color" accept="image/*" onchange="updateFileName(this)">
+                        <span class="file-name"><i class="ph ph-camera"></i> Загрузить фото катушек...</span>
+                    </label>
+                    <button class="btn-primary" onclick="autoDetectStashColors()" title="Умное автоопределение"><i class="ph ph-magic-wand"></i> Авто</button>
+                </div>
+
+                <div id="stash-canvas-wrapper" style="position: relative; width: 100%; display: none; border-radius: 12px; overflow: hidden; margin-top: 10px;">
+                    <canvas id="stash-color-canvas" style="width: 100%; display: block; cursor: crosshair;"></canvas>
+                    <div id="stash-markers-container"></div>
+                </div>
+            </div>
+
             <div class="color-picker-controls glass-panel-inner" style="display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center; margin-bottom: 20px;">
                 <input type="color" id="stash-color-picker" value="#ffb6c1">
-                <input type="text" id="stash-color-code" placeholder="Код нити (Madeira 1001)" style="margin-bottom: 0;">
+                <input type="text" id="stash-color-code" placeholder="Код нити (Madeira 1001)" style="margin-bottom: 0; text-align: center;">
                 <button class="btn-primary" onclick="addThreadToStash()"><i class="ph ph-plus"></i></button>
             </div>
 
