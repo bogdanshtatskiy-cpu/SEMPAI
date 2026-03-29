@@ -20,39 +20,6 @@ let currentColors = [];
 let allPrints = []; 
 let editingId = null; 
 
-// --- ЛОГИКА МУЗЫКИ И ТАЙМЕРА ---
-let soundTimerStarted = false;
-
-function startMusicWithTimer() {
-    const bgMusic = document.getElementById('bg-music');
-    if (!bgMusic.paused) return; // Если уже играет, ничего не делаем
-
-    bgMusic.play().then(() => {
-        // Запускаем таймер на 20 секунд только если музыка успешно начала играть
-        if (!soundTimerStarted) {
-            soundTimerStarted = true;
-            setTimeout(() => {
-                document.getElementById('sound-btn').style.display = 'inline-flex';
-            }, 20000); // 20000 мс = 20 секунд
-        }
-    }).catch(e => {
-        console.log("Браузер ждет взаимодействия пользователя для запуска музыки.");
-    });
-}
-
-window.toggleSound = function() {
-    const bgMusic = document.getElementById('bg-music');
-    const icon = document.getElementById('sound-icon');
-    if (bgMusic.muted) {
-        bgMusic.muted = false;
-        icon.classList.replace('ph-speaker-slash', 'ph-speaker-high');
-    } else {
-        bgMusic.muted = true;
-        icon.classList.replace('ph-speaker-high', 'ph-speaker-slash');
-    }
-}
-
-
 // --- ТЕМНАЯ ТЕМА ---
 function applyTheme(isDark) {
     if (isDark) {
@@ -77,12 +44,6 @@ if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
     loadPrints();
-    
-    // При авто-входе музыка ждет первого клика по экрану
-    document.body.addEventListener('click', function playAudioOnFirstClick() {
-        startMusicWithTimer();
-        document.body.removeEventListener('click', playAudioOnFirstClick);
-    }, { once: true });
 }
 
 window.checkPassword = async function() {
@@ -100,7 +61,7 @@ window.checkPassword = async function() {
         }
     } catch (e) {
         console.error(e);
-        alert("Ошибка подключения. Создан ли документ settings/auth в базе?");
+        alert("Ошибка подключения.");
     }
     btn.innerHTML = "Войти";
 }
@@ -109,16 +70,11 @@ window.confirmJoke = function() {
     localStorage.setItem('hk_vault_auth', 'true');
     window.closeModal('joke-modal');
     document.getElementById('app-container').style.display = 'block';
-    
-    // Клик по кнопке "Да" - это взаимодействие, музыка заиграет сразу
-    startMusicWithTimer();
-    
-    loadPrints();
+    loadPrints(); // МУЗЫКА ВЫРЕЗАНА
 }
 
 window.logout = function() {
     localStorage.removeItem('hk_vault_auth');
-    document.getElementById('bg-music').pause();
     location.reload();
 }
 
@@ -145,7 +101,10 @@ window.openAddModal = function() {
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Выберите изображение...`;
     document.getElementById('cover-file-name').removeAttribute('data-url'); 
     
+    // Сброс зоны определения цветов
+    document.getElementById('markers-container').innerHTML = '';
     document.getElementById('color-canvas').style.display = 'none';
+    
     window.addFileRow(); 
     window.openModal('add-modal');
 }
@@ -193,41 +152,93 @@ window.addFileRow = function(existingData = null) {
     container.appendChild(row);
 }
 
-// --- ПИПЕТКА И ЦВЕТА ---
+// --- === АЛГОРИТМ РАСПОЗНАВАНИЯ ЦВЕТОВ === ---
 const canvas = document.getElementById('color-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
-const manualColorInput = document.getElementById('manual-color');
+const markersContainer = document.getElementById('markers-container');
 
 document.getElementById('photo-for-color').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(!file) return;
+    
+    // Очищаем старые маркеры
+    markersContainer.innerHTML = '';
+    
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
             canvas.style.display = 'block';
-            const maxWidth = canvas.parentElement.clientWidth - 30;
+            const maxWidth = canvas.parentElement.clientWidth;
             const scale = Math.min(maxWidth / img.width, 1);
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Запускаем алгоритм определения цветов
+            detectDominantColors(img, scale);
         }
         img.src = event.target.result;
     };
     reader.readAsDataURL(file);
 });
 
-canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
-    const hex = "#" + ("000000" + ((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16)).slice(-6);
-    manualColorInput.value = hex;
-});
+async function detectDominantColors(img, scale) {
+    // В реальном приложении здесь был бы код кластеризации (K-means).
+    // Для простоты и производительности, мы эмулируем выбор доминирующих цветов,
+    // просто беря сетку пикселей и фильтруя их по яркости.
+    const step = Math.floor(canvas.width / 5); // 5 точек по ширине
+    let detectedCount = 0;
 
+    for (let x = step; x < canvas.width; x += step) {
+        for (let y = step; y < canvas.height; y += step) {
+            if (detectedCount >= 10) break; // Максимум 10 точек
+
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+            
+            // Фильтруем слишком темные или слишком белые цвета
+            const brightness = (pixel[0] * 299 + pixel[1] * 587 + pixel[2] * 114) / 1000;
+            if(brightness > 30 && brightness < 220) {
+                 createColorMarker(x, y, hex);
+                 detectedCount++;
+            }
+        }
+    }
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function createColorMarker(x, y, hex) {
+    const marker = document.createElement('div');
+    marker.className = 'color-marker';
+    marker.style.left = `${x}px`;
+    marker.style.top = `${y + 10}px`; // +10 сдвиг из-за margin-top у канваса
+    marker.style.backgroundColor = hex;
+    marker.title = `Кликни, чтобы добавить ${hex}`;
+    
+    // Клик по маркеру открывает поле кода
+    marker.addEventListener('click', () => {
+        promptForColorCode(hex);
+    });
+    
+    markersContainer.appendChild(marker);
+}
+
+function promptForColorCode(hex) {
+    const code = prompt(`Введите код нити для цвета ${hex}:`, "");
+    if (code !== null) { // Пользователь не нажал "Отмена"
+        const finalCode = code.trim() || 'Без кода';
+        currentColors.push({ hex, code: finalCode });
+        renderColors();
+    }
+}
+
+// --- ЦВЕТА (РУЧНОЙ ВЫБОР И УДАЛЕНИЕ) ---
 window.addColor = function() {
-    const hex = manualColorInput.value;
+    const hex = document.getElementById('manual-color').value;
     const code = document.getElementById('color-code').value || 'Без кода';
     currentColors.push({ hex, code });
     renderColors();
