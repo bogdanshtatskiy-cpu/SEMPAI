@@ -17,20 +17,20 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 let currentColors = [];
-let currentJefFiles = []; // Сохраняем ссылки для удаления старых JEF файлов при обновлении
+let currentJefFiles = []; 
 let allPrints = []; 
 let editingId = null; 
 let isImageLoadedForCanvas = false;
-let allStashThreads = []; // Локальный склад
+let allStashThreads = []; 
 
-// --- УПРАВЛЕНИЕ ОКНАМИ (С БЛОКИРОВКОЙ СКРОЛЛА) ---
+// --- УПРАВЛЕНИЕ ОКНАМИ ---
 window.openModal = (id) => {
     document.getElementById(id).style.display = 'flex';
-    document.body.classList.add('no-scroll'); // Блокируем фон
+    document.body.classList.add('no-scroll'); 
 };
 window.closeModal = (id) => {
     document.getElementById(id).style.display = 'none';
-    document.body.classList.remove('no-scroll'); // Разблокируем фон
+    document.body.classList.remove('no-scroll'); 
 };
 
 // --- ТЕМНАЯ ТЕМА ---
@@ -43,22 +43,19 @@ function applyTheme(isDark) {
         document.getElementById('theme-icon')?.classList.replace('ph-sun', 'ph-moon');
     }
 }
-
 window.toggleTheme = function() {
     const isDarkNow = document.body.classList.contains('dark-theme');
     localStorage.setItem('hk_vault_theme', !isDarkNow);
     applyTheme(!isDarkNow);
 }
-
-// Инициализация темы при загрузке
 if (localStorage.getItem('hk_vault_theme') === 'true') applyTheme(true);
 
-// --- АВТОРИЗАЦИЯ И ШУТКА ---
+// --- АВТОРИЗАЦИЯ (ИСПРАВЛЕНО: СРАЗУ ВХОД, БЕЗ ШУТОК) ---
 if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
     loadPrints();
-    loadStashToLocals(); // Автозагрузка склада
+    loadStashToLocals(); 
 }
 
 window.checkPassword = async function() {
@@ -69,8 +66,11 @@ window.checkPassword = async function() {
     try {
         const docSnap = await getDoc(doc(db, "settings", "auth"));
         if (docSnap.exists() && input === docSnap.data().password) {
+            localStorage.setItem('hk_vault_auth', 'true');
             document.getElementById('auth-screen').style.display = 'none';
-            window.openModal('joke-modal');
+            document.getElementById('app-container').style.display = 'block'; // Сразу открываем приложение
+            loadPrints();
+            loadStashToLocals();
         } else {
             alert("Неверный ключ доступа 💅");
         }
@@ -81,20 +81,12 @@ window.checkPassword = async function() {
     btn.innerHTML = "Войти";
 }
 
-// Кнопка "Да" в шуточном окне (Музыка ВЫРЕЗАНА)
-window.confirmJoke = function() {
-    localStorage.setItem('hk_vault_auth', 'true');
-    window.closeModal('joke-modal');
-    document.getElementById('app-container').style.display = 'block';
-    loadPrints();
-    loadStashToLocals(); // Автозагрузка склада
-}
-
 window.logout = function() {
     localStorage.removeItem('hk_vault_auth');
     location.reload();
 }
 
+// --- ОТКРЫТИЕ МОДАЛКИ ДИЗАЙНА ---
 window.openAddModal = function() {
     editingId = null;
     document.getElementById('modal-title').innerText = "Новый дизайн вышивки";
@@ -110,14 +102,12 @@ window.openAddModal = function() {
     document.getElementById('cover-file-name').removeAttribute('data-url'); 
     document.getElementById('cover-file-name').removeAttribute('data-path'); 
     
-    // Сброс зоны определения цветов
     document.getElementById('markers-container').innerHTML = '';
     document.getElementById('photo-for-color').value = '';
     document.getElementById('canvas-wrapper').style.display = 'none';
     isImageLoadedForCanvas = false;
     
-    fillStashSelect(); // Обновить Stash select
-
+    fillStashSelect(); 
     window.addJefRow(); 
     window.openModal('add-modal');
 }
@@ -131,7 +121,6 @@ window.updateFileName = function(input) {
     }
 }
 
-// Глобальная Jef row функция (Grid)
 window.addJefRow = function(existingData = null) {
     const container = document.getElementById('files-container');
     const row = document.createElement('div');
@@ -166,13 +155,12 @@ window.addJefRow = function(existingData = null) {
     container.appendChild(row);
 }
 
-// --- === УМНАЯ ПИПЕТКА И БД АВТООПРЕДЕЛЕНИЕ (Разброс цвета 100) === ---
+// --- УМНАЯ ПИПЕТКА ---
 const canvas = document.getElementById('color-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const markersContainer = document.getElementById('markers-container');
 const manualColorInput = document.getElementById('manual-color');
 
-// Ручной клик по картинке (выбор любого цвета)
 canvas.addEventListener('click', (e) => {
     if (!isImageLoadedForCanvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -186,7 +174,7 @@ canvas.addEventListener('click', (e) => {
     const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
     
     manualColorInput.value = hex; 
-    document.getElementById('color-code').focus(); // Фокус на ввод текста
+    document.getElementById('color-code').focus();
 });
 
 document.getElementById('photo-for-color').addEventListener('change', (e) => {
@@ -199,8 +187,6 @@ document.getElementById('photo-for-color').addEventListener('change', (e) => {
         const img = new Image();
         img.onload = () => {
             document.getElementById('canvas-wrapper').style.display = 'block';
-            
-            // Жесткое внутреннее разрешение (для точности расчетов)
             const maxWidth = 800; 
             const scale = Math.min(maxWidth / img.width, 1);
             canvas.width = img.width * scale;
@@ -213,40 +199,31 @@ document.getElementById('photo-for-color').addEventListener('change', (e) => {
     reader.readAsDataURL(file);
 });
 
-// Кнопка Автоопределения (Разброс цвета 100)
 window.autoDetectColors = function() {
     if (!isImageLoadedForCanvas) return alert("Сначала загрузи фото ниток!");
     markersContainer.innerHTML = '';
     
-    const step = Math.floor(canvas.width / 20); // Сетка сканирования
+    const step = Math.floor(canvas.width / 20); 
     let detectedColors = [];
 
     for (let x = step; x < canvas.width; x += step) {
         for (let y = step; y < canvas.height; y += step) {
-            if(detectedColors.length >= 12) break; // Максимум 12 цветов
+            if(detectedColors.length >= 12) break;
 
             const pixel = ctx.getImageData(x, y, 1, 1).data;
             const r = pixel[0], g = pixel[1], b = pixel[2];
             
-            // Игнорируем черный и белый фон
             const brightness = (r * 299 + g * 587 + b * 114) / 1000;
             if (brightness > 35 && brightness < 235) {
-                
-                // Проверка на схожесть с УМНЫМ БОЛЬШИМ разбросом (100)
                 let isTooSimilar = false;
                 for (let color of detectedColors) {
-                    // Евклидово расстояние цветов
                     const dist = Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2));
-                    if (dist < 100) { // 100 - БОЛЬШОЙ разброс, чтобы не путать оттенки
-                        isTooSimilar = true; 
-                        break;
-                    }
+                    if (dist < 100) { isTooSimilar = true; break; }
                 }
                 
                 if (!isTooSimilar) {
                     detectedColors.push({r, g, b});
                     const hex = rgbToHex(r, g, b);
-                    // Координаты в процентах для идеальной адаптивности
                     const percentX = (x / canvas.width) * 100;
                     const percentY = (y / canvas.height) * 100;
                     createColorMarker(percentX, percentY, hex);
@@ -257,9 +234,7 @@ window.autoDetectColors = function() {
     }
 }
 
-function rgbToHex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
+function rgbToHex(r, g, b) { return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
 
 function createColorMarker(percentX, percentY, hex) {
     const marker = document.createElement('div');
@@ -275,7 +250,7 @@ function createColorMarker(percentX, percentY, hex) {
     markersContainer.appendChild(marker);
 }
 
-// --- === БД СКЛАД НИТЕЙ === ---
+// --- БД СКЛАД НИТЕЙ ---
 async function loadStashToLocals() {
     allStashThreads = [];
     const q = query(collection(db, "stash"), orderBy("code", "asc"));
@@ -286,7 +261,6 @@ async function loadStashToLocals() {
     });
 }
 
-// Открыть модалку склада
 window.openStashModal = function() {
     window.openModal('stash-modal');
     loadStashToModal();
@@ -303,10 +277,10 @@ window.addThreadToStash = async function() {
     try {
         await addDoc(collection(db, "stash"), { hex, code, addedAt: new Date() });
         document.getElementById('stash-color-code').value = '';
-        await loadStashToLocals(); // Обновить локальный склад
-        loadStashToModal(); // Обновить модалку
+        await loadStashToLocals();
+        loadStashToModal(); 
     } catch (e) { console.error(e); }
-    btn.innerHTML = '<i class="ph ph-plus"></i> Добавить';
+    btn.innerHTML = '<i class="ph ph-plus"></i>';
 }
 
 async function loadStashToModal() {
@@ -315,7 +289,6 @@ async function loadStashToModal() {
     list.innerHTML = '';
     
     try {
-        // Мы уже загрузили склад в авто-входе/добавлении, просто выводим
         allStashThreads.forEach((thread) => {
             list.innerHTML += `
                 <div class="color-badge" onclick="deleteStashThread('${thread.id}')" style="cursor:pointer" title="Удалить со склада">
@@ -336,7 +309,6 @@ window.deleteStashThread = async function(id) {
     }
 }
 
-// --- БД ВЫБОР ИЗ СКЛАДА (Модалка дизайна) ---
 function fillStashSelect() {
     const select = document.getElementById('stash-select');
     select.innerHTML = '<option value="">Выбрать из Склада...</option>';
@@ -345,7 +317,6 @@ function fillStashSelect() {
     });
 }
 
-// Листенер для автозаполнения полей из склада
 document.getElementById('stash-select').addEventListener('change', (e) => {
     const threadId = e.target.value;
     if (!threadId) return;
@@ -355,10 +326,9 @@ document.getElementById('stash-select').addEventListener('change', (e) => {
     
     manualColorInput.value = thread.hex;
     document.getElementById('color-code').value = thread.code;
-    e.target.value = ''; // Сброс селекта
+    e.target.value = ''; 
 });
 
-// Добавление в палитру дизайна
 window.addDesignColor = function() {
     const hex = manualColorInput.value;
     const code = document.getElementById('color-code').value.trim() || 'Без кода';
@@ -381,11 +351,11 @@ window.removeColor = function(index) {
     renderColors();
 }
 
-// === УДАЛЕНИЕ СТАРОЙ ОБЛОЖКИ/JEF ПРИ ОБНОВЛЕНИИ ===
-async function deleteOldFileFromStorage(path) {
-    if (!path) return;
+// === ИСПРАВЛЕНИЕ: УМНОЕ УДАЛЕНИЕ ФАЙЛОВ ИЗ STORAGE ===
+async function deleteOldFileFromStorage(pathOrUrl) {
+    if (!pathOrUrl) return;
     try {
-        const fileRef = ref(storage, path);
+        const fileRef = ref(storage, pathOrUrl);
         await deleteObject(fileRef);
     } catch (error) {
         if (error.code !== 'storage/object-not-found') {
@@ -394,7 +364,7 @@ async function deleteOldFileFromStorage(path) {
     }
 }
 
-// --- СОХРАНЕНИЕ ПРИНТОВ (БД Редактирование, УДАЛЕНИЕ СТАРЫХ JEF ФАЙЛОВ) ---
+// --- СОХРАНЕНИЕ ПРИНТОВ (С ИСПРАВЛЕННЫМ БАГОМ ФАЙЛОВ) ---
 window.savePrint = async function(event) {
     const coverInput = document.getElementById('cover-image');
     const oldCoverUrl = document.getElementById('cover-file-name').getAttribute('data-url');
@@ -415,15 +385,10 @@ window.savePrint = async function(event) {
         if (coverInput.files[0]) {
             const coverRef = ref(storage, `covers/${printId}_${coverInput.files[0].name}`);
             await uploadBytesResumable(coverRef, coverInput.files[0]);
-            
-            // ИСПРАВЛЕНА ОШИБКА ЗДЕСЬ: используем coverRef вместо coverTask.ref
-            coverUrl = await getDownloadURL(coverRef); 
+            coverUrl = await getDownloadURL(coverRef); // ИСПРАВЛЕНА ОПЕЧАТКА!
             newCoverPath = coverRef.fullPath;
             
-            // Если мы редактируем и загрузили новую обложку — удаляем старую
-            if (editingId && oldCoverPath) {
-                await deleteOldFileFromStorage(oldCoverPath);
-            }
+            if (editingId && oldCoverPath) await deleteOldFileFromStorage(oldCoverPath);
         }
 
         // 2. Файлы .jef
@@ -438,26 +403,22 @@ window.savePrint = async function(event) {
             const oldPath = spanData.getAttribute('data-path');
             const oldName = spanData.getAttribute('data-name');
             
-            if (jefInput.files[0]) { // Новый файл
+            if (jefInput.files[0]) { 
                 const file = jefInput.files[0];
                 const fileRef = ref(storage, `jef_files/${printId}_${file.name}`);
                 await uploadBytesResumable(fileRef, file);
                 const fileUrl = await getDownloadURL(fileRef);
-                
                 filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: file.name, url: fileUrl, path: fileRef.fullPath });
-                newJefPaths.push(fileRef.fullPath); // Сохраняем путь для сравнения
-            } else if (oldUrl) { // Оставляем старый файл
+                newJefPaths.push(fileRef.fullPath); 
+            } else if (oldUrl) { 
                 filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: oldName, url: oldUrl, path: oldPath });
-                newJefPaths.push(oldPath); // Сохраняем путь
+                newJefPaths.push(oldPath); 
             }
         }
 
-        // Если мы редактируем — удаляем JEF файлы, которые были удалены из списка
         if (editingId) {
             for (let oldPath of currentJefFiles) {
-                if (!newJefPaths.includes(oldPath)) {
-                    await deleteOldFileFromStorage(oldPath);
-                }
+                if (!newJefPaths.includes(oldPath)) await deleteOldFileFromStorage(oldPath);
             }
         }
 
@@ -466,7 +427,7 @@ window.savePrint = async function(event) {
         if (editingId) {
             await updateDoc(doc(db, "prints", editingId), dataToSave);
         } else {
-            dataToSave.createdAt = new Date(); // createdAt только для новых
+            dataToSave.createdAt = new Date(); 
             await addDoc(collection(db, "prints"), dataToSave);
         }
 
@@ -478,7 +439,8 @@ window.savePrint = async function(event) {
         btn.innerHTML = "Сохранить в базу"; btn.disabled = false;
     }
 }
-// --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ (2 колонки, ТОЛЬКО КАРТИНКИ) ---
+
+// --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
@@ -495,7 +457,7 @@ async function loadPrints() {
             
             const tile = window.document.createElement('div');
             tile.className = 'print-tile';
-            tile.onclick = () => showViewModal(print.id); // Клик открывает модалку просмотра
+            tile.onclick = () => showViewModal(print.id); 
             tile.innerHTML = `<img src="${print.coverUrl}">`;
             grid.appendChild(tile);
         });
@@ -530,33 +492,31 @@ window.showViewModal = function(id) {
     window.openModal('view-modal');
 }
 
-// === БД УДАЛЕНИЕ ДИЗАЙНА (УДАЛЕНИЕ ФАЙЛОВ ИЗ STORAGE) ===
+// === ИСПРАВЛЕНИЕ: ЧИСТОЕ УДАЛЕНИЕ ===
 window.deletePrint = async function(id) {
     if (confirm("Удалить дизайн? Восстановить будет невозможно.")) {
         const print = allPrints.find(p => p.id === id);
         if(!print) return alert("Дизайн не найден!");
 
         try {
-            // Удаляем обложку
-            await deleteOldFileFromStorage(print.coverPath);
+            if (print.coverPath) await deleteOldFileFromStorage(print.coverPath);
+            else if (print.coverUrl) await deleteOldFileFromStorage(print.coverUrl); // Подстраховка для старых дизайнов
             
-            // Удаляем JEF файлы
             if (print.files) {
                 for (let f of print.files) {
-                    await deleteOldFileFromStorage(f.path);
+                    if (f.path) await deleteOldFileFromStorage(f.path);
+                    else if (f.url) await deleteOldFileFromStorage(f.url);
                 }
             }
             
-            // Удаляем документ Firestore
             await deleteDoc(doc(db, "prints", id));
-            
             window.closeModal('view-modal');
             loadPrints(); 
         } catch (error) { console.error(error); alert("Не удалось удалить."); }
     }
 }
 
-// --- БД РЕДАКТИРОВАНИЕ (Автозаполнение) ---
+// --- РЕДАКТИРОВАНИЕ ---
 window.editPrint = function(id) {
     editingId = id;
     const print = allPrints.find(p => p.id === id);
@@ -566,25 +526,22 @@ window.editPrint = function(id) {
     document.getElementById('save-btn').innerText = "Обновить дизайн";
     document.getElementById('save-btn').style.textAlign = 'center';
     
-    // Подгружаем обложку
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Оставить старую обложку`;
     document.getElementById('cover-file-name').setAttribute('data-url', print.coverUrl);
-    document.getElementById('cover-file-name').setAttribute('data-path', print.coverPath);
+    document.getElementById('cover-file-name').setAttribute('data-path', print.coverPath || '');
     
-    // Подгружаем цвета
     currentColors = [...(print.colors || [])];
     renderColors();
     
-    // Подгружаем файлы JEF (с сохранением путей)
     const filesContainer = document.getElementById('files-container');
     filesContainer.innerHTML = '';
-    currentJefFiles = []; // Сброс старых путей JEF
+    currentJefFiles = []; 
     (print.files || []).forEach(f => {
         window.addJefRow(f);
-        if(f.path) currentJefFiles.push(f.path); // Сохраняем путь для сравнения
+        if(f.path) currentJefFiles.push(f.path); 
     });
 
-    fillStashSelect(); // Обновить Stash select
+    fillStashSelect(); 
 
     window.closeModal('view-modal');
     window.openModal('add-modal');
