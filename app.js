@@ -23,11 +23,9 @@ let editingId = null;
 let isImageLoadedForCanvas = false;
 let allStashThreads = []; 
 
-// Управление окнами
 window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; document.body.classList.add('no-scroll'); };
 window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; document.body.classList.remove('no-scroll'); };
 
-// Тема
 function applyTheme(isDark) {
     if (isDark) { document.body.classList.add('dark-theme'); document.getElementById('theme-icon')?.classList.replace('ph-moon', 'ph-sun'); } 
     else { document.body.classList.remove('dark-theme'); document.getElementById('theme-icon')?.classList.replace('ph-sun', 'ph-moon'); }
@@ -38,7 +36,6 @@ window.toggleTheme = function() {
 }
 if (localStorage.getItem('hk_vault_theme') === 'true') applyTheme(true);
 
-// Авторизация
 if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
@@ -48,7 +45,7 @@ if (localStorage.getItem('hk_vault_auth') === 'true') {
 window.checkPassword = async function() {
     const input = document.getElementById('secret-password').value;
     const btn = document.querySelector('.auth-panel button');
-    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i> Проверка...";
+    btn.innerHTML = "<i class='ph-fill ph-spinner-gap ph-spin'></i> Проверяем...";
 
     try {
         const docSnap = await getDoc(doc(db, "settings", "auth"));
@@ -57,31 +54,30 @@ window.checkPassword = async function() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-container').style.display = 'block'; 
             loadPrints(); loadStashToLocals();
-        } else { alert("Неверный ключ доступа 💅"); }
+        } else { alert("Неверный пароль, сладкий 💅"); }
     } catch (e) { console.error(e); alert("Ошибка подключения."); }
-    btn.innerHTML = "Войти";
+    btn.innerHTML = "<i class='ph-fill ph-key'></i> Войти красиво";
 }
 
 window.logout = function() { localStorage.removeItem('hk_vault_auth'); location.reload(); }
 
-// --- ОТКРЫТИЕ МОДАЛКИ ДИЗАЙНА ---
 window.openAddModal = function() {
     editingId = null;
-    document.getElementById('modal-title').innerText = "Новый дизайн вышивки";
-    document.getElementById('save-btn').innerText = "Сохранить в базу";
+    document.getElementById('modal-title').innerHTML = "Новый шедевр <i class='ph-fill ph-heart'></i>";
+    document.getElementById('save-btn').innerHTML = "<i class='ph-fill ph-floppy-disk'></i> Сохранить в базу";
     
     currentColors = []; currentJefFiles = []; renderColors();
     document.getElementById('files-container').innerHTML = '';
     
     document.getElementById('cover-image').value = '';
-    document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Выберите изображение...`;
+    document.getElementById('cover-file-name').innerHTML = `Выбери самое красивое фото...`;
     document.getElementById('cover-file-name').removeAttribute('data-url'); 
     document.getElementById('cover-file-name').removeAttribute('data-path'); 
     
     document.getElementById('markers-container').innerHTML = '';
     document.getElementById('photo-for-color').value = '';
     const spanC = document.getElementById('photo-for-color').nextElementSibling;
-    if(spanC) spanC.innerHTML = `<i class="ph ph-camera"></i> Загрузить фото ниток...`;
+    if(spanC) spanC.innerHTML = `<i class="ph-fill ph-camera"></i> Загрузить фото ниток...`;
     document.getElementById('canvas-wrapper').style.display = 'none';
     isImageLoadedForCanvas = false;
     
@@ -91,8 +87,8 @@ window.openAddModal = function() {
 window.updateFileName = function(input) {
     const fileNameElement = input.nextElementSibling;
     if (input.files && input.files.length > 0) {
-        fileNameElement.innerHTML = `<i class="ph ph-check-circle" style="color: green;"></i> ${input.files[0].name}`;
-    } else { fileNameElement.innerHTML = `<i class="ph ph-file"></i> Выберите файл...`; }
+        fileNameElement.innerHTML = `<i class="ph-fill ph-check-circle" style="color: var(--hk-hot-pink);"></i> ${input.files[0].name}`;
+    } else { fileNameElement.innerHTML = `<i class="ph-fill ph-file"></i> Выберите файл...`; }
 }
 
 window.addJefRow = function(existingData = null) {
@@ -101,15 +97,15 @@ window.addJefRow = function(existingData = null) {
     row.className = 'file-row';
     const uniqueId = 'jef-' + Date.now() + Math.floor(Math.random() * 1000);
     
-    let fileNameHtml = `<i class="ph ph-file-arrow-up"></i> Загрузить .jef`;
+    let fileNameHtml = `<i class="ph-fill ph-file-arrow-up"></i> Загрузить .jef`;
     let dataUrlAttr = "";
     if(existingData) {
-        fileNameHtml = `<i class="ph ph-file-jef"></i> Старый: ${existingData.name}`;
+        fileNameHtml = `<i class="ph-fill ph-file-jef"></i> Оставить старый: ${existingData.name}`;
         dataUrlAttr = `data-url="${existingData.url}" data-path="${existingData.path}" data-name="${existingData.name}"`;
     }
 
     row.innerHTML = `
-        <select class="hoop-size" style="text-align: center;">
+        <select class="hoop-size">
             <option value="RE36b (200x360)">RE36b (200x360)</option>
             <option value="SQ20b (200x200)">SQ20b (200x200)</option>
             <option value="RE20b (140x200)">RE20b (140x200)</option>
@@ -117,12 +113,12 @@ window.addJefRow = function(existingData = null) {
             <option value="HH10b (100x90)">HH10b (100x90)</option>
             <option value="RE10b (100x40)">RE10b (100x40)</option>
         </select>
-        <input type="text" class="emb-size" placeholder="Размер (напр. 15x18 см)" value="${existingData ? existingData.size : ''}" style="text-align: center;">
+        <input type="text" class="emb-size" placeholder="Размер (напр. 15x18 см)" value="${existingData ? existingData.size : ''}">
         <label class="custom-file-upload">
             <input type="file" id="${uniqueId}" class="jef-file" accept=".jef" onchange="updateFileName(this)">
-            <span class="file-name" ${dataUrlAttr} style="text-align: center; width: 100%;">${fileNameHtml}</span>
+            <span class="file-name" ${dataUrlAttr}>${fileNameHtml}</span>
         </label>
-        <button class="btn-danger" style="height:46px; text-align: center; justify-content: center;" title="Удалить" onclick="this.parentElement.remove()"><i class="ph ph-trash"></i></button>
+        <button class="btn-danger" style="height:50px; display:flex;" title="Удалить" onclick="this.parentElement.remove()"><i class="ph-bold ph-trash" style="font-size: 1.2rem;"></i></button>
     `;
     if(existingData) row.querySelector('.hoop-size').value = existingData.hoop;
     container.appendChild(row);
@@ -190,70 +186,6 @@ window.autoDetectColors = function() {
     }
 }
 
-// --- УМНАЯ ПИПЕТКА (СКЛАД) ---
-let isStashImageLoadedForCanvas = false;
-const stashCanvas = document.getElementById('stash-color-canvas');
-const stashCtx = stashCanvas.getContext('2d', { willReadFrequently: true });
-const stashMarkersContainer = document.getElementById('stash-markers-container');
-const stashColorPicker = document.getElementById('stash-color-picker');
-
-stashCanvas.addEventListener('click', (e) => {
-    if (!isStashImageLoadedForCanvas) return;
-    const rect = stashCanvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (stashCanvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (stashCanvas.height / rect.height);
-    const pixel = stashCtx.getImageData(x, y, 1, 1).data;
-    stashColorPicker.value = rgbToHex(pixel[0], pixel[1], pixel[2]); 
-    document.getElementById('stash-color-code').focus();
-});
-
-document.getElementById('stash-photo-for-color').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    stashMarkersContainer.innerHTML = ''; 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-            document.getElementById('stash-canvas-wrapper').style.display = 'block';
-            const scale = Math.min(800 / img.width, 1);
-            stashCanvas.width = img.width * scale; stashCanvas.height = img.height * scale;
-            stashCtx.drawImage(img, 0, 0, stashCanvas.width, stashCanvas.height);
-            isStashImageLoadedForCanvas = true;
-        }
-        img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-});
-
-window.autoDetectStashColors = function() {
-    if (!isStashImageLoadedForCanvas) return alert("Сначала загрузи фото катушек!");
-    stashMarkersContainer.innerHTML = '';
-    const step = Math.floor(stashCanvas.width / 20); 
-    let detectedColors = [];
-
-    for (let x = step; x < stashCanvas.width; x += step) {
-        for (let y = step; y < stashCanvas.height; y += step) {
-            if(detectedColors.length >= 12) break;
-            const pixel = stashCtx.getImageData(x, y, 1, 1).data;
-            const r = pixel[0], g = pixel[1], b = pixel[2];
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            
-            if (brightness > 35 && brightness < 235) {
-                let isTooSimilar = false;
-                for (let color of detectedColors) {
-                    if (Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2)) < 100) { isTooSimilar = true; break; }
-                }
-                if (!isTooSimilar) {
-                    detectedColors.push({r, g, b});
-                    createColorMarker(stashMarkersContainer, stashColorPicker, 'stash-color-code', (x / stashCanvas.width) * 100, (y / stashCanvas.height) * 100, rgbToHex(r, g, b));
-                }
-            }
-        }
-    }
-}
-
-// Общая утилита для маркеров и hex
 function rgbToHex(r, g, b) { return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
 
 function createColorMarker(container, inputElement, codeInputId, percentX, percentY, hex) {
@@ -268,7 +200,6 @@ function createColorMarker(container, inputElement, codeInputId, percentX, perce
     container.appendChild(marker);
 }
 
-
 // --- БД СКЛАД НИТЕЙ ---
 async function loadStashToLocals() {
     allStashThreads = [];
@@ -280,14 +211,6 @@ async function loadStashToLocals() {
 }
 
 window.openStashModal = function() {
-    // Сброс UI пипетки склада
-    document.getElementById('stash-photo-for-color').value = '';
-    const span = document.getElementById('stash-photo-for-color').nextElementSibling;
-    if(span) span.innerHTML = `<i class="ph ph-camera"></i> Загрузить фото катушек...`;
-    document.getElementById('stash-canvas-wrapper').style.display = 'none';
-    document.getElementById('stash-markers-container').innerHTML = '';
-    isStashImageLoadedForCanvas = false;
-
     window.openModal('stash-modal');
     loadStashToModal();
 }
@@ -298,7 +221,7 @@ window.addThreadToStash = async function() {
     if(!code) return alert("Введите код нити!");
 
     const btn = event.target;
-    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i>";
+    btn.innerHTML = "<i class='ph-fill ph-spinner-gap ph-spin'></i>";
     
     try {
         await addDoc(collection(db, "stash"), { hex, code, addedAt: new Date() });
@@ -306,7 +229,7 @@ window.addThreadToStash = async function() {
         await loadStashToLocals();
         loadStashToModal(); 
     } catch (e) { console.error(e); }
-    btn.innerHTML = '<i class="ph ph-plus"></i>';
+    btn.innerHTML = '<i class="ph-bold ph-plus"></i>';
 }
 
 async function loadStashToModal() {
@@ -316,7 +239,7 @@ async function loadStashToModal() {
     allStashThreads.forEach((thread) => {
         list.innerHTML += `<div class="color-badge" onclick="deleteStashThread('${thread.id}')" style="cursor:pointer" title="Удалить со склада"><div class="color-circle" style="background:${thread.hex}"></div> ${thread.code}</div>`;
     });
-    if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%; text-align:center;">Склад пуст.</p>';
+    if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%; text-align:center;">Твой склад пока пуст, красавчик.</p>';
     document.getElementById('stash-loading').style.display = 'none';
 }
 
@@ -329,7 +252,7 @@ window.deleteStashThread = async function(id) {
 
 function fillStashSelect() {
     const select = document.getElementById('stash-select');
-    select.innerHTML = '<option value="">Выбрать из Склада...</option>';
+    select.innerHTML = '<option value="">Взять со Склада...</option>';
     allStashThreads.forEach(thread => {
         select.innerHTML += `<option value="${thread.id}" style="color: black; background-color: ${thread.hex};">${thread.code}</option>`;
     });
@@ -370,10 +293,10 @@ window.savePrint = async function(event) {
     const oldCoverUrl = document.getElementById('cover-file-name').getAttribute('data-url');
     const oldCoverPath = document.getElementById('cover-file-name').getAttribute('data-path');
     
-    if (!coverInput.files[0] && !oldCoverUrl) return alert("Загрузи обложку дизайна!");
+    if (!coverInput.files[0] && !oldCoverUrl) return alert("Загрузи обложку, золотце!");
 
     const btn = event.target;
-    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i> Сохраняем..."; btn.disabled = true;
+    btn.innerHTML = "<i class='ph-fill ph-spinner-gap ph-spin'></i> Творим магию..."; btn.disabled = true;
 
     try {
         const printId = editingId ? editingId : Date.now().toString();
@@ -414,14 +337,14 @@ window.savePrint = async function(event) {
         else { dataToSave.createdAt = new Date(); await addDoc(collection(db, "prints"), dataToSave); }
 
         window.closeModal('add-modal'); loadPrints(); 
-    } catch (error) { console.error(error); alert("Произошла ошибка! Проверь консоль."); } 
-    finally { btn.innerHTML = "Сохранить в базу"; btn.disabled = false; }
+    } catch (error) { console.error(error); alert("Ой, что-то пошло не так!"); } 
+    finally { btn.innerHTML = "<i class='ph-fill ph-floppy-disk'></i> Сохранить в базу"; btn.disabled = false; }
 }
 
 // --- ЗАГРУЗКА ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
-    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
+    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph-fill ph-spinner-gap ph-spin" style="font-size: 3rem; color: var(--hk-hot-pink);"></i></p>';
     
     try {
         const querySnapshot = await getDocs(collection(db, "prints"));
@@ -434,7 +357,7 @@ async function loadPrints() {
             tile.innerHTML = `<img src="${print.coverUrl}">`; grid.appendChild(tile);
         });
 
-        if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Дизайнов пока нет.</p>';
+        if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; font-size: 1.2rem; font-weight: 600;">Тут пока пусто. Добавь первый шедевр!</p>';
     } catch (error) { console.error(error); grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>'; }
 }
 
@@ -442,14 +365,14 @@ window.showViewModal = function(id) {
     const print = allPrints.find(p => p.id === id); if(!print) return;
     document.getElementById('view-image').src = print.coverUrl;
     document.getElementById('view-colors').innerHTML = (print.colors || []).map(c => `<div class="color-badge"><div class="color-circle" style="background:${c.hex}"></div> ${c.code}</div>`).join(' ');
-    document.getElementById('view-files').innerHTML = (print.files || []).map(f => `<div class="file-view-item"><div class="file-view-info"><strong>${f.hoop}</strong> <span>Размер: ${f.size}</span></div><a href="${f.url}" target="_blank" download class="btn-download"><i class="ph ph-download-simple"></i> .jef</a></div>`).join('');
+    document.getElementById('view-files').innerHTML = (print.files || []).map(f => `<div class="file-view-item"><div class="file-view-info"><strong>${f.hoop}</strong> <span>Размер: ${f.size}</span></div><a href="${f.url}" target="_blank" download class="btn-download"><i class="ph-fill ph-download-simple"></i> .jef</a></div>`).join('');
     document.getElementById('btn-edit-print').onclick = () => editPrint(id);
     document.getElementById('btn-delete-print').onclick = () => deletePrint(id);
     window.openModal('view-modal');
 }
 
 window.deletePrint = async function(id) {
-    if (confirm("Удалить дизайн? Восстановить будет невозможно.")) {
+    if (confirm("Точно удалить этот шедевр?")) {
         const print = allPrints.find(p => p.id === id); if(!print) return;
         try {
             if (print.coverPath) await deleteOldFileFromStorage(print.coverPath);
@@ -465,9 +388,9 @@ window.deletePrint = async function(id) {
 
 window.editPrint = function(id) {
     editingId = id; const print = allPrints.find(p => p.id === id);
-    document.getElementById('modal-title').innerText = "Редактирование дизайна";
-    document.getElementById('save-btn').innerText = "Обновить дизайн";
-    document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Оставить старую обложку`;
+    document.getElementById('modal-title').innerHTML = "Редактирование <i class='ph-fill ph-pencil-simple'></i>";
+    document.getElementById('save-btn').innerHTML = "<i class='ph-fill ph-check-circle'></i> Обновить дизайн";
+    document.getElementById('cover-file-name').innerHTML = `Оставить старую обложку`;
     document.getElementById('cover-file-name').setAttribute('data-url', print.coverUrl);
     document.getElementById('cover-file-name').setAttribute('data-path', print.coverPath || '');
     
