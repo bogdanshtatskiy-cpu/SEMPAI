@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // !!! ВСТАВЬ СВОИ ДАННЫЕ СЮДА !!!
 const firebaseConfig = {
@@ -17,9 +17,21 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 let currentColors = [];
+let currentJefFiles = []; // Сохраняем ссылки для удаления старых JEF файлов при обновлении
 let allPrints = []; 
 let editingId = null; 
 let isImageLoadedForCanvas = false;
+let allStashThreads = []; // Локальный склад
+
+// --- УПРАВЛЕНИЕ ОКНАМИ (С БЛОКИРОВКОЙ СКРОЛЛА) ---
+window.openModal = (id) => {
+    document.getElementById(id).style.display = 'flex';
+    document.body.classList.add('no-scroll'); // Блокируем фон
+};
+window.closeModal = (id) => {
+    document.getElementById(id).style.display = 'none';
+    document.body.classList.remove('no-scroll'); // Разблокируем фон
+};
 
 // --- ТЕМНАЯ ТЕМА ---
 function applyTheme(isDark) {
@@ -38,6 +50,7 @@ window.toggleTheme = function() {
     applyTheme(!isDarkNow);
 }
 
+// Инициализация темы при загрузке
 if (localStorage.getItem('hk_vault_theme') === 'true') applyTheme(true);
 
 // --- АВТОРИЗАЦИЯ И ШУТКА ---
@@ -45,6 +58,7 @@ if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
     loadPrints();
+    loadStashToLocals(); // Автозагрузка склада
 }
 
 window.checkPassword = async function() {
@@ -58,20 +72,22 @@ window.checkPassword = async function() {
             document.getElementById('auth-screen').style.display = 'none';
             window.openModal('joke-modal');
         } else {
-            alert("Неверный пароль 💅");
+            alert("Неверный ключ доступа 💅");
         }
     } catch (e) {
         console.error(e);
-        alert("Ошибка подключения.");
+        alert("Ошибка подключения. Создан ли документ settings/auth в базе?");
     }
     btn.innerHTML = "Войти";
 }
 
+// Кнопка "Да" в шуточном окне (Музыка ВЫРЕЗАНА)
 window.confirmJoke = function() {
     localStorage.setItem('hk_vault_auth', 'true');
     window.closeModal('joke-modal');
     document.getElementById('app-container').style.display = 'block';
-    loadPrints(); 
+    loadPrints();
+    loadStashToLocals(); // Автозагрузка склада
 }
 
 window.logout = function() {
@@ -79,34 +95,30 @@ window.logout = function() {
     location.reload();
 }
 
-// --- УПРАВЛЕНИЕ ОКНАМИ ---
-window.openModal = (id) => {
-    document.getElementById(id).style.display = 'flex';
-    document.body.classList.add('no-scroll'); 
-};
-window.closeModal = (id) => {
-    document.getElementById(id).style.display = 'none';
-    document.body.classList.remove('no-scroll'); 
-};
-
 window.openAddModal = function() {
     editingId = null;
     document.getElementById('modal-title').innerText = "Новый дизайн вышивки";
     document.getElementById('save-btn').innerText = "Сохранить в базу";
     
     currentColors = [];
+    currentJefFiles = [];
     renderColors();
     document.getElementById('files-container').innerHTML = '';
     
     document.getElementById('cover-image').value = '';
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Выберите изображение...`;
     document.getElementById('cover-file-name').removeAttribute('data-url'); 
+    document.getElementById('cover-file-name').removeAttribute('data-path'); 
     
+    // Сброс зоны определения цветов
     document.getElementById('markers-container').innerHTML = '';
+    document.getElementById('photo-for-color').value = '';
     document.getElementById('canvas-wrapper').style.display = 'none';
     isImageLoadedForCanvas = false;
     
-    window.addFileRow(); 
+    fillStashSelect(); // Обновить Stash select
+
+    window.addJefRow(); 
     window.openModal('add-modal');
 }
 
@@ -119,7 +131,8 @@ window.updateFileName = function(input) {
     }
 }
 
-window.addFileRow = function(existingData = null) {
+// Глобальная Jef row функция (Grid)
+window.addJefRow = function(existingData = null) {
     const container = document.getElementById('files-container');
     const row = document.createElement('div');
     row.className = 'file-row';
@@ -129,11 +142,11 @@ window.addFileRow = function(existingData = null) {
     let dataUrlAttr = "";
     if(existingData) {
         fileNameHtml = `<i class="ph ph-file-jef"></i> Старый: ${existingData.name}`;
-        dataUrlAttr = `data-url="${existingData.url}" data-name="${existingData.name}"`;
+        dataUrlAttr = `data-url="${existingData.url}" data-path="${existingData.path}" data-name="${existingData.name}"`;
     }
 
     row.innerHTML = `
-        <select class="hoop-size">
+        <select class="hoop-size" style="text-align: center;">
             <option value="RE36b (200x360)">RE36b (200x360)</option>
             <option value="SQ20b (200x200)">SQ20b (200x200)</option>
             <option value="RE20b (140x200)">RE20b (140x200)</option>
@@ -141,38 +154,54 @@ window.addFileRow = function(existingData = null) {
             <option value="HH10b (100x90)">HH10b (100x90)</option>
             <option value="RE10b (100x40)">RE10b (100x40)</option>
         </select>
-        <input type="text" class="emb-size" placeholder="Размер" value="${existingData ? existingData.size : ''}">
+        <input type="text" class="emb-size" placeholder="Размер (напр. 15x18 см)" value="${existingData ? existingData.size : ''}" style="text-align: center;">
         
         <label class="custom-file-upload">
             <input type="file" id="${uniqueId}" class="jef-file" accept=".jef" onchange="updateFileName(this)">
-            <span class="file-name" ${dataUrlAttr}>${fileNameHtml}</span>
+            <span class="file-name" ${dataUrlAttr} style="text-align: center; width: 100%;">${fileNameHtml}</span>
         </label>
-        <button class="btn-danger" style="height:46px" title="Удалить" onclick="this.parentElement.remove()"><i class="ph ph-trash"></i></button>
+        <button class="btn-danger" style="height:46px; text-align: center; justify-content: center;" title="Удалить" onclick="this.parentElement.remove()"><i class="ph ph-trash"></i></button>
     `;
     if(existingData) row.querySelector('.hoop-size').value = existingData.hoop;
     container.appendChild(row);
 }
 
-// --- === УМНАЯ ПИПЕТКА И АВТООПРЕДЕЛЕНИЕ === ---
+// --- === УМНАЯ ПИПЕТКА И БД АВТООПРЕДЕЛЕНИЕ (Разброс цвета 100) === ---
 const canvas = document.getElementById('color-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const markersContainer = document.getElementById('markers-container');
 const manualColorInput = document.getElementById('manual-color');
 
+// Ручной клик по картинке (выбор любого цвета)
+canvas.addEventListener('click', (e) => {
+    if (!isImageLoadedForCanvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+    
+    manualColorInput.value = hex; 
+    document.getElementById('color-code').focus(); // Фокус на ввод текста
+});
+
 document.getElementById('photo-for-color').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(!file) return;
     
-    markersContainer.innerHTML = ''; // Очистка старых маркеров
-    
+    markersContainer.innerHTML = ''; 
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
             document.getElementById('canvas-wrapper').style.display = 'block';
             
-            // Задаем внутреннее разрешение канваса (для точности расчетов)
-            const maxWidth = 600; 
+            // Жесткое внутреннее разрешение (для точности расчетов)
+            const maxWidth = 800; 
             const scale = Math.min(maxWidth / img.width, 1);
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
@@ -184,45 +213,31 @@ document.getElementById('photo-for-color').addEventListener('change', (e) => {
     reader.readAsDataURL(file);
 });
 
-// Ручной клик по картинке (выбор любого цвета)
-canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
-    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
-    
-    manualColorInput.value = hex; // Закидываем в палитру выбора
-    document.getElementById('color-code').focus(); // Фокус на ввод текста
-});
-
-// Кнопка Автоопределения
+// Кнопка Автоопределения (Разброс цвета 100)
 window.autoDetectColors = function() {
     if (!isImageLoadedForCanvas) return alert("Сначала загрузи фото ниток!");
     markersContainer.innerHTML = '';
     
-    const step = Math.floor(canvas.width / 15); // Сетка сканирования
+    const step = Math.floor(canvas.width / 20); // Сетка сканирования
     let detectedColors = [];
 
     for (let x = step; x < canvas.width; x += step) {
         for (let y = step; y < canvas.height; y += step) {
+            if(detectedColors.length >= 12) break; // Максимум 12 цветов
+
             const pixel = ctx.getImageData(x, y, 1, 1).data;
             const r = pixel[0], g = pixel[1], b = pixel[2];
             
             // Игнорируем черный и белый фон
             const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            if (brightness > 40 && brightness < 230) {
+            if (brightness > 35 && brightness < 235) {
                 
-                // Проверка на схожесть с уже найденными цветами (Умный разброс)
+                // Проверка на схожесть с УМНЫМ БОЛЬШИМ разбросом (100)
                 let isTooSimilar = false;
                 for (let color of detectedColors) {
                     // Евклидово расстояние цветов
                     const dist = Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2));
-                    if (dist < 70) { // 70 - хороший разброс, чтобы не путать оттенки
+                    if (dist < 100) { // 100 - БОЛЬШОЙ разброс, чтобы не путать оттенки
                         isTooSimilar = true; 
                         break;
                     }
@@ -231,19 +246,15 @@ window.autoDetectColors = function() {
                 if (!isTooSimilar) {
                     detectedColors.push({r, g, b});
                     const hex = rgbToHex(r, g, b);
-                    // Передаем координаты в процентах для идеальной адаптивности!
+                    // Координаты в процентах для идеальной адаптивности
                     const percentX = (x / canvas.width) * 100;
                     const percentY = (y / canvas.height) * 100;
                     createColorMarker(percentX, percentY, hex);
-                    
-                    if(detectedColors.length >= 10) break; // Максимум 10 цветов
                 }
             }
         }
-        if(detectedColors.length >= 10) break;
+        if(detectedColors.length >= 12) break;
     }
-    
-    if(detectedColors.length === 0) alert("Не удалось четко определить цвета. Кликните по фото вручную.");
 }
 
 function rgbToHex(r, g, b) {
@@ -264,10 +275,93 @@ function createColorMarker(percentX, percentY, hex) {
     markersContainer.appendChild(marker);
 }
 
-// Добавление в список
-window.addColor = function() {
+// --- === БД СКЛАД НИТЕЙ === ---
+async function loadStashToLocals() {
+    allStashThreads = [];
+    const q = query(collection(db, "stash"), orderBy("code", "asc"));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        allStashThreads.push({ id: doc.id, hex: data.hex, code: data.code });
+    });
+}
+
+// Открыть модалку склада
+window.openStashModal = function() {
+    window.openModal('stash-modal');
+    loadStashToModal();
+}
+
+window.addThreadToStash = async function() {
+    const hex = document.getElementById('stash-color-picker').value;
+    const code = document.getElementById('stash-color-code').value.trim();
+    if(!code) return alert("Введите код нити!");
+
+    const btn = event.target;
+    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i>";
+    
+    try {
+        await addDoc(collection(db, "stash"), { hex, code, addedAt: new Date() });
+        document.getElementById('stash-color-code').value = '';
+        await loadStashToLocals(); // Обновить локальный склад
+        loadStashToModal(); // Обновить модалку
+    } catch (e) { console.error(e); }
+    btn.innerHTML = '<i class="ph ph-plus"></i> Добавить';
+}
+
+async function loadStashToModal() {
+    const list = document.getElementById('stash-list');
+    document.getElementById('stash-loading').style.display = 'block';
+    list.innerHTML = '';
+    
+    try {
+        // Мы уже загрузили склад в авто-входе/добавлении, просто выводим
+        allStashThreads.forEach((thread) => {
+            list.innerHTML += `
+                <div class="color-badge" onclick="deleteStashThread('${thread.id}')" style="cursor:pointer" title="Удалить со склада">
+                    <div class="color-circle" style="background:${thread.hex}"></div> ${thread.code}
+                </div>
+            `;
+        });
+        if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%;">Склад пуст.</p>';
+    } catch (e) { console.error(e); }
+    document.getElementById('stash-loading').style.display = 'none';
+}
+
+window.deleteStashThread = async function(id) {
+    if(confirm("Удалить нить со склада?")) {
+        await deleteDoc(doc(db, "stash", id));
+        await loadStashToLocals();
+        loadStashToModal();
+    }
+}
+
+// --- БД ВЫБОР ИЗ СКЛАДА (Модалка дизайна) ---
+function fillStashSelect() {
+    const select = document.getElementById('stash-select');
+    select.innerHTML = '<option value="">Выбрать из Склада...</option>';
+    allStashThreads.forEach(thread => {
+        select.innerHTML += `<option value="${thread.id}" style="color: black; background-color: ${thread.hex};">${thread.code}</option>`;
+    });
+}
+
+// Листенер для автозаполнения полей из склада
+document.getElementById('stash-select').addEventListener('change', (e) => {
+    const threadId = e.target.value;
+    if (!threadId) return;
+    
+    const thread = allStashThreads.find(t => t.id === threadId);
+    if (!thread) return;
+    
+    manualColorInput.value = thread.hex;
+    document.getElementById('color-code').value = thread.code;
+    e.target.value = ''; // Сброс селекта
+});
+
+// Добавление в палитру дизайна
+window.addDesignColor = function() {
     const hex = manualColorInput.value;
-    const code = document.getElementById('color-code').value || 'Без кода';
+    const code = document.getElementById('color-code').value.trim() || 'Без кода';
     currentColors.push({ hex, code });
     renderColors();
     document.getElementById('color-code').value = '';
@@ -287,64 +381,24 @@ window.removeColor = function(index) {
     renderColors();
 }
 
-// --- === СКЛАД НИТЕЙ === ---
-window.openStashModal = function() {
-    window.openModal('stash-modal');
-    loadStash();
-}
-
-window.addThreadToStash = async function() {
-    const hex = document.getElementById('stash-color-picker').value;
-    const code = document.getElementById('stash-color-code').value;
-    if(!code) return alert("Введите код нити!");
-
-    const btn = event.target;
-    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i>";
-    
+// === УДАЛЕНИЕ СТАРОЙ ОБЛОЖКИ/JEF ПРИ ОБНОВЛЕНИИ ===
+async function deleteOldFileFromStorage(path) {
+    if (!path) return;
     try {
-        await addDoc(collection(db, "stash"), { hex, code, addedAt: new Date() });
-        document.getElementById('stash-color-code').value = '';
-        loadStash();
-    } catch (e) {
-        console.error(e); alert("Ошибка!");
-    }
-    btn.innerHTML = '<i class="ph ph-plus"></i> Добавить';
-}
-
-async function loadStash() {
-    const list = document.getElementById('stash-list');
-    document.getElementById('stash-loading').style.display = 'block';
-    list.innerHTML = '';
-    
-    try {
-        const querySnapshot = await getDocs(collection(db, "stash"));
-        querySnapshot.forEach((document) => {
-            const data = document.data();
-            list.innerHTML += `
-                <div class="color-badge" onclick="deleteStashThread('${document.id}')" style="cursor:pointer" title="Удалить со склада">
-                    <div class="color-circle" style="background:${data.hex}"></div> ${data.code}
-                </div>
-            `;
-        });
-        if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%;">Склад пуст.</p>';
-    } catch (e) {
-        console.error(e);
-    }
-    document.getElementById('stash-loading').style.display = 'none';
-}
-
-window.deleteStashThread = async function(id) {
-    if(confirm("Удалить нить со склада?")) {
-        await deleteDoc(doc(db, "stash", id));
-        loadStash();
+        const fileRef = ref(storage, path);
+        await deleteObject(fileRef);
+    } catch (error) {
+        if (error.code !== 'storage/object-not-found') {
+            console.error('Ошибка удаления файла:', error);
+        }
     }
 }
 
-
-// --- СОХРАНЕНИЕ ПРИНТОВ ---
+// --- СОХРАНЕНИЕ ПРИНТОВ (БД Редактирование, УДАЛЕНИЕ СТАРЫХ JEF ФАЙЛОВ) ---
 window.savePrint = async function(event) {
     const coverInput = document.getElementById('cover-image');
     const oldCoverUrl = document.getElementById('cover-file-name').getAttribute('data-url');
+    const oldCoverPath = document.getElementById('cover-file-name').getAttribute('data-path');
     
     if (!coverInput.files[0] && !oldCoverUrl) return alert("Загрузи обложку дизайна!");
 
@@ -355,48 +409,75 @@ window.savePrint = async function(event) {
     try {
         const printId = editingId ? editingId : Date.now().toString();
         
+        // 1. Обложка
         let coverUrl = oldCoverUrl;
+        let newCoverPath = oldCoverPath;
         if (coverInput.files[0]) {
             const coverRef = ref(storage, `covers/${printId}_${coverInput.files[0].name}`);
-            await uploadBytes(coverRef, coverInput.files[0]);
-            coverUrl = await getDownloadURL(coverRef);
+            const uploadTask = await uploadBytesResumable(coverRef, coverInput.files[0]);
+            coverUrl = await getDownloadURL(coverTask.ref);
+            newCoverPath = coverRef.fullPath;
+            
+            // Если мы редактируем и загрузили новую обложку — удаляем старую
+            if (editingId && oldCoverPath) {
+                await deleteOldFileFromStorage(oldCoverPath);
+            }
         }
 
+        // 2. Файлы .jef
         const fileRows = document.querySelectorAll('.file-row');
         let filesData = [];
+        let newJefPaths = [];
         
         for (let row of fileRows) {
             const jefInput = row.querySelector('.jef-file');
             const spanData = row.querySelector('.file-name');
             const oldUrl = spanData.getAttribute('data-url');
+            const oldPath = spanData.getAttribute('data-path');
             const oldName = spanData.getAttribute('data-name');
             
-            if (jefInput.files[0]) { 
+            if (jefInput.files[0]) { // Новый файл
                 const file = jefInput.files[0];
                 const fileRef = ref(storage, `jef_files/${printId}_${file.name}`);
-                await uploadBytes(fileRef, file);
+                await uploadBytesResumable(fileRef, file);
                 const fileUrl = await getDownloadURL(fileRef);
-                filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value || 'Не указан', name: file.name, url: fileUrl });
-            } else if (oldUrl) { 
-                filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value || 'Не указан', name: oldName, url: oldUrl });
+                
+                filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: file.name, url: fileUrl, path: fileRef.fullPath });
+                newJefPaths.push(fileRef.fullPath); // Сохраняем путь для сравнения
+            } else if (oldUrl) { // Оставляем старый файл
+                filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: oldName, url: oldUrl, path: oldPath });
+                newJefPaths.push(oldPath); // Сохраняем путь
             }
         }
 
-        const dataToSave = { coverUrl, colors: currentColors, files: filesData, updatedAt: new Date() };
+        // Если мы редактируем — удаляем JEF файлы, которые были удалены из списка
+        if (editingId) {
+            for (let oldPath of currentJefFiles) {
+                if (!newJefPaths.includes(oldPath)) {
+                    await deleteOldFileFromStorage(oldPath);
+                }
+            }
+        }
 
-        if (editingId) await updateDoc(doc(db, "prints", editingId), dataToSave);
-        else await addDoc(collection(db, "prints"), dataToSave);
+        const dataToSave = { coverUrl, coverPath: newCoverPath, colors: currentColors, files: filesData, updatedAt: new Date() };
+
+        if (editingId) {
+            await updateDoc(doc(db, "prints", editingId), dataToSave);
+        } else {
+            dataToSave.createdAt = new Date(); // createdAt только для новых
+            await addDoc(collection(db, "prints"), dataToSave);
+        }
 
         window.closeModal('add-modal');
         loadPrints(); 
     } catch (error) {
-        console.error(error); alert("Произошла ошибка!");
+        console.error(error); alert("Произошла ошибка! Проверь консоль.");
     } finally {
         btn.innerHTML = "Сохранить в базу"; btn.disabled = false;
     }
 }
 
-// --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ ---
+// --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ (2 колонки, ТОЛЬКО КАРТИНКИ) ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
@@ -413,7 +494,7 @@ async function loadPrints() {
             
             const tile = window.document.createElement('div');
             tile.className = 'print-tile';
-            tile.onclick = () => showViewModal(print.id); 
+            tile.onclick = () => showViewModal(print.id); // Клик открывает модалку просмотра
             tile.innerHTML = `<img src="${print.coverUrl}">`;
             grid.appendChild(tile);
         });
@@ -424,7 +505,7 @@ async function loadPrints() {
     }
 }
 
-// --- ПРОСМОТР, РЕДАКТИРОВАНИЕ, УДАЛЕНИЕ ---
+// --- ПРОСМОТР ---
 window.showViewModal = function(id) {
     const print = allPrints.find(p => p.id === id);
     if(!print) return;
@@ -448,32 +529,61 @@ window.showViewModal = function(id) {
     window.openModal('view-modal');
 }
 
+// === БД УДАЛЕНИЕ ДИЗАЙНА (УДАЛЕНИЕ ФАЙЛОВ ИЗ STORAGE) ===
 window.deletePrint = async function(id) {
     if (confirm("Удалить дизайн? Восстановить будет невозможно.")) {
+        const print = allPrints.find(p => p.id === id);
+        if(!print) return alert("Дизайн не найден!");
+
         try {
+            // Удаляем обложку
+            await deleteOldFileFromStorage(print.coverPath);
+            
+            // Удаляем JEF файлы
+            if (print.files) {
+                for (let f of print.files) {
+                    await deleteOldFileFromStorage(f.path);
+                }
+            }
+            
+            // Удаляем документ Firestore
             await deleteDoc(doc(db, "prints", id));
+            
             window.closeModal('view-modal');
             loadPrints(); 
         } catch (error) { console.error(error); alert("Не удалось удалить."); }
     }
 }
 
+// --- БД РЕДАКТИРОВАНИЕ (Автозаполнение) ---
 window.editPrint = function(id) {
     editingId = id;
     const print = allPrints.find(p => p.id === id);
     
     document.getElementById('modal-title').innerText = "Редактирование дизайна";
+    document.getElementById('modal-title').style.textAlign = 'center';
     document.getElementById('save-btn').innerText = "Обновить дизайн";
+    document.getElementById('save-btn').style.textAlign = 'center';
     
+    // Подгружаем обложку
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Оставить старую обложку`;
     document.getElementById('cover-file-name').setAttribute('data-url', print.coverUrl);
+    document.getElementById('cover-file-name').setAttribute('data-path', print.coverPath);
     
+    // Подгружаем цвета
     currentColors = [...(print.colors || [])];
     renderColors();
     
+    // Подгружаем файлы JEF (с сохранением путей)
     const filesContainer = document.getElementById('files-container');
     filesContainer.innerHTML = '';
-    (print.files || []).forEach(f => window.addFileRow(f));
+    currentJefFiles = []; // Сброс старых путей JEF
+    (print.files || []).forEach(f => {
+        window.addJefRow(f);
+        if(f.path) currentJefFiles.push(f.path); // Сохраняем путь для сравнения
+    });
+
+    fillStashSelect(); // Обновить Stash select
 
     window.closeModal('view-modal');
     window.openModal('add-modal');
