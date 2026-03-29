@@ -77,7 +77,7 @@ window.openAddModal = function() {
     document.getElementById('markers-container').innerHTML = '';
     document.getElementById('photo-for-color').value = '';
     const spanC = document.getElementById('photo-for-color').nextElementSibling;
-    if(spanC) spanC.innerHTML = `<i class="ph-fill ph-camera"></i> Загрузить фото ниток...`;
+    if(spanC) spanC.innerHTML = `<i class="ph-fill ph-camera"></i> Фото ниток...`;
     document.getElementById('canvas-wrapper').style.display = 'none';
     isImageLoadedForCanvas = false;
     
@@ -100,7 +100,7 @@ window.addJefRow = function(existingData = null) {
     let fileNameHtml = `<i class="ph-fill ph-file-arrow-up"></i> Загрузить .jef`;
     let dataUrlAttr = "";
     if(existingData) {
-        fileNameHtml = `<i class="ph-fill ph-file-jef"></i> Оставить старый: ${existingData.name}`;
+        fileNameHtml = `<i class="ph-fill ph-file-jef"></i> Старый: ${existingData.name}`;
         dataUrlAttr = `data-url="${existingData.url}" data-path="${existingData.path}" data-name="${existingData.name}"`;
     }
 
@@ -113,12 +113,12 @@ window.addJefRow = function(existingData = null) {
             <option value="HH10b (100x90)">HH10b (100x90)</option>
             <option value="RE10b (100x40)">RE10b (100x40)</option>
         </select>
-        <input type="text" class="emb-size" placeholder="Размер (напр. 15x18 см)" value="${existingData ? existingData.size : ''}">
+        <input type="text" class="emb-size" placeholder="Размер (15x18 см)" value="${existingData ? existingData.size : ''}">
         <label class="custom-file-upload">
             <input type="file" id="${uniqueId}" class="jef-file" accept=".jef" onchange="updateFileName(this)">
             <span class="file-name" ${dataUrlAttr}>${fileNameHtml}</span>
         </label>
-        <button class="btn-danger" style="height:50px; display:flex;" title="Удалить" onclick="this.parentElement.remove()"><i class="ph-bold ph-trash" style="font-size: 1.2rem;"></i></button>
+        <button class="btn-danger" style="display:flex;" title="Удалить" onclick="this.parentElement.remove()"><i class="ph-bold ph-trash" style="font-size: 1.4rem;"></i></button>
     `;
     if(existingData) row.querySelector('.hoop-size').value = existingData.hoop;
     container.appendChild(row);
@@ -239,7 +239,7 @@ async function loadStashToModal() {
     allStashThreads.forEach((thread) => {
         list.innerHTML += `<div class="color-badge" onclick="deleteStashThread('${thread.id}')" style="cursor:pointer" title="Удалить со склада"><div class="color-circle" style="background:${thread.hex}"></div> ${thread.code}</div>`;
     });
-    if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%; text-align:center;">Твой склад пока пуст, красавчик.</p>';
+    if(list.innerHTML === '') list.innerHTML = '<p style="color:var(--hk-hot-pink); width:100%; text-align:center; font-weight: 700;">Твой склад пока пуст, красавчик.</p>';
     document.getElementById('stash-loading').style.display = 'none';
 }
 
@@ -357,7 +357,7 @@ async function loadPrints() {
             tile.innerHTML = `<img src="${print.coverUrl}">`; grid.appendChild(tile);
         });
 
-        if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; font-size: 1.2rem; font-weight: 600;">Тут пока пусто. Добавь первый шедевр!</p>';
+        if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; font-size: 1.2rem; font-weight: 800; color: var(--hk-hot-pink);">Тут пока пусто. Добавь первый шедевр!</p>';
     } catch (error) { console.error(error); grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>'; }
 }
 
