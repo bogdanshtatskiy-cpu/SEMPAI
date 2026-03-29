@@ -31,13 +31,31 @@
                 <span class="subtitle">База для Janome 550e LE</span>
             </div>
             <div class="header-actions">
-                <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Добавить</button>
+                <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Дизайн</button>
+                <button class="btn-secondary" onclick="openStashModal()" title="Склад нитей"><i class="ph ph-yarn"></i> Склад</button>
                 <button class="btn-icon" onclick="toggleTheme()" title="Сменить тему"><i class="ph ph-moon" id="theme-icon"></i></button>
                 <button class="btn-icon" onclick="logout()" title="Выйти"><i class="ph ph-sign-out"></i></button>
             </div>
         </header>
 
         <main id="prints-grid" class="grid-container"></main>
+    </div>
+
+    <div id="stash-modal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <button class="close-btn" onclick="closeModal('stash-modal')"><i class="ph ph-x"></i></button>
+            <h2 style="margin-bottom: 20px;"><i class="ph-fill ph-yarn" style="color: var(--hk-hot-pink);"></i> Мой склад нитей</h2>
+            
+            <div class="color-picker-controls glass-panel-inner" style="display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center; margin-bottom: 20px;">
+                <input type="color" id="stash-color-picker" value="#ffb6c1">
+                <input type="text" id="stash-color-code" placeholder="Код нити (напр. Madeira 1001)" style="margin-bottom: 0;">
+                <button class="btn-primary" onclick="addThreadToStash()"><i class="ph ph-plus"></i> Добавить</button>
+            </div>
+
+            <div id="stash-loading" style="text-align: center; display: none;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></div>
+            <div id="stash-list" class="colors-tags-container">
+                </div>
+        </div>
     </div>
 
     <div id="add-modal" class="modal-overlay">
@@ -67,21 +85,26 @@
             </div>
 
             <div class="form-group color-section">
-                <label>Палитра цветов нитей (Автоопределение)</label>
-                <div class="eyedropper-box glass-panel-inner" id="detection-zone" style="position: relative;">
-                    <p style="margin-bottom: 10px; font-size: 0.85rem;">1. Загрузите фото катушек:</p>
-                    <label class="custom-file-upload full-width">
-                        <input type="file" id="photo-for-color" accept="image/*" onchange="updateFileName(this)">
-                        <span class="file-name"><i class="ph ph-camera"></i> Выбрать фото катушек...</span>
-                    </label>
-                    <div id="markers-container" style="position: absolute; inset: 0; pointer-events: none;"></div>
-                    <canvas id="color-canvas" style="display:none; max-width: 100%; border-radius: 12px; margin-top: 10px;"></canvas>
+                <label>Палитра цветов (Кликай по фото для выбора)</label>
+                <div class="eyedropper-box glass-panel-inner">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <label class="custom-file-upload" style="flex: 1;">
+                            <input type="file" id="photo-for-color" accept="image/*" onchange="updateFileName(this)">
+                            <span class="file-name"><i class="ph ph-camera"></i> Загрузить фото ниток...</span>
+                        </label>
+                        <button class="btn-primary" onclick="autoDetectColors()" title="Умное автоопределение"><i class="ph ph-magic-wand"></i> Авто</button>
+                    </div>
+
+                    <div id="canvas-wrapper" style="position: relative; width: 100%; display: none; border-radius: 12px; overflow: hidden; margin-top: 10px;">
+                        <canvas id="color-canvas" style="width: 100%; display: block; cursor: crosshair;"></canvas>
+                        <div id="markers-container"></div>
+                    </div>
                 </div>
                 
                 <div class="color-picker-controls" style="margin-top: 15px; display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center;">
                     <input type="color" id="manual-color" value="#ffb6c1" title="Ручной выбор цвета">
                     <input type="text" id="color-code" placeholder="Код нити (напр. Madeira 1001)" style="margin-bottom: 0;">
-                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> Добавить</button>
+                    <button class="btn-primary" onclick="addColor()"><i class="ph ph-palette"></i> В палитру</button>
                 </div>
 
                 <div id="colors-container" class="colors-tags-container"></div>
