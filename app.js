@@ -4,12 +4,12 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } f
 
 // !!! ВСТАВЬ СВОИ ДАННЫЕ СЮДА !!!
 const firebaseConfig = {
-  apiKey: "AIzaSyDhElZXZz6wdjwR6DRIIqyfwfrCdRK-JZc",
-  authDomain: "mc550e.firebaseapp.com",
-  projectId: "mc550e",
-  storageBucket: "mc550e.firebasestorage.app",
-  messagingSenderId: "772399307357",
-  appId: "1:772399307357:web:b4adec6deed9e1ab96cbb4"
+    apiKey: "ТВОЙ_API_KEY",
+    authDomain: "ТВОЙ_ПРОЕКТ.firebaseapp.com",
+    projectId: "ТВОЙ_ПРОЕКТ",
+    storageBucket: "ТВОЙ_ПРОЕКТ.appspot.com",
+    messagingSenderId: "ТВОЙ_ID",
+    appId: "ТВОЙ_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -142,7 +142,7 @@ window.addJefRow = function(existingData = null) {
     let dataUrlAttr = "";
     
     if(existingData) {
-        fileNameHtml = `<i class="ph-fill ph-file-jef"></i> Оставить старый: ${existingData.name}`;
+        fileNameHtml = `<i class="ph-fill ph-file-text"></i> Старый: ${existingData.name}`; // Исправлена иконка!
         dataUrlAttr = `data-url="${existingData.url}" data-path="${existingData.path}" data-name="${existingData.name}"`;
     }
 
@@ -353,7 +353,7 @@ window.openStashModal = function() {
     if (document.getElementById('stash-photo-for-color')) {
         document.getElementById('stash-photo-for-color').value = '';
         const span = document.getElementById('stash-photo-for-color').nextElementSibling;
-        if(span) span.innerHTML = `<i class="ph-fill ph-camera"></i> Загрузить фото катушек...`;
+        if(span) span.innerHTML = `<i class="ph-fill ph-camera"></i> Фото ниток...`;
     }
     if (document.getElementById('stash-canvas-wrapper')) {
         document.getElementById('stash-canvas-wrapper').style.display = 'none';
@@ -417,7 +417,7 @@ window.deleteStashThread = async function(id) {
 // --- ВЫБОР ИЗ СКЛАДА В ФОРМЕ ДИЗАЙНА ---
 function fillStashSelect() {
     const select = document.getElementById('stash-select');
-    select.innerHTML = '<option value="">Взять со Склада...</option>';
+    select.innerHTML = '<option value="">Из Склада...</option>';
     
     allStashThreads.forEach(thread => {
         select.innerHTML += `<option value="${thread.id}" style="color: black; background-color: ${thread.hex};">${thread.code}</option>`;
