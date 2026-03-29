@@ -19,6 +19,7 @@ const storage = getStorage(app);
 let currentColors = [];
 let allPrints = []; 
 let editingId = null; 
+let isImageLoadedForCanvas = false;
 
 // --- ТЕМНАЯ ТЕМА ---
 function applyTheme(isDark) {
@@ -70,7 +71,7 @@ window.confirmJoke = function() {
     localStorage.setItem('hk_vault_auth', 'true');
     window.closeModal('joke-modal');
     document.getElementById('app-container').style.display = 'block';
-    loadPrints(); // МУЗЫКА ВЫРЕЗАНА
+    loadPrints(); 
 }
 
 window.logout = function() {
@@ -101,9 +102,9 @@ window.openAddModal = function() {
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Выберите изображение...`;
     document.getElementById('cover-file-name').removeAttribute('data-url'); 
     
-    // Сброс зоны определения цветов
     document.getElementById('markers-container').innerHTML = '';
-    document.getElementById('color-canvas').style.display = 'none';
+    document.getElementById('canvas-wrapper').style.display = 'none';
+    isImageLoadedForCanvas = false;
     
     window.addFileRow(); 
     window.openModal('add-modal');
@@ -152,93 +153,120 @@ window.addFileRow = function(existingData = null) {
     container.appendChild(row);
 }
 
-// --- === АЛГОРИТМ РАСПОЗНАВАНИЯ ЦВЕТОВ === ---
+// --- === УМНАЯ ПИПЕТКА И АВТООПРЕДЕЛЕНИЕ === ---
 const canvas = document.getElementById('color-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const markersContainer = document.getElementById('markers-container');
+const manualColorInput = document.getElementById('manual-color');
 
 document.getElementById('photo-for-color').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(!file) return;
     
-    // Очищаем старые маркеры
-    markersContainer.innerHTML = '';
+    markersContainer.innerHTML = ''; // Очистка старых маркеров
     
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-            canvas.style.display = 'block';
-            const maxWidth = canvas.parentElement.clientWidth;
+            document.getElementById('canvas-wrapper').style.display = 'block';
+            
+            // Задаем внутреннее разрешение канваса (для точности расчетов)
+            const maxWidth = 600; 
             const scale = Math.min(maxWidth / img.width, 1);
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            // Запускаем алгоритм определения цветов
-            detectDominantColors(img, scale);
+            isImageLoadedForCanvas = true;
         }
         img.src = event.target.result;
     };
     reader.readAsDataURL(file);
 });
 
-async function detectDominantColors(img, scale) {
-    // В реальном приложении здесь был бы код кластеризации (K-means).
-    // Для простоты и производительности, мы эмулируем выбор доминирующих цветов,
-    // просто беря сетку пикселей и фильтруя их по яркости.
-    const step = Math.floor(canvas.width / 5); // 5 точек по ширине
-    let detectedCount = 0;
+// Ручной клик по картинке (выбор любого цвета)
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+    
+    manualColorInput.value = hex; // Закидываем в палитру выбора
+    document.getElementById('color-code').focus(); // Фокус на ввод текста
+});
+
+// Кнопка Автоопределения
+window.autoDetectColors = function() {
+    if (!isImageLoadedForCanvas) return alert("Сначала загрузи фото ниток!");
+    markersContainer.innerHTML = '';
+    
+    const step = Math.floor(canvas.width / 15); // Сетка сканирования
+    let detectedColors = [];
 
     for (let x = step; x < canvas.width; x += step) {
         for (let y = step; y < canvas.height; y += step) {
-            if (detectedCount >= 10) break; // Максимум 10 точек
-
             const pixel = ctx.getImageData(x, y, 1, 1).data;
-            const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+            const r = pixel[0], g = pixel[1], b = pixel[2];
             
-            // Фильтруем слишком темные или слишком белые цвета
-            const brightness = (pixel[0] * 299 + pixel[1] * 587 + pixel[2] * 114) / 1000;
-            if(brightness > 30 && brightness < 220) {
-                 createColorMarker(x, y, hex);
-                 detectedCount++;
+            // Игнорируем черный и белый фон
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            if (brightness > 40 && brightness < 230) {
+                
+                // Проверка на схожесть с уже найденными цветами (Умный разброс)
+                let isTooSimilar = false;
+                for (let color of detectedColors) {
+                    // Евклидово расстояние цветов
+                    const dist = Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2));
+                    if (dist < 70) { // 70 - хороший разброс, чтобы не путать оттенки
+                        isTooSimilar = true; 
+                        break;
+                    }
+                }
+                
+                if (!isTooSimilar) {
+                    detectedColors.push({r, g, b});
+                    const hex = rgbToHex(r, g, b);
+                    // Передаем координаты в процентах для идеальной адаптивности!
+                    const percentX = (x / canvas.width) * 100;
+                    const percentY = (y / canvas.height) * 100;
+                    createColorMarker(percentX, percentY, hex);
+                    
+                    if(detectedColors.length >= 10) break; // Максимум 10 цветов
+                }
             }
         }
+        if(detectedColors.length >= 10) break;
     }
+    
+    if(detectedColors.length === 0) alert("Не удалось четко определить цвета. Кликните по фото вручную.");
 }
 
 function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-function createColorMarker(x, y, hex) {
+function createColorMarker(percentX, percentY, hex) {
     const marker = document.createElement('div');
     marker.className = 'color-marker';
-    marker.style.left = `${x}px`;
-    marker.style.top = `${y + 10}px`; // +10 сдвиг из-за margin-top у канваса
+    marker.style.left = `${percentX}%`;
+    marker.style.top = `${percentY}%`;
     marker.style.backgroundColor = hex;
-    marker.title = `Кликни, чтобы добавить ${hex}`;
     
-    // Клик по маркеру открывает поле кода
     marker.addEventListener('click', () => {
-        promptForColorCode(hex);
+        manualColorInput.value = hex;
+        document.getElementById('color-code').focus();
     });
-    
     markersContainer.appendChild(marker);
 }
 
-function promptForColorCode(hex) {
-    const code = prompt(`Введите код нити для цвета ${hex}:`, "");
-    if (code !== null) { // Пользователь не нажал "Отмена"
-        const finalCode = code.trim() || 'Без кода';
-        currentColors.push({ hex, code: finalCode });
-        renderColors();
-    }
-}
-
-// --- ЦВЕТА (РУЧНОЙ ВЫБОР И УДАЛЕНИЕ) ---
+// Добавление в список
 window.addColor = function() {
-    const hex = document.getElementById('manual-color').value;
+    const hex = manualColorInput.value;
     const code = document.getElementById('color-code').value || 'Без кода';
     currentColors.push({ hex, code });
     renderColors();
@@ -259,7 +287,61 @@ window.removeColor = function(index) {
     renderColors();
 }
 
-// --- СОХРАНЕНИЕ ---
+// --- === СКЛАД НИТЕЙ === ---
+window.openStashModal = function() {
+    window.openModal('stash-modal');
+    loadStash();
+}
+
+window.addThreadToStash = async function() {
+    const hex = document.getElementById('stash-color-picker').value;
+    const code = document.getElementById('stash-color-code').value;
+    if(!code) return alert("Введите код нити!");
+
+    const btn = event.target;
+    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i>";
+    
+    try {
+        await addDoc(collection(db, "stash"), { hex, code, addedAt: new Date() });
+        document.getElementById('stash-color-code').value = '';
+        loadStash();
+    } catch (e) {
+        console.error(e); alert("Ошибка!");
+    }
+    btn.innerHTML = '<i class="ph ph-plus"></i> Добавить';
+}
+
+async function loadStash() {
+    const list = document.getElementById('stash-list');
+    document.getElementById('stash-loading').style.display = 'block';
+    list.innerHTML = '';
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, "stash"));
+        querySnapshot.forEach((document) => {
+            const data = document.data();
+            list.innerHTML += `
+                <div class="color-badge" onclick="deleteStashThread('${document.id}')" style="cursor:pointer" title="Удалить со склада">
+                    <div class="color-circle" style="background:${data.hex}"></div> ${data.code}
+                </div>
+            `;
+        });
+        if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%;">Склад пуст.</p>';
+    } catch (e) {
+        console.error(e);
+    }
+    document.getElementById('stash-loading').style.display = 'none';
+}
+
+window.deleteStashThread = async function(id) {
+    if(confirm("Удалить нить со склада?")) {
+        await deleteDoc(doc(db, "stash", id));
+        loadStash();
+    }
+}
+
+
+// --- СОХРАНЕНИЕ ПРИНТОВ ---
 window.savePrint = async function(event) {
     const coverInput = document.getElementById('cover-image');
     const oldCoverUrl = document.getElementById('cover-file-name').getAttribute('data-url');
@@ -308,15 +390,13 @@ window.savePrint = async function(event) {
         window.closeModal('add-modal');
         loadPrints(); 
     } catch (error) {
-        console.error(error);
-        alert("Произошла ошибка!");
+        console.error(error); alert("Произошла ошибка!");
     } finally {
-        btn.innerHTML = "Сохранить в базу";
-        btn.disabled = false;
+        btn.innerHTML = "Сохранить в базу"; btn.disabled = false;
     }
 }
 
-// --- ЗАГРУЗКА ---
+// --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
@@ -340,8 +420,7 @@ async function loadPrints() {
 
         if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Дизайнов пока нет.</p>';
     } catch (error) {
-        console.error(error);
-        grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>';
+        console.error(error); grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>';
     }
 }
 
@@ -375,10 +454,7 @@ window.deletePrint = async function(id) {
             await deleteDoc(doc(db, "prints", id));
             window.closeModal('view-modal');
             loadPrints(); 
-        } catch (error) {
-            console.error(error);
-            alert("Не удалось удалить.");
-        }
+        } catch (error) { console.error(error); alert("Не удалось удалить."); }
     }
 }
 
