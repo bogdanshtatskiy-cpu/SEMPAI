@@ -23,39 +23,26 @@ let editingId = null;
 let isImageLoadedForCanvas = false;
 let allStashThreads = []; 
 
-// --- УПРАВЛЕНИЕ ОКНАМИ ---
-window.openModal = (id) => {
-    document.getElementById(id).style.display = 'flex';
-    document.body.classList.add('no-scroll'); 
-};
-window.closeModal = (id) => {
-    document.getElementById(id).style.display = 'none';
-    document.body.classList.remove('no-scroll'); 
-};
+// Управление окнами
+window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; document.body.classList.add('no-scroll'); };
+window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; document.body.classList.remove('no-scroll'); };
 
-// --- ТЕМНАЯ ТЕМА ---
+// Тема
 function applyTheme(isDark) {
-    if (isDark) {
-        document.body.classList.add('dark-theme');
-        document.getElementById('theme-icon')?.classList.replace('ph-moon', 'ph-sun');
-    } else {
-        document.body.classList.remove('dark-theme');
-        document.getElementById('theme-icon')?.classList.replace('ph-sun', 'ph-moon');
-    }
+    if (isDark) { document.body.classList.add('dark-theme'); document.getElementById('theme-icon')?.classList.replace('ph-moon', 'ph-sun'); } 
+    else { document.body.classList.remove('dark-theme'); document.getElementById('theme-icon')?.classList.replace('ph-sun', 'ph-moon'); }
 }
 window.toggleTheme = function() {
     const isDarkNow = document.body.classList.contains('dark-theme');
-    localStorage.setItem('hk_vault_theme', !isDarkNow);
-    applyTheme(!isDarkNow);
+    localStorage.setItem('hk_vault_theme', !isDarkNow); applyTheme(!isDarkNow);
 }
 if (localStorage.getItem('hk_vault_theme') === 'true') applyTheme(true);
 
-// --- АВТОРИЗАЦИЯ (ИСПРАВЛЕНО: СРАЗУ ВХОД, БЕЗ ШУТОК) ---
+// Авторизация
 if (localStorage.getItem('hk_vault_auth') === 'true') {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
-    loadPrints();
-    loadStashToLocals(); 
+    loadPrints(); loadStashToLocals(); 
 }
 
 window.checkPassword = async function() {
@@ -68,23 +55,14 @@ window.checkPassword = async function() {
         if (docSnap.exists() && input === docSnap.data().password) {
             localStorage.setItem('hk_vault_auth', 'true');
             document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('app-container').style.display = 'block'; // Сразу открываем приложение
-            loadPrints();
-            loadStashToLocals();
-        } else {
-            alert("Неверный ключ доступа 💅");
-        }
-    } catch (e) {
-        console.error(e);
-        alert("Ошибка подключения. Создан ли документ settings/auth в базе?");
-    }
+            document.getElementById('app-container').style.display = 'block'; 
+            loadPrints(); loadStashToLocals();
+        } else { alert("Неверный ключ доступа 💅"); }
+    } catch (e) { console.error(e); alert("Ошибка подключения."); }
     btn.innerHTML = "Войти";
 }
 
-window.logout = function() {
-    localStorage.removeItem('hk_vault_auth');
-    location.reload();
-}
+window.logout = function() { localStorage.removeItem('hk_vault_auth'); location.reload(); }
 
 // --- ОТКРЫТИЕ МОДАЛКИ ДИЗАЙНА ---
 window.openAddModal = function() {
@@ -92,9 +70,7 @@ window.openAddModal = function() {
     document.getElementById('modal-title').innerText = "Новый дизайн вышивки";
     document.getElementById('save-btn').innerText = "Сохранить в базу";
     
-    currentColors = [];
-    currentJefFiles = [];
-    renderColors();
+    currentColors = []; currentJefFiles = []; renderColors();
     document.getElementById('files-container').innerHTML = '';
     
     document.getElementById('cover-image').value = '';
@@ -104,21 +80,19 @@ window.openAddModal = function() {
     
     document.getElementById('markers-container').innerHTML = '';
     document.getElementById('photo-for-color').value = '';
+    const spanC = document.getElementById('photo-for-color').nextElementSibling;
+    if(spanC) spanC.innerHTML = `<i class="ph ph-camera"></i> Загрузить фото ниток...`;
     document.getElementById('canvas-wrapper').style.display = 'none';
     isImageLoadedForCanvas = false;
     
-    fillStashSelect(); 
-    window.addJefRow(); 
-    window.openModal('add-modal');
+    fillStashSelect(); window.addJefRow(); window.openModal('add-modal');
 }
 
 window.updateFileName = function(input) {
     const fileNameElement = input.nextElementSibling;
     if (input.files && input.files.length > 0) {
         fileNameElement.innerHTML = `<i class="ph ph-check-circle" style="color: green;"></i> ${input.files[0].name}`;
-    } else {
-        fileNameElement.innerHTML = `<i class="ph ph-file"></i> Выберите файл...`;
-    }
+    } else { fileNameElement.innerHTML = `<i class="ph ph-file"></i> Выберите файл...`; }
 }
 
 window.addJefRow = function(existingData = null) {
@@ -144,7 +118,6 @@ window.addJefRow = function(existingData = null) {
             <option value="RE10b (100x40)">RE10b (100x40)</option>
         </select>
         <input type="text" class="emb-size" placeholder="Размер (напр. 15x18 см)" value="${existingData ? existingData.size : ''}" style="text-align: center;">
-        
         <label class="custom-file-upload">
             <input type="file" id="${uniqueId}" class="jef-file" accept=".jef" onchange="updateFileName(this)">
             <span class="file-name" ${dataUrlAttr} style="text-align: center; width: 100%;">${fileNameHtml}</span>
@@ -155,7 +128,7 @@ window.addJefRow = function(existingData = null) {
     container.appendChild(row);
 }
 
-// --- УМНАЯ ПИПЕТКА ---
+// --- УМНАЯ ПИПЕТКА (ДИЗАЙН) ---
 const canvas = document.getElementById('color-canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const markersContainer = document.getElementById('markers-container');
@@ -164,33 +137,24 @@ const manualColorInput = document.getElementById('manual-color');
 canvas.addEventListener('click', (e) => {
     if (!isImageLoadedForCanvas) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
     const pixel = ctx.getImageData(x, y, 1, 1).data;
-    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
-    
-    manualColorInput.value = hex; 
+    manualColorInput.value = rgbToHex(pixel[0], pixel[1], pixel[2]); 
     document.getElementById('color-code').focus();
 });
 
 document.getElementById('photo-for-color').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(!file) return;
-    
     markersContainer.innerHTML = ''; 
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
             document.getElementById('canvas-wrapper').style.display = 'block';
-            const maxWidth = 800; 
-            const scale = Math.min(maxWidth / img.width, 1);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
+            const scale = Math.min(800 / img.width, 1);
+            canvas.width = img.width * scale; canvas.height = img.height * scale;
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             isImageLoadedForCanvas = true;
         }
@@ -202,53 +166,108 @@ document.getElementById('photo-for-color').addEventListener('change', (e) => {
 window.autoDetectColors = function() {
     if (!isImageLoadedForCanvas) return alert("Сначала загрузи фото ниток!");
     markersContainer.innerHTML = '';
-    
     const step = Math.floor(canvas.width / 20); 
     let detectedColors = [];
 
     for (let x = step; x < canvas.width; x += step) {
         for (let y = step; y < canvas.height; y += step) {
             if(detectedColors.length >= 12) break;
-
             const pixel = ctx.getImageData(x, y, 1, 1).data;
             const r = pixel[0], g = pixel[1], b = pixel[2];
-            
             const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            
             if (brightness > 35 && brightness < 235) {
                 let isTooSimilar = false;
                 for (let color of detectedColors) {
-                    const dist = Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2));
-                    if (dist < 100) { isTooSimilar = true; break; }
+                    if (Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2)) < 100) { isTooSimilar = true; break; }
                 }
-                
                 if (!isTooSimilar) {
                     detectedColors.push({r, g, b});
-                    const hex = rgbToHex(r, g, b);
-                    const percentX = (x / canvas.width) * 100;
-                    const percentY = (y / canvas.height) * 100;
-                    createColorMarker(percentX, percentY, hex);
+                    createColorMarker(markersContainer, manualColorInput, 'color-code', (x / canvas.width) * 100, (y / canvas.height) * 100, rgbToHex(r, g, b));
                 }
             }
         }
-        if(detectedColors.length >= 12) break;
     }
 }
 
+// --- УМНАЯ ПИПЕТКА (СКЛАД) ---
+let isStashImageLoadedForCanvas = false;
+const stashCanvas = document.getElementById('stash-color-canvas');
+const stashCtx = stashCanvas.getContext('2d', { willReadFrequently: true });
+const stashMarkersContainer = document.getElementById('stash-markers-container');
+const stashColorPicker = document.getElementById('stash-color-picker');
+
+stashCanvas.addEventListener('click', (e) => {
+    if (!isStashImageLoadedForCanvas) return;
+    const rect = stashCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (stashCanvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (stashCanvas.height / rect.height);
+    const pixel = stashCtx.getImageData(x, y, 1, 1).data;
+    stashColorPicker.value = rgbToHex(pixel[0], pixel[1], pixel[2]); 
+    document.getElementById('stash-color-code').focus();
+});
+
+document.getElementById('stash-photo-for-color').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    stashMarkersContainer.innerHTML = ''; 
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            document.getElementById('stash-canvas-wrapper').style.display = 'block';
+            const scale = Math.min(800 / img.width, 1);
+            stashCanvas.width = img.width * scale; stashCanvas.height = img.height * scale;
+            stashCtx.drawImage(img, 0, 0, stashCanvas.width, stashCanvas.height);
+            isStashImageLoadedForCanvas = true;
+        }
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+window.autoDetectStashColors = function() {
+    if (!isStashImageLoadedForCanvas) return alert("Сначала загрузи фото катушек!");
+    stashMarkersContainer.innerHTML = '';
+    const step = Math.floor(stashCanvas.width / 20); 
+    let detectedColors = [];
+
+    for (let x = step; x < stashCanvas.width; x += step) {
+        for (let y = step; y < stashCanvas.height; y += step) {
+            if(detectedColors.length >= 12) break;
+            const pixel = stashCtx.getImageData(x, y, 1, 1).data;
+            const r = pixel[0], g = pixel[1], b = pixel[2];
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            
+            if (brightness > 35 && brightness < 235) {
+                let isTooSimilar = false;
+                for (let color of detectedColors) {
+                    if (Math.sqrt(Math.pow(r - color.r, 2) + Math.pow(g - color.g, 2) + Math.pow(b - color.b, 2)) < 100) { isTooSimilar = true; break; }
+                }
+                if (!isTooSimilar) {
+                    detectedColors.push({r, g, b});
+                    createColorMarker(stashMarkersContainer, stashColorPicker, 'stash-color-code', (x / stashCanvas.width) * 100, (y / stashCanvas.height) * 100, rgbToHex(r, g, b));
+                }
+            }
+        }
+    }
+}
+
+// Общая утилита для маркеров и hex
 function rgbToHex(r, g, b) { return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
 
-function createColorMarker(percentX, percentY, hex) {
+function createColorMarker(container, inputElement, codeInputId, percentX, percentY, hex) {
     const marker = document.createElement('div');
     marker.className = 'color-marker';
-    marker.style.left = `${percentX}%`;
-    marker.style.top = `${percentY}%`;
+    marker.style.left = `${percentX}%`; marker.style.top = `${percentY}%`;
     marker.style.backgroundColor = hex;
-    
     marker.addEventListener('click', () => {
-        manualColorInput.value = hex;
-        document.getElementById('color-code').focus();
+        inputElement.value = hex;
+        document.getElementById(codeInputId).focus();
     });
-    markersContainer.appendChild(marker);
+    container.appendChild(marker);
 }
+
 
 // --- БД СКЛАД НИТЕЙ ---
 async function loadStashToLocals() {
@@ -256,12 +275,19 @@ async function loadStashToLocals() {
     const q = query(collection(db, "stash"), orderBy("code", "asc"));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        allStashThreads.push({ id: doc.id, hex: data.hex, code: data.code });
+        allStashThreads.push({ id: doc.id, hex: doc.data().hex, code: doc.data().code });
     });
 }
 
 window.openStashModal = function() {
+    // Сброс UI пипетки склада
+    document.getElementById('stash-photo-for-color').value = '';
+    const span = document.getElementById('stash-photo-for-color').nextElementSibling;
+    if(span) span.innerHTML = `<i class="ph ph-camera"></i> Загрузить фото катушек...`;
+    document.getElementById('stash-canvas-wrapper').style.display = 'none';
+    document.getElementById('stash-markers-container').innerHTML = '';
+    isStashImageLoadedForCanvas = false;
+
     window.openModal('stash-modal');
     loadStashToModal();
 }
@@ -287,25 +313,17 @@ async function loadStashToModal() {
     const list = document.getElementById('stash-list');
     document.getElementById('stash-loading').style.display = 'block';
     list.innerHTML = '';
-    
-    try {
-        allStashThreads.forEach((thread) => {
-            list.innerHTML += `
-                <div class="color-badge" onclick="deleteStashThread('${thread.id}')" style="cursor:pointer" title="Удалить со склада">
-                    <div class="color-circle" style="background:${thread.hex}"></div> ${thread.code}
-                </div>
-            `;
-        });
-        if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%;">Склад пуст.</p>';
-    } catch (e) { console.error(e); }
+    allStashThreads.forEach((thread) => {
+        list.innerHTML += `<div class="color-badge" onclick="deleteStashThread('${thread.id}')" style="cursor:pointer" title="Удалить со склада"><div class="color-circle" style="background:${thread.hex}"></div> ${thread.code}</div>`;
+    });
+    if(list.innerHTML === '') list.innerHTML = '<p style="color:#888; width:100%; text-align:center;">Склад пуст.</p>';
     document.getElementById('stash-loading').style.display = 'none';
 }
 
 window.deleteStashThread = async function(id) {
     if(confirm("Удалить нить со склада?")) {
         await deleteDoc(doc(db, "stash", id));
-        await loadStashToLocals();
-        loadStashToModal();
+        await loadStashToLocals(); loadStashToModal();
     }
 }
 
@@ -318,12 +336,8 @@ function fillStashSelect() {
 }
 
 document.getElementById('stash-select').addEventListener('change', (e) => {
-    const threadId = e.target.value;
-    if (!threadId) return;
-    
-    const thread = allStashThreads.find(t => t.id === threadId);
+    const thread = allStashThreads.find(t => t.id === e.target.value);
     if (!thread) return;
-    
     manualColorInput.value = thread.hex;
     document.getElementById('color-code').value = thread.code;
     e.target.value = ''; 
@@ -332,39 +346,25 @@ document.getElementById('stash-select').addEventListener('change', (e) => {
 window.addDesignColor = function() {
     const hex = manualColorInput.value;
     const code = document.getElementById('color-code').value.trim() || 'Без кода';
-    currentColors.push({ hex, code });
-    renderColors();
+    currentColors.push({ hex, code }); renderColors();
     document.getElementById('color-code').value = '';
 }
 
 function renderColors() {
-    const container = document.getElementById('colors-container');
-    container.innerHTML = currentColors.map((c, i) => `
-        <div class="color-badge" onclick="removeColor(${i})" style="cursor:pointer" title="Удалить">
-            <div class="color-circle" style="background:${c.hex}"></div> ${c.code}
-        </div>
+    document.getElementById('colors-container').innerHTML = currentColors.map((c, i) => `
+        <div class="color-badge" onclick="removeColor(${i})" style="cursor:pointer" title="Удалить"><div class="color-circle" style="background:${c.hex}"></div> ${c.code}</div>
     `).join('');
 }
 
-window.removeColor = function(index) {
-    currentColors.splice(index, 1);
-    renderColors();
-}
+window.removeColor = function(index) { currentColors.splice(index, 1); renderColors(); }
 
-// === ИСПРАВЛЕНИЕ: УМНОЕ УДАЛЕНИЕ ФАЙЛОВ ИЗ STORAGE ===
 async function deleteOldFileFromStorage(pathOrUrl) {
     if (!pathOrUrl) return;
-    try {
-        const fileRef = ref(storage, pathOrUrl);
-        await deleteObject(fileRef);
-    } catch (error) {
-        if (error.code !== 'storage/object-not-found') {
-            console.error('Ошибка удаления файла:', error);
-        }
-    }
+    try { await deleteObject(ref(storage, pathOrUrl)); } 
+    catch (error) { if (error.code !== 'storage/object-not-found') console.error(error); }
 }
 
-// --- СОХРАНЕНИЕ ПРИНТОВ (С ИСПРАВЛЕННЫМ БАГОМ ФАЙЛОВ) ---
+// --- СОХРАНЕНИЕ ПРИНТОВ ---
 window.savePrint = async function(event) {
     const coverInput = document.getElementById('cover-image');
     const oldCoverUrl = document.getElementById('cover-file-name').getAttribute('data-url');
@@ -373,42 +373,30 @@ window.savePrint = async function(event) {
     if (!coverInput.files[0] && !oldCoverUrl) return alert("Загрузи обложку дизайна!");
 
     const btn = event.target;
-    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i> Сохраняем...";
-    btn.disabled = true;
+    btn.innerHTML = "<i class='ph ph-spinner ph-spin'></i> Сохраняем..."; btn.disabled = true;
 
     try {
         const printId = editingId ? editingId : Date.now().toString();
-        
-        // 1. Обложка
-        let coverUrl = oldCoverUrl;
-        let newCoverPath = oldCoverPath;
+        let coverUrl = oldCoverUrl, newCoverPath = oldCoverPath;
         if (coverInput.files[0]) {
             const coverRef = ref(storage, `covers/${printId}_${coverInput.files[0].name}`);
             await uploadBytesResumable(coverRef, coverInput.files[0]);
-            coverUrl = await getDownloadURL(coverRef); // ИСПРАВЛЕНА ОПЕЧАТКА!
-            newCoverPath = coverRef.fullPath;
-            
+            coverUrl = await getDownloadURL(coverRef); newCoverPath = coverRef.fullPath;
             if (editingId && oldCoverPath) await deleteOldFileFromStorage(oldCoverPath);
         }
 
-        // 2. Файлы .jef
         const fileRows = document.querySelectorAll('.file-row');
-        let filesData = [];
-        let newJefPaths = [];
+        let filesData = [], newJefPaths = [];
         
         for (let row of fileRows) {
             const jefInput = row.querySelector('.jef-file');
             const spanData = row.querySelector('.file-name');
-            const oldUrl = spanData.getAttribute('data-url');
-            const oldPath = spanData.getAttribute('data-path');
-            const oldName = spanData.getAttribute('data-name');
+            const oldUrl = spanData.getAttribute('data-url'), oldPath = spanData.getAttribute('data-path'), oldName = spanData.getAttribute('data-name');
             
             if (jefInput.files[0]) { 
-                const file = jefInput.files[0];
-                const fileRef = ref(storage, `jef_files/${printId}_${file.name}`);
-                await uploadBytesResumable(fileRef, file);
-                const fileUrl = await getDownloadURL(fileRef);
-                filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: file.name, url: fileUrl, path: fileRef.fullPath });
+                const fileRef = ref(storage, `jef_files/${printId}_${jefInput.files[0].name}`);
+                await uploadBytesResumable(fileRef, jefInput.files[0]);
+                filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: jefInput.files[0].name, url: await getDownloadURL(fileRef), path: fileRef.fullPath });
                 newJefPaths.push(fileRef.fullPath); 
             } else if (oldUrl) { 
                 filesData.push({ hoop: row.querySelector('.hoop-size').value, size: row.querySelector('.emb-size').value.trim() || 'Не указан', name: oldName, url: oldUrl, path: oldPath });
@@ -417,132 +405,77 @@ window.savePrint = async function(event) {
         }
 
         if (editingId) {
-            for (let oldPath of currentJefFiles) {
-                if (!newJefPaths.includes(oldPath)) await deleteOldFileFromStorage(oldPath);
-            }
+            for (let oldPath of currentJefFiles) { if (!newJefPaths.includes(oldPath)) await deleteOldFileFromStorage(oldPath); }
         }
 
         const dataToSave = { coverUrl, coverPath: newCoverPath, colors: currentColors, files: filesData, updatedAt: new Date() };
 
-        if (editingId) {
-            await updateDoc(doc(db, "prints", editingId), dataToSave);
-        } else {
-            dataToSave.createdAt = new Date(); 
-            await addDoc(collection(db, "prints"), dataToSave);
-        }
+        if (editingId) await updateDoc(doc(db, "prints", editingId), dataToSave);
+        else { dataToSave.createdAt = new Date(); await addDoc(collection(db, "prints"), dataToSave); }
 
-        window.closeModal('add-modal');
-        loadPrints(); 
-    } catch (error) {
-        console.error(error); alert("Произошла ошибка! Проверь консоль.");
-    } finally {
-        btn.innerHTML = "Сохранить в базу"; btn.disabled = false;
-    }
+        window.closeModal('add-modal'); loadPrints(); 
+    } catch (error) { console.error(error); alert("Произошла ошибка! Проверь консоль."); } 
+    finally { btn.innerHTML = "Сохранить в базу"; btn.disabled = false; }
 }
 
-// --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ ---
+// --- ЗАГРУЗКА ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
     grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;"><i class="ph ph-spinner ph-spin" style="font-size: 2rem; color: var(--hk-hot-pink);"></i></p>';
     
     try {
         const querySnapshot = await getDocs(collection(db, "prints"));
-        grid.innerHTML = '';
-        allPrints = []; 
+        grid.innerHTML = ''; allPrints = []; 
         
         querySnapshot.forEach((document) => {
-            const print = document.data();
-            print.id = document.id; 
-            allPrints.push(print);
-            
+            const print = document.data(); print.id = document.id; allPrints.push(print);
             const tile = window.document.createElement('div');
-            tile.className = 'print-tile';
-            tile.onclick = () => showViewModal(print.id); 
-            tile.innerHTML = `<img src="${print.coverUrl}">`;
-            grid.appendChild(tile);
+            tile.className = 'print-tile'; tile.onclick = () => showViewModal(print.id); 
+            tile.innerHTML = `<img src="${print.coverUrl}">`; grid.appendChild(tile);
         });
 
         if(allPrints.length === 0) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Дизайнов пока нет.</p>';
-    } catch (error) {
-        console.error(error); grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>';
-    }
+    } catch (error) { console.error(error); grid.innerHTML = '<p style="grid-column: 1/-1; color: red;">Ошибка подключения.</p>'; }
 }
 
-// --- ПРОСМОТР ---
 window.showViewModal = function(id) {
-    const print = allPrints.find(p => p.id === id);
-    if(!print) return;
-
+    const print = allPrints.find(p => p.id === id); if(!print) return;
     document.getElementById('view-image').src = print.coverUrl;
-    
-    document.getElementById('view-colors').innerHTML = (print.colors || []).map(c => 
-        `<div class="color-badge"><div class="color-circle" style="background:${c.hex}"></div> ${c.code}</div>`
-    ).join(' ');
-
-    document.getElementById('view-files').innerHTML = (print.files || []).map(f => `
-        <div class="file-view-item">
-            <div class="file-view-info"><strong>${f.hoop}</strong> <span>Размер: ${f.size}</span></div>
-            <a href="${f.url}" target="_blank" download class="btn-download"><i class="ph ph-download-simple"></i> .jef</a>
-        </div>
-    `).join('');
-
+    document.getElementById('view-colors').innerHTML = (print.colors || []).map(c => `<div class="color-badge"><div class="color-circle" style="background:${c.hex}"></div> ${c.code}</div>`).join(' ');
+    document.getElementById('view-files').innerHTML = (print.files || []).map(f => `<div class="file-view-item"><div class="file-view-info"><strong>${f.hoop}</strong> <span>Размер: ${f.size}</span></div><a href="${f.url}" target="_blank" download class="btn-download"><i class="ph ph-download-simple"></i> .jef</a></div>`).join('');
     document.getElementById('btn-edit-print').onclick = () => editPrint(id);
     document.getElementById('btn-delete-print').onclick = () => deletePrint(id);
-
     window.openModal('view-modal');
 }
 
-// === ИСПРАВЛЕНИЕ: ЧИСТОЕ УДАЛЕНИЕ ===
 window.deletePrint = async function(id) {
     if (confirm("Удалить дизайн? Восстановить будет невозможно.")) {
-        const print = allPrints.find(p => p.id === id);
-        if(!print) return alert("Дизайн не найден!");
-
+        const print = allPrints.find(p => p.id === id); if(!print) return;
         try {
             if (print.coverPath) await deleteOldFileFromStorage(print.coverPath);
-            else if (print.coverUrl) await deleteOldFileFromStorage(print.coverUrl); // Подстраховка для старых дизайнов
-            
+            else if (print.coverUrl) await deleteOldFileFromStorage(print.coverUrl); 
             if (print.files) {
-                for (let f of print.files) {
-                    if (f.path) await deleteOldFileFromStorage(f.path);
-                    else if (f.url) await deleteOldFileFromStorage(f.url);
-                }
+                for (let f of print.files) { if (f.path) await deleteOldFileFromStorage(f.path); else if (f.url) await deleteOldFileFromStorage(f.url); }
             }
-            
             await deleteDoc(doc(db, "prints", id));
-            window.closeModal('view-modal');
-            loadPrints(); 
+            window.closeModal('view-modal'); loadPrints(); 
         } catch (error) { console.error(error); alert("Не удалось удалить."); }
     }
 }
 
-// --- РЕДАКТИРОВАНИЕ ---
 window.editPrint = function(id) {
-    editingId = id;
-    const print = allPrints.find(p => p.id === id);
-    
+    editingId = id; const print = allPrints.find(p => p.id === id);
     document.getElementById('modal-title').innerText = "Редактирование дизайна";
-    document.getElementById('modal-title').style.textAlign = 'center';
     document.getElementById('save-btn').innerText = "Обновить дизайн";
-    document.getElementById('save-btn').style.textAlign = 'center';
-    
     document.getElementById('cover-file-name').innerHTML = `<i class="ph ph-image"></i> Оставить старую обложку`;
     document.getElementById('cover-file-name').setAttribute('data-url', print.coverUrl);
     document.getElementById('cover-file-name').setAttribute('data-path', print.coverPath || '');
     
-    currentColors = [...(print.colors || [])];
-    renderColors();
+    currentColors = [...(print.colors || [])]; renderColors();
     
     const filesContainer = document.getElementById('files-container');
-    filesContainer.innerHTML = '';
-    currentJefFiles = []; 
-    (print.files || []).forEach(f => {
-        window.addJefRow(f);
-        if(f.path) currentJefFiles.push(f.path); 
-    });
+    filesContainer.innerHTML = ''; currentJefFiles = []; 
+    (print.files || []).forEach(f => { window.addJefRow(f); if(f.path) currentJefFiles.push(f.path); });
 
-    fillStashSelect(); 
-
-    window.closeModal('view-modal');
-    window.openModal('add-modal');
+    fillStashSelect(); window.closeModal('view-modal'); window.openModal('add-modal');
 }
