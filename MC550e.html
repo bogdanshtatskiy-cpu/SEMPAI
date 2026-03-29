@@ -12,12 +12,12 @@
     <div id="auth-screen" class="glass-panel auth-panel">
         <div class="icon-cluster" style="margin-bottom: 15px;">
             <i class="ph-fill ph-sparkle" style="font-size: 2.5rem; color: #00ffff; animation: pulse 2s infinite;"></i>
-            <i class="ph-fill ph-rainbow" style="font-size: 5.5rem; margin: 0 10px; filter: drop-shadow(0 0 20px rgba(255,20,147,0.8));"></i>
+            <i class="ph-fill ph-rainbow pride-glow" style="font-size: 5.5rem; margin: 0 10px;"></i>
             <i class="ph-fill ph-shooting-star" style="font-size: 2.5rem; color: #ff00ff; animation: pulse 2s infinite 1s;"></i>
         </div>
         <h2 class="pride-text" style="font-size: 2rem;">Вход в хранилище</h2>
         <p style="font-size: 0.9rem; margin-bottom: 25px; font-weight: 800; color: var(--hk-hot-pink); text-transform: uppercase; letter-spacing: 2px;">Только для VIP 💅</p>
-        <input type="password" id="secret-password" placeholder="Введи секретный пароль, сладкий">
+        <input type="password" id="secret-password" placeholder="Секретный пароль...">
         <button onclick="checkPassword()" class="btn-rainbow full-width" style="font-size: 1.2rem; padding: 18px;"><i class="ph-fill ph-key"></i> Войти красиво</button>
     </div>
 
@@ -52,9 +52,9 @@
             <button class="close-btn" onclick="closeModal('stash-modal')"><i class="ph-bold ph-x"></i></button>
             <h2 class="pride-text" style="margin-bottom: 25px; text-align: center; font-size: 1.8rem;"><i class="ph-fill ph-yarn"></i> Склад нитей</h2>
             
-            <div class="color-picker-controls stash-controls glass-panel-inner">
+            <div class="flex-controls glass-panel-inner" style="margin-bottom: 20px;">
                 <input type="color" id="stash-color-picker" value="#ff1493">
-                <input type="text" id="stash-color-code" placeholder="Код (Madeira 1001)" style="margin-bottom: 0;">
+                <input type="text" id="stash-color-code" placeholder="Код (Madeira 1001)">
                 <button class="btn-primary" onclick="addThreadToStash()"><i class="ph-bold ph-plus"></i></button>
             </div>
 
@@ -69,35 +69,35 @@
             
             <div class="modal-header">
                 <h2 id="modal-title" class="pride-text" style="text-align: center; margin-bottom: 15px; font-size: 2rem;">Новый шедевр <i class="ph-fill ph-heart"></i></h2>
-                <div class="janome-info glass-panel-inner" style="margin-bottom: 30px;">
+                <div class="janome-info glass-panel-inner" style="margin-bottom: 25px;">
                     <i class="ph-fill ph-info"></i> 
-                    <small>Загружайте только файлы <b>.jef</b> для нашей любимой 550e.</small>
+                    <small>Загружайте только файлы <b>.jef</b> для нашей 550e.</small>
                 </div>
             </div>
             
-            <div class="form-group" style="margin-bottom: 30px;">
+            <div class="form-group">
                 <label><i class="ph-fill ph-image"></i> Обложка дизайна</label>
                 <label class="custom-file-upload full-width">
                     <input type="file" id="cover-image" accept="image/*" onchange="updateFileName(this)">
-                    <span class="file-name" id="cover-file-name" style="text-align: center; width: 100%;">Выбери самое красивое фото...</span>
+                    <span class="file-name" id="cover-file-name">Выбери самое красивое фото...</span>
                 </label>
             </div>
 
-            <div class="form-group" style="margin-bottom: 30px;">
+            <div class="form-group">
                 <label><i class="ph-fill ph-files"></i> Файлы вышивки</label>
                 <div id="files-container" class="files-grid-container" style="margin-bottom: 15px;"></div>
-                <button class="btn-secondary full-width" onclick="addJefRow()" style="text-align: center; border: 2px dashed var(--hk-hot-pink);"><i class="ph-bold ph-plus-circle"></i> Добавить размер</button>
+                <button class="btn-secondary full-width" onclick="addJefRow()" style="border: 2px dashed var(--hk-hot-pink);"><i class="ph-bold ph-plus-circle"></i> Добавить размер</button>
             </div>
 
-            <div class="form-group color-section" style="margin-bottom: 30px;">
-                <label><i class="ph-fill ph-palette"></i> Палитра (Магия автоопределения)</label>
+            <div class="form-group color-section">
+                <label><i class="ph-fill ph-palette"></i> Палитра (Автоопределение)</label>
                 <div class="eyedropper-box glass-panel-inner">
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div class="flex-controls">
                         <label class="custom-file-upload" style="flex: 1;">
                             <input type="file" id="photo-for-color" accept="image/*" onchange="updateFileName(this)">
                             <span class="file-name"><i class="ph-fill ph-camera"></i> Фото ниток...</span>
                         </label>
-                        <button class="btn-rainbow" onclick="autoDetectColors()" title="Умное автоопределение" style="padding: 0 20px;"><i class="ph-fill ph-magic-wand"></i> Авто</button>
+                        <button class="btn-rainbow" onclick="autoDetectColors()" title="Умное автоопределение"><i class="ph-fill ph-magic-wand"></i> Авто</button>
                     </div>
 
                     <div id="canvas-wrapper" style="position: relative; width: 100%; display: none; border-radius: 16px; overflow: hidden; margin-top: 15px; box-shadow: 0 0 25px rgba(255, 20, 147, 0.5);">
@@ -106,24 +106,24 @@
                     </div>
                 </div>
                 
-                <div class="color-picker-controls design-color-controls glass-panel-inner" style="margin-top: 20px;">
+                <div class="flex-controls glass-panel-inner" style="margin-top: 15px;">
                     <input type="color" id="manual-color" value="#ff1493" title="Ручной выбор цвета">
-                    <input type="text" id="color-code" placeholder="Код (Madeira 1001)" style="margin-bottom: 0; text-align: center;">
+                    <input type="text" id="color-code" placeholder="Код (напр. 1001)">
                     <select id="stash-select">
-                        <option value="">Взять со Склада...</option>
+                        <option value="">Из Склада...</option>
                     </select>
-                    <button class="btn-primary" onclick="addDesignColor()" style="text-align: center;"><i class="ph-bold ph-plus"></i></button>
+                    <button class="btn-primary" onclick="addDesignColor()"><i class="ph-bold ph-plus"></i></button>
                 </div>
 
                 <div id="colors-container" class="colors-tags-container" style="margin-top: 20px;"></div>
             </div>
 
-            <button class="btn-rainbow full-width" onclick="savePrint(event)" id="save-btn" style="margin-top: 25px; font-size: 1.3rem; padding: 20px; text-align: center; text-transform: uppercase; letter-spacing: 2px;"><i class="ph-fill ph-floppy-disk"></i> Сохранить в базу</button>
+            <button class="btn-rainbow full-width" onclick="savePrint(event)" id="save-btn" style="margin-top: 25px; font-size: 1.3rem; padding: 20px; text-transform: uppercase; letter-spacing: 2px;"><i class="ph-fill ph-floppy-disk"></i> Сохранить в базу</button>
         </div>
     </div>
 
     <div id="view-modal" class="modal-overlay">
-        <div class="modal-content glass-panel view-modal-content">
+        <div class="modal-content glass-panel">
             <button class="close-btn" onclick="closeModal('view-modal')"><i class="ph-bold ph-x"></i></button>
             
             <div class="view-header-actions">
@@ -133,14 +133,14 @@
 
             <img id="view-image" src="" class="view-cover-img">
             
-            <div class="glass-panel-inner">
-                <h3 class="pride-text" style="margin-bottom: 20px; text-align: center; font-size: 1.5rem;">Палитра нитей</h3>
-                <div id="view-colors" class="colors-list-vertical" style="justify-content: center;"></div>
+            <div class="glass-panel-inner" style="margin-bottom: 20px;">
+                <h3 class="pride-text" style="margin-bottom: 15px; text-align: center; font-size: 1.5rem;">Палитра нитей</h3>
+                <div id="view-colors" class="colors-tags-container"></div>
             </div>
 
-            <div class="glass-panel-inner" style="margin-top: 25px;">
-                <h3 class="pride-text" style="margin-bottom: 20px; text-align: center; font-size: 1.5rem;">Файлы для вышивки</h3>
-                <div id="view-files" class="files-list-vertical" style="justify-content: center;"></div>
+            <div class="glass-panel-inner">
+                <h3 class="pride-text" style="margin-bottom: 15px; text-align: center; font-size: 1.5rem;">Файлы для вышивки</h3>
+                <div id="view-files" class="files-list-vertical"></div>
             </div>
         </div>
     </div>
