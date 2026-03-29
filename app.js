@@ -414,8 +414,10 @@ window.savePrint = async function(event) {
         let newCoverPath = oldCoverPath;
         if (coverInput.files[0]) {
             const coverRef = ref(storage, `covers/${printId}_${coverInput.files[0].name}`);
-            const uploadTask = await uploadBytesResumable(coverRef, coverInput.files[0]);
-            coverUrl = await getDownloadURL(coverTask.ref);
+            await uploadBytesResumable(coverRef, coverInput.files[0]);
+            
+            // ИСПРАВЛЕНА ОШИБКА ЗДЕСЬ: используем coverRef вместо coverTask.ref
+            coverUrl = await getDownloadURL(coverRef); 
             newCoverPath = coverRef.fullPath;
             
             // Если мы редактируем и загрузили новую обложку — удаляем старую
@@ -476,7 +478,6 @@ window.savePrint = async function(event) {
         btn.innerHTML = "Сохранить в базу"; btn.disabled = false;
     }
 }
-
 // --- ЗАГРУЗКА И ВЫВОД ПРИНТОВ (2 колонки, ТОЛЬКО КАРТИНКИ) ---
 async function loadPrints() {
     const grid = document.getElementById('prints-grid');
