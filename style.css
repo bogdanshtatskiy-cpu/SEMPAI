@@ -91,5 +91,41 @@ input[type="color"]::-webkit-color-swatch { border: 2px solid white; border-radi
 .file-view-item { display: flex; justify-content: space-between; align-items: center; background: var(--panel-inner); padding: 12px 15px; border-radius: 12px; border: 1px solid var(--glass-border); transition: 0.3s; }
 .file-view-info strong { color: var(--hk-hot-pink); display: block; margin-bottom: 2px; }
 .file-view-info span { font-size: 0.85rem; opacity: 0.8; }
-
 .btn-download { background: var(--hk-hot-pink); color: white; padding: 10px 15px; border-radius: 12px; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(255, 107, 158, 0.3); transition: 0.2s; }
+
+/* === СТИЛИ ДЛЯ АВТООПРЕДЕЛЕНИЯ ЦВЕТОВ === */
+#markers-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none; /* Маркеры не мешают кликать на фото */
+}
+
+.color-marker {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%); /* Центрирование точки по клику */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border: 2px solid white;
+    cursor: pointer;
+    pointer-events: auto; /* Разрешаем клик по самому маркеру */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 10;
+}
+
+.color-marker:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 6px 15px rgba(255, 107, 158, 0.4);
+}
+
+.color-marker::after {
+    content: '+';
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
