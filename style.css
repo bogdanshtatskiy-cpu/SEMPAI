@@ -31,9 +31,8 @@ body.no-scroll { overflow: hidden; }
 .glass-panel-inner { background: var(--panel-inner); border-radius: 16px; padding: 15px; border: 1px solid var(--glass-border); transition: background 0.3s; }
 
 .glass-header { padding: 15px 20px; display: flex; flex-direction: column; gap: 10px; background: var(--glass-bg); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass-border); transition: background 0.3s; }
-.header-actions { display: flex; gap: 10px; width: 100%; }
-.header-actions .btn-primary { flex: 1; }
-@media(min-width: 600px) { .glass-header { flex-direction: row; justify-content: space-between; align-items: center; } .header-actions { width: auto; } }
+.header-actions { display: flex; gap: 10px; width: 100%; flex-wrap: wrap; }
+@media(min-width: 600px) { .glass-header { flex-direction: row; justify-content: space-between; align-items: center; } .header-actions { width: auto; flex-wrap: nowrap; } }
 .subtitle { font-size: 0.85rem; color: #888; font-weight: 500; }
 
 .auth-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 40px; width: 90%; max-width: 400px; text-align: center; }
@@ -47,7 +46,6 @@ button { border: none; border-radius: 12px; padding: 12px 20px; font-weight: 600
 .btn-rainbow { background: var(--rainbow-grad); background-size: 200% auto; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); animation: gradientShift 4s ease infinite; }
 .full-width { width: 100%; }
 @keyframes gradientShift { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
-@keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
 input[type="text"], input[type="password"], select { width: 100%; height: 46px; padding: 0 15px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-dark); outline: none; font-size: 16px; transition: background 0.3s, color 0.3s; }
 input:focus, select:focus { border-color: var(--hk-hot-pink); }
@@ -91,41 +89,11 @@ input[type="color"]::-webkit-color-swatch { border: 2px solid white; border-radi
 .file-view-item { display: flex; justify-content: space-between; align-items: center; background: var(--panel-inner); padding: 12px 15px; border-radius: 12px; border: 1px solid var(--glass-border); transition: 0.3s; }
 .file-view-info strong { color: var(--hk-hot-pink); display: block; margin-bottom: 2px; }
 .file-view-info span { font-size: 0.85rem; opacity: 0.8; }
+
 .btn-download { background: var(--hk-hot-pink); color: white; padding: 10px 15px; border-radius: 12px; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(255, 107, 158, 0.3); transition: 0.2s; }
 
-/* === СТИЛИ ДЛЯ АВТООПРЕДЕЛЕНИЯ ЦВЕТОВ === */
-#markers-container {
-    position: absolute;
-    inset: 0;
-    pointer-events: none; /* Маркеры не мешают кликать на фото */
-}
-
-.color-marker {
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%); /* Центрирование точки по клику */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    border: 2px solid white;
-    cursor: pointer;
-    pointer-events: auto; /* Разрешаем клик по самому маркеру */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    z-index: 10;
-}
-
-.color-marker:hover {
-    transform: translate(-50%, -50%) scale(1.2);
-    box-shadow: 0 6px 15px rgba(255, 107, 158, 0.4);
-}
-
-.color-marker::after {
-    content: '+';
-    color: white;
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
+/* === МАРКЕРЫ АВТООПРЕДЕЛЕНИЯ (В ПРОЦЕНТАХ) === */
+#markers-container { position: absolute; inset: 0; pointer-events: none; }
+.color-marker { position: absolute; width: 20px; height: 20px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 2px 8px rgba(0,0,0,0.4); border: 2px solid white; cursor: pointer; pointer-events: auto; transition: transform 0.2s; z-index: 10; }
+.color-marker:hover { transform: translate(-50%, -50%) scale(1.3); z-index: 11; }
+.color-marker::after { content: '+'; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; height: 100%; font-size: 1rem; font-weight: bold; }
