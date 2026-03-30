@@ -35,7 +35,7 @@ window.closeModal = (id) => {
     document.body.classList.remove('no-scroll'); 
 };
 
-// --- ТЕМНАЯ ТЕМА ---
+// --- ТЕМНАЯ ТЕМА (ДЕНЬ/НОЧЬ) ---
 function applyTheme(isDark) {
     if (isDark) { 
         document.body.classList.add('dark-theme'); 
@@ -45,15 +45,45 @@ function applyTheme(isDark) {
         document.getElementById('theme-icon')?.classList.replace('ph-sun', 'ph-moon'); 
     }
 }
-
 window.toggleTheme = function() {
     const isDarkNow = document.body.classList.contains('dark-theme');
     localStorage.setItem('hk_vault_theme', !isDarkNow); 
     applyTheme(!isDarkNow);
 }
-
 if (localStorage.getItem('hk_vault_theme') === 'true') {
     applyTheme(true);
+}
+
+// --- СТИЛЬ ПРИЛОЖЕНИЯ (ОБЫЧНАЯ / МУЖИЦКАЯ) ---
+function applyMode(isNormal) {
+    const modeText = document.getElementById('mode-text');
+    const modeIcon = document.getElementById('mode-icon');
+    
+    if (isNormal) {
+        document.body.classList.add('normal-mode');
+        if (modeText) modeText.innerText = 'Мужицкая тема';
+        if (modeIcon) {
+            modeIcon.classList.remove('ph-drop');
+            modeIcon.classList.add('ph-rainbow');
+        }
+    } else {
+        document.body.classList.remove('normal-mode');
+        if (modeText) modeText.innerText = 'Обычная тема';
+        if (modeIcon) {
+            modeIcon.classList.remove('ph-rainbow');
+            modeIcon.classList.add('ph-drop');
+        }
+    }
+}
+window.toggleMode = function() {
+    const isNormalNow = document.body.classList.contains('normal-mode');
+    localStorage.setItem('hk_vault_mode', !isNormalNow);
+    applyMode(!isNormalNow);
+}
+if (localStorage.getItem('hk_vault_mode') === 'true') {
+    applyMode(true);
+} else {
+    applyMode(false); // Гейская по умолчанию
 }
 
 // --- АВТОРИЗАЦИЯ ---
@@ -142,7 +172,7 @@ window.addJefRow = function(existingData = null) {
     let dataUrlAttr = "";
     
     if(existingData) {
-        fileNameHtml = `<i class="ph-fill ph-file-text"></i> Старый: ${existingData.name}`; // Исправлена иконка!
+        fileNameHtml = `<i class="ph-fill ph-file-text"></i> Старый: ${existingData.name}`; 
         dataUrlAttr = `data-url="${existingData.url}" data-path="${existingData.path}" data-name="${existingData.name}"`;
     }
 
@@ -160,7 +190,7 @@ window.addJefRow = function(existingData = null) {
             <input type="file" id="${uniqueId}" class="jef-file" accept=".jef" onchange="updateFileName(this)">
             <span class="file-name" ${dataUrlAttr}>${fileNameHtml}</span>
         </label>
-        <button class="btn-danger" style="display:flex;" title="Удалить" onclick="this.parentElement.remove()">
+        <button class="btn-danger" style="display:flex; justify-content:center;" title="Удалить" onclick="this.parentElement.remove()">
             <i class="ph-bold ph-trash" style="font-size: 1.4rem;"></i>
         </button>
     `;
@@ -349,7 +379,6 @@ async function loadStashToLocals() {
 }
 
 window.openStashModal = function() {
-    // Сброс UI пипетки склада перед открытием
     if (document.getElementById('stash-photo-for-color')) {
         document.getElementById('stash-photo-for-color').value = '';
         const span = document.getElementById('stash-photo-for-color').nextElementSibling;
@@ -417,7 +446,7 @@ window.deleteStashThread = async function(id) {
 // --- ВЫБОР ИЗ СКЛАДА В ФОРМЕ ДИЗАЙНА ---
 function fillStashSelect() {
     const select = document.getElementById('stash-select');
-    select.innerHTML = '<option value="">Из Склада...</option>';
+    select.innerHTML = '<option value="">Взять со Склада...</option>';
     
     allStashThreads.forEach(thread => {
         select.innerHTML += `<option value="${thread.id}" style="color: black; background-color: ${thread.hex};">${thread.code}</option>`;
