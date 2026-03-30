@@ -13,9 +13,9 @@
 
     <div id="auth-screen" class="glass-panel auth-panel">
         <div class="icon-cluster" style="margin-bottom: 15px;">
-            <i class="ph-fill ph-sparkle" style="font-size: 2.5rem; color: #00ffff; animation: pulse 2s infinite;"></i>
+            <i class="ph-fill ph-sparkle" style="font-size: 2.5rem; color: var(--neon-cyan); animation: pulse 2s infinite;"></i>
             <i class="ph-fill ph-rainbow pride-glow" style="font-size: 5.5rem; margin: 0 10px;"></i>
-            <i class="ph-fill ph-shooting-star" style="font-size: 2.5rem; color: #ff00ff; animation: pulse 2s infinite 1s;"></i>
+            <i class="ph-fill ph-shooting-star" style="font-size: 2.5rem; color: var(--hk-hot-pink); animation: pulse 2s infinite 1s;"></i>
         </div>
         <h2 class="pride-text" style="font-size: 2rem;">Вход в хранилище</h2>
         <p style="font-size: 0.9rem; margin-bottom: 25px; font-weight: 800; color: var(--hk-hot-pink); text-transform: uppercase; letter-spacing: 2px;">Только для VIP 💅</p>
@@ -37,7 +37,10 @@
                 <button class="btn-secondary" onclick="openStashModal()" title="Склад нитей">
                     <i class="ph-fill ph-yarn"></i> <span class="btn-text">Ниточки</span>
                 </button>
-                <button class="btn-icon" onclick="toggleTheme()" title="Сменить тему">
+                <button class="btn-secondary" onclick="toggleMode()" title="Сменить стиль">
+                    <i class="ph-fill ph-drop" id="mode-icon"></i> <span class="btn-text" id="mode-text">Обычная тема</span>
+                </button>
+                <button class="btn-icon" onclick="toggleTheme()" title="Сменить цвет (День/Ночь)">
                     <i class="ph-fill ph-moon" id="theme-icon"></i>
                 </button>
                 <button class="btn-icon" onclick="logout()" title="Выйти">
@@ -81,7 +84,7 @@
                 <label><i class="ph-fill ph-image"></i> Обложка дизайна</label>
                 <label class="custom-file-upload full-width">
                     <input type="file" id="cover-image" accept="image/*" onchange="updateFileName(this)">
-                    <span class="file-name" id="cover-file-name">Выбери самое красивое фото...</span>
+                    <span class="file-name" id="cover-file-name">Выбери красивое фото...</span>
                 </label>
             </div>
 
@@ -102,7 +105,7 @@
                         <button class="btn-rainbow" onclick="autoDetectColors()" title="Умное автоопределение"><i class="ph-fill ph-magic-wand"></i> Авто</button>
                     </div>
 
-                    <div id="canvas-wrapper" style="position: relative; width: 100%; display: none; border-radius: 16px; overflow: hidden; margin-top: 15px; box-shadow: 0 0 25px rgba(255, 20, 147, 0.5);">
+                    <div id="canvas-wrapper" style="position: relative; width: 100%; display: none; border-radius: 16px; overflow: hidden; margin-top: 15px; box-shadow: var(--rainbow-shadow);">
                         <canvas id="color-canvas" style="width: 100%; display: block; cursor: crosshair;"></canvas>
                         <div id="markers-container"></div>
                     </div>
