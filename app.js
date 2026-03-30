@@ -11,7 +11,6 @@ const firebaseConfig = {
   messagingSenderId: "772399307357",
   appId: "1:772399307357:web:b4adec6deed9e1ab96cbb4"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
@@ -24,16 +23,8 @@ let editingId = null;
 let isImageLoadedForCanvas = false;
 let allStashThreads = []; 
 
-// --- УПРАВЛЕНИЕ ОКНАМИ ---
-window.openModal = (id) => { 
-    document.getElementById(id).style.display = 'flex'; 
-    document.body.classList.add('no-scroll'); 
-};
-
-window.closeModal = (id) => { 
-    document.getElementById(id).style.display = 'none'; 
-    document.body.classList.remove('no-scroll'); 
-};
+window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; document.body.classList.add('no-scroll'); };
+window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; document.body.classList.remove('no-scroll'); };
 
 // --- ТЕМНАЯ ТЕМА (ДЕНЬ/НОЧЬ) ---
 function applyTheme(isDark) {
@@ -97,7 +88,10 @@ if (localStorage.getItem('hk_vault_auth') === 'true') {
 window.checkPassword = async function() {
     const input = document.getElementById('secret-password').value;
     const btn = document.querySelector('.auth-panel button');
-    btn.innerHTML = "<i class='ph-fill ph-spinner-gap ph-spin'></i> Проверяем...";
+    const oldText = document.getElementById('auth-btn-text').innerText;
+    document.getElementById('auth-btn-text').innerText = "Проверяем...";
+    btn.querySelector('i').classList.replace('ph-key', 'ph-spinner-gap');
+    btn.querySelector('i').classList.add('ph-spin');
 
     try {
         const docSnap = await getDoc(doc(db, "settings", "auth"));
@@ -114,7 +108,9 @@ window.checkPassword = async function() {
         console.error(e); 
         alert("Ошибка подключения."); 
     }
-    btn.innerHTML = "<i class='ph-fill ph-key'></i> Войти красиво";
+    document.getElementById('auth-btn-text').innerText = oldText;
+    btn.querySelector('i').classList.replace('ph-spinner-gap', 'ph-key');
+    btn.querySelector('i').classList.remove('ph-spin');
 }
 
 window.logout = function() { 
@@ -134,7 +130,7 @@ window.openAddModal = function() {
     document.getElementById('files-container').innerHTML = '';
     
     document.getElementById('cover-image').value = '';
-    document.getElementById('cover-file-name').innerHTML = `Выбери самое красивое фото...`;
+    document.getElementById('cover-file-name').innerHTML = `Выбери красивое фото...`;
     document.getElementById('cover-file-name').removeAttribute('data-url'); 
     document.getElementById('cover-file-name').removeAttribute('data-path'); 
     
@@ -142,7 +138,7 @@ window.openAddModal = function() {
     document.getElementById('photo-for-color').value = '';
     
     const spanC = document.getElementById('photo-for-color').nextElementSibling;
-    if(spanC) spanC.innerHTML = `<i class="ph-fill ph-camera"></i> Загрузить фото ниток...`;
+    if(spanC) spanC.innerHTML = `<i class="ph-fill ph-camera"></i> Фото ниток...`;
     
     document.getElementById('canvas-wrapper').style.display = 'none';
     isImageLoadedForCanvas = false;
@@ -379,6 +375,7 @@ async function loadStashToLocals() {
 }
 
 window.openStashModal = function() {
+    // Сброс UI пипетки склада перед открытием
     if (document.getElementById('stash-photo-for-color')) {
         document.getElementById('stash-photo-for-color').value = '';
         const span = document.getElementById('stash-photo-for-color').nextElementSibling;
@@ -430,7 +427,7 @@ async function loadStashToModal() {
     });
     
     if(list.innerHTML === '') {
-        list.innerHTML = '<p style="color:var(--hk-hot-pink); width:100%; text-align:center; font-weight: 700;">Твой склад пока пуст, красавчик.</p>';
+        list.innerHTML = '<p style="color:var(--hk-hot-pink); width:100%; text-align:center; font-weight: 700;">Склад пуст.</p>';
     }
     document.getElementById('stash-loading').style.display = 'none';
 }
@@ -446,7 +443,7 @@ window.deleteStashThread = async function(id) {
 // --- ВЫБОР ИЗ СКЛАДА В ФОРМЕ ДИЗАЙНА ---
 function fillStashSelect() {
     const select = document.getElementById('stash-select');
-    select.innerHTML = '<option value="">Взять со Склада...</option>';
+    select.innerHTML = '<option value="">Из Склада...</option>';
     
     allStashThreads.forEach(thread => {
         select.innerHTML += `<option value="${thread.id}" style="color: black; background-color: ${thread.hex};">${thread.code}</option>`;
