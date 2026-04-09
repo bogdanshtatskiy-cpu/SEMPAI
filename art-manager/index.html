@@ -43,26 +43,55 @@
         </main>
     </div>
 
-    <div id="artModal" class="modal-overlay" style="display: none;">
-        <div class="modal-box glass-panel">
-            <h3>Управление Артом</h3>
-            <p id="modalProductName" style="margin-bottom: 15px; color: var(--text-muted);"></p>
+    <div id="productModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box glass-panel modal-large">
+            <button id="closeModalBtn" class="close-btn">&times;</button>
             
-            <div class="input-group">
-                <label>1. Вставить ссылку (Гугл Диск):</label>
-                <input type="text" id="artLinkInput" placeholder="https://drive.google.com/...">
-            </div>
-            
-            <div style="text-align: center; margin: 15px 0;">— ИЛИ —</div>
+            <div class="modal-split">
+                <div class="modal-info">
+                    <div class="modal-img-wrapper">
+                        <img id="modalImg" src="" alt="">
+                    </div>
+                    <h3 id="modalTitle" class="modal-title"></h3>
+                    <p id="modalCategory" class="modal-category"></p>
+                </div>
 
-            <div class="input-group">
-                <label>2. Загрузить файл с компьютера:</label>
-                <input type="file" id="artFileInput" accept="image/*,.pdf,.cdr,.ai">
-            </div>
+                <div class="modal-arts">
+                    <h3>Управление артами</h3>
+                    
+                    <div class="art-block black-art-block">
+                        <div class="art-block-header">
+                            <span class="color-dot dot-black"></span>
+                            <h4>Для черной футболки</h4>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="linkBlack" placeholder="Ссылка Google Диск...">
+                            <input type="file" id="fileBlack" accept="image/*,.pdf,.cdr,.ai">
+                        </div>
+                        <div class="modal-actions">
+                            <button id="saveBlackBtn" class="btn-variant btn-black">Сохранить</button>
+                            <a id="viewBlackBtn" target="_blank" class="btn-variant btn-black" style="display:none;">Открыть арт</a>
+                            <button id="delBlackBtn" class="btn-delete" style="display:none;">Удалить</button>
+                        </div>
+                    </div>
 
-            <div class="modal-actions">
-                <button id="closeModalBtn" class="btn-secondary">Отмена</button>
-                <button id="saveArtBtn" class="btn-primary">Сохранить арт</button>
+                    <div class="art-block white-art-block">
+                        <div class="art-block-header">
+                            <span class="color-dot dot-white"></span>
+                            <h4>Для белой футболки</h4>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="linkWhite" placeholder="Ссылка Google Диск...">
+                            <input type="file" id="fileWhite" accept="image/*,.pdf,.cdr,.ai">
+                        </div>
+                        <div class="modal-actions">
+                            <button id="saveWhiteBtn" class="btn-variant btn-white">Сохранить</button>
+                            <a id="viewWhiteBtn" target="_blank" class="btn-variant btn-white" style="display:none;">Открыть арт</a>
+                            <button id="delWhiteBtn" class="btn-delete" style="display:none;">Удалить</button>
+                        </div>
+                    </div>
+                    
+                </div>
             </div>
         </div>
     </div>
