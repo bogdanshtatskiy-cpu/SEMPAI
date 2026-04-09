@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-// --- ОБЯЗАТЕЛЬНО ВСТАВЬ СВОИ КЛЮЧИ СЮДА ---
+// --- ВСТАВЬ СВОИ ДАННЫЕ ИЗ FIREBASE СЮДА ---
 const firebaseConfig = {
 	apiKey: "AIzaSyD5XdT5kt_4MPbQat4yxxX49HsNa-SI6Ms",
 	authDomain: "sempai-art.firebaseapp.com",
@@ -38,6 +38,11 @@ const logoutBtn = document.getElementById('logoutBtn');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
 
+// Элементы Мобильного меню
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const sidebar = document.getElementById('sidebar');
+const mobileOverlay = document.getElementById('mobileOverlay');
+
 // Элементы Модалки
 const productModal = document.getElementById('productModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
@@ -57,8 +62,9 @@ const saveWhiteBtn = document.getElementById('saveWhiteBtn');
 const viewWhiteBtn = document.getElementById('viewWhiteBtn');
 const delWhiteBtn = document.getElementById('delWhiteBtn');
 
+
 // ==========================================
-// 1. ЛОГИКА АВТОРИЗАЦИИ
+// 1. АВТОРИЗАЦИЯ
 // ==========================================
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -72,21 +78,27 @@ onAuthStateChanged(auth, (user) => {
 });
 
 loginBtn.onclick = () => {
-    const email = document.getElementById('emailInput').value;
-    const pass = document.getElementById('passwordInput').value;
-    loginError.textContent = "Вход...";
-    
-    signInWithEmailAndPassword(auth, email, pass)
-        .then(() => loginError.textContent = "")
-        .catch(e => {
-            console.error(e);
-            loginError.textContent = "Ошибка: неверный Email/Пароль или нет конфига.";
-        });
+    signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passwordInput').value)
+        .catch(e => loginError.textContent = "Ошибка входа.");
 };
 logoutBtn.onclick = () => signOut(auth);
 
 // ==========================================
-// 2. ИНИЦИАЛИЗАЦИЯ И ДАННЫЕ
+// МОБИЛЬНОЕ МЕНЮ
+// ==========================================
+function toggleMobileMenu() {
+    sidebar.classList.toggle('active');
+    mobileOverlay.classList.toggle('active');
+}
+function closeMobileMenu() {
+    sidebar.classList.remove('active');
+    mobileOverlay.classList.remove('active');
+}
+mobileMenuBtn.onclick = toggleMobileMenu;
+mobileOverlay.onclick = closeMobileMenu;
+
+// ==========================================
+// 2. ИНИЦИАЛИЗАЦИЯ
 // ==========================================
 async function loadApp() {
     try {
@@ -140,22 +152,18 @@ function setupCategories() {
     const favs = categories.filter(c => favoriteCategories.includes(c));
     const others = categories.filter(c => !favoriteCategories.includes(c));
 
-    // Избранные
     if (favs.length > 0) {
         const favDivider = document.createElement('div');
         favDivider.className = 'cat-divider';
         favDivider.textContent = '★ Избранные';
         categoryList.appendChild(favDivider);
-
         favs.forEach(cat => createCategoryItem(cat, true));
-
+        
         const otherDivider = document.createElement('div');
         otherDivider.className = 'cat-divider';
         otherDivider.textContent = 'Остальные';
         categoryList.appendChild(otherDivider);
     }
-
-    // Остальные
     others.forEach(cat => createCategoryItem(cat, false));
 }
 
@@ -169,7 +177,6 @@ function createCategoryItem(cat, isFav) {
         toggleFavorite(cat); 
     };
     li.onclick = () => selectCategory(cat, li);
-    
     categoryList.appendChild(li);
 }
 
@@ -188,6 +195,8 @@ function selectCategory(cat, el) {
     el.classList.add('active'); 
     activeCategory = cat; 
     renderProducts(); 
+    // На мобильном закрываем меню при выборе категории
+    if(window.innerWidth <= 768) closeMobileMenu();
 }
 
 searchInput.addEventListener('input', renderProducts);
@@ -215,8 +224,8 @@ function renderProducts() {
         let indicatorsHtml = '';
         if (hasBlack || hasWhite) {
             indicatorsHtml = `<div class="art-indicators">
-                ${hasBlack ? '<div class="indicator ind-black" title="Загружен арт для черной"></div>' : ''}
-                ${hasWhite ? '<div class="indicator ind-white" title="Загружен арт для белой"></div>' : ''}
+                ${hasBlack ? '<div class="indicator ind-black"></div>' : ''}
+                ${hasWhite ? '<div class="indicator ind-white"></div>' : ''}
             </div>`;
         }
 
@@ -235,7 +244,7 @@ function renderProducts() {
 }
 
 // ==========================================
-// 4. ЛОГИКА ОКНА ТОВАРА
+// 4. ОКНО ТОВАРА И СОХРАНЕНИЕ
 // ==========================================
 function openProductModal(product) {
     currentProduct = product;
@@ -291,7 +300,6 @@ async function saveVariant(variant, fileInput, linkInput, btn) {
             openProductModal(currentProduct); 
         }
     } catch (error) {
-        console.error("Ошибка:", error);
         alert("Ошибка при сохранении.");
     }
     btn.textContent = 'Сохранить'; btn.disabled = false;
