@@ -15,7 +15,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; position: relative; }
+body { background-color: var(--bg-dark); color: var(--text-main); height: 100dvh; overflow: hidden; position: relative; }
 
 /* Фоновые градиенты */
 .bg-blob { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; animation: float 20s infinite alternate; }
@@ -23,7 +23,7 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 .blob-white { width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); bottom: -10%; right: -10%; }
 @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.1); } }
 
-.app-container { display: flex; height: 100vh; padding: 20px; gap: 20px; }
+.app-container { display: flex; height: 100dvh; padding: 20px; gap: 20px; }
 .glass-panel { background: var(--glass-dark); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border-dark); border-radius: var(--radius-lg); color: #fff; }
 
 .sidebar { width: 300px; display: flex; flex-direction: column; padding: 30px 20px; flex-shrink: 0; z-index: 100; transition: var(--transition); }
@@ -46,10 +46,13 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 .filters li.active .fav-star.is-fav { color: #fff; }
 
 .main-content { flex-grow: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
-.top-bar { padding: 15px 30px; display: flex; align-items: center; flex-shrink: 0; overflow-x: auto; white-space: nowrap; }
-.top-bar::-webkit-scrollbar { display: none; }
-.mobile-menu-btn { display: none; background: none; border: none; color: #fff; font-size: 24px; margin-right: 15px; cursor: pointer; }
-.group-toggles button { background: transparent; border: none; color: #fff; font-size: 16px; margin-right: 20px; cursor: pointer; opacity: 0.5; transition: var(--transition); }
+
+/* ИСПРАВЛЕННАЯ ШАПКА */
+.top-bar { padding: 15px 30px; display: flex; align-items: center; flex-shrink: 0; width: 100%; box-sizing: border-box; }
+.mobile-menu-btn { display: none; background: none; border: none; color: #fff; font-size: 28px; margin-right: 15px; cursor: pointer; flex-shrink: 0; padding: 5px; }
+.group-toggles { display: flex; flex-grow: 1; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.group-toggles::-webkit-scrollbar { display: none; }
+.group-toggles button { background: transparent; border: none; color: #fff; font-size: 16px; margin-right: 20px; cursor: pointer; opacity: 0.5; transition: var(--transition); flex-shrink: 0; }
 .group-toggles button.active { opacity: 1; font-weight: 700; border-bottom: 2px solid var(--red-accent); }
 
 .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; overflow-y: auto; padding-right: 10px; padding-bottom: 20px; align-content: start;}
@@ -78,7 +81,7 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 .ind-white { background: #fff; border: 1px solid rgba(0,0,0,0.3); }
 
 /* Авторизация */
-.login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(40px); }
+.login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(40px); }
 .login-box { background: var(--bg-dark); padding: 40px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); width: 350px; display: flex; flex-direction: column; gap: 15px; }
 .login-box input { padding: 12px; border-radius: 10px; border: 1px solid var(--border-dark); background: rgba(255,255,255,0.05); color: #fff; font-size: 16px; outline: none; }
 .error-text { color: var(--red-accent); font-size: 13px; text-align: center; }
@@ -87,8 +90,8 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 .btn-logout { background: transparent; border: 1px solid var(--red-accent); color: var(--red-accent); padding: 10px; border-radius: 10px; cursor: pointer; transition: 0.3s;}
 
 /* Окно товара */
-.modal-overlay-product { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-.modal-large { width: 900px; max-width: 95vw; position: relative; padding: 0; overflow: hidden; max-height: 95vh; display: flex; flex-direction: column; }
+.modal-overlay-product { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+.modal-large { width: 900px; max-width: 95vw; position: relative; padding: 0; overflow: hidden; max-height: 95dvh; display: flex; flex-direction: column; }
 .close-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; opacity: 0.6; transition: 0.3s; z-index: 10; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
 .modal-split { display: flex; min-height: 500px; height: auto; overflow-y: auto; }
@@ -117,7 +120,7 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 .btn-white { background: #f0f0f0; color: #111; border: 1px solid #ccc; }
 .btn-delete { background: transparent; border: 1px solid var(--red-accent); color: var(--red-accent); padding: 10px 15px; border-radius: 8px; font-weight: 600; }
 
-.mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 90; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s; }
+.mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.5); z-index: 900; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s; }
 
 /* =======================================
    ПОЛНАЯ АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ
@@ -125,14 +128,18 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 @media (max-width: 768px) {
     .app-container { padding: 10px; gap: 10px; }
     
+    /* Оптимизация GPU для мобильных */
+    .bg-blob { animation: none; filter: blur(60px); opacity: 0.4; } 
+    .glass-panel { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
     /* Боковое меню превращается в шторку */
-    .sidebar { position: fixed; top: 0; left: -100%; height: 100vh; width: 280px; background: rgba(20, 20, 22, 0.95); border-radius: 0; border: none; box-shadow: 5px 0 25px rgba(0,0,0,0.5); z-index: 100; }
+    .sidebar { position: fixed; top: 0; left: -100%; height: 100dvh; width: 280px; background: rgba(20, 20, 22, 0.98); border-radius: 0; border: none; box-shadow: 5px 0 25px rgba(0,0,0,0.7); z-index: 1000; }
     .sidebar.active { left: 0; }
     .mobile-overlay.active { display: block; opacity: 1; }
 
     /* Верхняя панель */
     .mobile-menu-btn { display: block; }
-    .top-bar { padding: 10px 15px; border-radius: 16px; margin-bottom: 10px;}
+    .top-bar { padding: 10px 15px; border-radius: 16px; margin-bottom: 10px; }
     .group-toggles button { font-size: 14px; margin-right: 15px; }
 
     /* Сетка товаров (2 колонки) */
@@ -144,7 +151,7 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
     .indicator { width: 12px; height: 12px; }
 
     /* Окно товара складывается в колонку */
-    .modal-large { width: 95vw; max-height: 85vh; border-radius: 20px;}
+    .modal-large { width: 95vw; max-height: 85dvh; border-radius: 20px;}
     .modal-split { flex-direction: column; }
     .modal-info { width: 100%; border-right: none; border-bottom: 1px solid var(--border-dark); padding: 20px; }
     .modal-img-wrapper { margin-bottom: 15px; }
