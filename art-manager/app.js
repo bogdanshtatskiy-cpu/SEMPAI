@@ -92,13 +92,13 @@ async function loadApp() {
         });
 
         setupGroups();
-        setupCategories();
+        ();
     } catch (error) {
         console.error('Ошибка загрузки', error);
     }
 }
 
-// (setupGroups, setupCategories, createCategoryItem, toggleFavorite, selectCategory - без изменений)
+// (setupGroups, , createCategoryItem, toggleFavorite, selectCategory - без изменений)
 function setupGroups() {
     groupToggles.innerHTML = '';
     const groups = [...new Set(products.map(p => p.group))];
@@ -125,9 +125,18 @@ function setupCategories() {
     const others = categories.filter(c => !favoriteCategories.includes(c));
 
     if (favs.length > 0) {
-        categoryList.innerHTML += `<div class="cat-divider">★ Избранные</div>`;
+        // Создаем разделители правильно, не ломая события кликов
+        const favDivider = document.createElement('div');
+        favDivider.className = 'cat-divider';
+        favDivider.textContent = '★ Избранные';
+        categoryList.appendChild(favDivider);
+
         favs.forEach(cat => createCategoryItem(cat, true));
-        categoryList.innerHTML += `<div class="cat-divider">Остальные</div>`;
+
+        const otherDivider = document.createElement('div');
+        otherDivider.className = 'cat-divider';
+        otherDivider.textContent = 'Остальные';
+        categoryList.appendChild(otherDivider);
     }
     others.forEach(cat => createCategoryItem(cat, false));
 }
