@@ -23,7 +23,6 @@
     <div id="mobileOverlay" class="mobile-overlay"></div>
 
     <div class="app-container" id="appContent" style="display: none;">
-        
         <aside class="sidebar glass-panel" id="sidebar">
             <div class="logo">
                 <h1>SEMPAI<span>.art</span></h1>
@@ -56,6 +55,16 @@
                     <div class="modal-img-wrapper">
                         <img id="modalImg" src="" alt="">
                     </div>
+                    
+                    <div id="modalImageSwitcher" class="image-switcher" style="display: none;">
+                        <button id="btnImgBlack" class="img-switch-btn active" title="Показать на черном">
+                            <span class="color-dot dot-black"></span>
+                        </button>
+                        <button id="btnImgWhite" class="img-switch-btn" title="Показать на белом">
+                            <span class="color-dot dot-white"></span>
+                        </button>
+                    </div>
+
                     <h3 id="modalTitle" class="modal-title"></h3>
                     <p id="modalCategory" class="modal-category"></p>
                 </div>
