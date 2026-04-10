@@ -55,6 +55,11 @@ const modalImageSwitcher = document.getElementById('modalImageSwitcher');
 const btnImgBlack = document.getElementById('btnImgBlack');
 const btnImgWhite = document.getElementById('btnImgWhite');
 
+// Элементы Полноэкранного просмотра
+const fullscreenViewer = document.getElementById('fullscreenViewer');
+const fullscreenImg = document.getElementById('fullscreenImg');
+const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
+
 const linkBlack = document.getElementById('linkBlack');
 const fileBlack = document.getElementById('fileBlack');
 const linkWhite = document.getElementById('linkWhite');
@@ -274,17 +279,15 @@ function renderProducts() {
 }
 
 // ==========================================
-// 4. ОКНО ТОВАРА И СОХРАНЕНИЕ
+// 4. ОКНО ТОВАРА, СОХРАНЕНИЕ И ПРОСМОТР
 // ==========================================
 function openProductModal(product) {
     currentProduct = product;
     
-    // По умолчанию показываем первую картинку
     modalImg.src = product.images[0] || 'placeholder.jpg';
     modalTitle.textContent = product.nameRu;
     modalCategory.textContent = product.category;
 
-    // Логика переключателя картинок
     if (product.images.length > 1) {
         modalImageSwitcher.style.display = 'flex';
         btnImgBlack.classList.add('active');
@@ -302,7 +305,6 @@ function openProductModal(product) {
             btnImgBlack.classList.remove('active');
         };
     } else {
-        // Если картинка только одна - прячем переключатель
         modalImageSwitcher.style.display = 'none';
     }
 
@@ -331,6 +333,22 @@ function openProductModal(product) {
 }
 
 closeModalBtn.onclick = () => productModal.style.display = 'none';
+
+// Логика открытия полноэкранного изображения
+modalImg.onclick = () => {
+    fullscreenImg.src = modalImg.src;
+    fullscreenViewer.style.display = 'flex';
+};
+
+// Закрытие полноэкранного режима при клике на крестик или фон
+function closeFullscreen() {
+    fullscreenViewer.style.display = 'none';
+    fullscreenImg.src = '';
+}
+closeFullscreenBtn.onclick = closeFullscreen;
+fullscreenViewer.onclick = (e) => {
+    if (e.target !== fullscreenImg) closeFullscreen();
+};
 
 async function saveVariant(variant, fileInput, linkInput, btn) {
     const file = fileInput.files[0];
