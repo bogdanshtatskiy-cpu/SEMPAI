@@ -5,13 +5,13 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "http
 
 // --- ВСТАВЬ СВОИ ДАННЫЕ ИЗ FIREBASE СЮДА ---
 const firebaseConfig = {
-    apiKey: "ТВОЙ_API_KEY",
-    authDomain: "твой-проект.firebaseapp.com",
-    databaseURL: "https://твой-проект-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "твой-проект",
-    storageBucket: "твой-проект.appspot.com",
-    messagingSenderId: "твой-ид",
-    appId: "твой-апп-ид"
+    apiKey: "AIzaSyD5XdT5kt_4MPbQat4yxxX49HsNa-SI6Ms",
+    authDomain: "sempai-art.firebaseapp.com",
+    databaseURL: "https://sempai-art-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "sempai-art",
+    storageBucket: "sempai-art.firebasestorage.app",
+    messagingSenderId: "746851856077",
+    appId: "1:746851856077:web:7757cc827a68db52424384"
 };
 
 const app = initializeApp(firebaseConfig);
