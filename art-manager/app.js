@@ -1,18 +1,17 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-// Добавлены функции setPersistence и browserLocalPersistence
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 // --- ВСТАВЬ СВОИ ДАННЫЕ ИЗ FIREBASE СЮДА ---
 const firebaseConfig = {
-	apiKey: "AIzaSyD5XdT5kt_4MPbQat4yxxX49HsNa-SI6Ms",
-	authDomain: "sempai-art.firebaseapp.com",
-	databaseURL: "https://sempai-art-default-rtdb.europe-west1.firebasedatabase.app",
-	projectId: "sempai-art",
-	storageBucket: "sempai-art.firebasestorage.app",
-	messagingSenderId: "746851856077",
-	appId: "1:746851856077:web:7757cc827a68db52424384"
+    apiKey: "ТВОЙ_API_KEY",
+    authDomain: "твой-проект.firebaseapp.com",
+    databaseURL: "https://твой-проект-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "твой-проект",
+    storageBucket: "твой-проект.appspot.com",
+    messagingSenderId: "твой-ид",
+    appId: "твой-апп-ид"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -26,7 +25,7 @@ let activeGroup = '';
 let favoriteCategories = JSON.parse(localStorage.getItem('sempai_fav_cats')) || [];
 let savedArts = {};
 let currentProduct = null;
-let isAppLoaded = false; // Флаг для защиты от двойной загрузки
+let isAppLoaded = false;
 
 // DOM Элементы
 const grid = document.getElementById('productsGrid');
@@ -40,7 +39,6 @@ const logoutBtn = document.getElementById('logoutBtn');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
 
-// Элементы Мобильного меню
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const sidebar = document.getElementById('sidebar');
 const mobileOverlay = document.getElementById('mobileOverlay');
@@ -51,6 +49,11 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const modalImg = document.getElementById('modalImg');
 const modalTitle = document.getElementById('modalTitle');
 const modalCategory = document.getElementById('modalCategory');
+
+// Элементы переключателя картинок
+const modalImageSwitcher = document.getElementById('modalImageSwitcher');
+const btnImgBlack = document.getElementById('btnImgBlack');
+const btnImgWhite = document.getElementById('btnImgWhite');
 
 const linkBlack = document.getElementById('linkBlack');
 const fileBlack = document.getElementById('fileBlack');
@@ -64,7 +67,6 @@ const saveWhiteBtn = document.getElementById('saveWhiteBtn');
 const viewWhiteBtn = document.getElementById('viewWhiteBtn');
 const delWhiteBtn = document.getElementById('delWhiteBtn');
 
-
 // ==========================================
 // 1. АВТОРИЗАЦИЯ И СОХРАНЕНИЕ СЕССИИ
 // ==========================================
@@ -73,7 +75,6 @@ onAuthStateChanged(auth, (user) => {
         loginScreen.style.display = 'none';
         appContent.style.display = 'flex';
         
-        // Загружаем приложение только один раз
         if (!isAppLoaded) {
             loadApp(); 
             isAppLoaded = true;
@@ -85,12 +86,11 @@ onAuthStateChanged(auth, (user) => {
 });
 
 loginBtn.onclick = (e) => {
-    e.preventDefault(); // Блокируем случайную перезагрузку
+    e.preventDefault(); 
     const email = document.getElementById('emailInput').value;
     const pass = document.getElementById('passwordInput').value;
     loginError.textContent = "Вход...";
     
-    // Жестко привязываем сессию к локальной памяти
     setPersistence(auth, browserLocalPersistence)
         .then(() => {
             return signInWithEmailAndPassword(auth, email, pass);
@@ -104,14 +104,13 @@ loginBtn.onclick = (e) => {
         });
 };
 
-// Вход по нажатию Enter
 document.getElementById('passwordInput').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') loginBtn.click();
 });
 
 logoutBtn.onclick = () => {
     signOut(auth).then(() => {
-        isAppLoaded = false; // Сбрасываем флаг при выходе
+        isAppLoaded = false; 
     });
 };
 
@@ -227,7 +226,6 @@ function selectCategory(cat, el) {
     el.classList.add('active'); 
     activeCategory = cat; 
     renderProducts(); 
-    // На мобильном закрываем меню при выборе категории
     if(window.innerWidth <= 768) closeMobileMenu();
 }
 
@@ -281,9 +279,32 @@ function renderProducts() {
 function openProductModal(product) {
     currentProduct = product;
     
+    // По умолчанию показываем первую картинку
     modalImg.src = product.images[0] || 'placeholder.jpg';
     modalTitle.textContent = product.nameRu;
     modalCategory.textContent = product.category;
+
+    // Логика переключателя картинок
+    if (product.images.length > 1) {
+        modalImageSwitcher.style.display = 'flex';
+        btnImgBlack.classList.add('active');
+        btnImgWhite.classList.remove('active');
+        
+        btnImgBlack.onclick = () => {
+            modalImg.src = product.images[0];
+            btnImgBlack.classList.add('active');
+            btnImgWhite.classList.remove('active');
+        };
+        
+        btnImgWhite.onclick = () => {
+            modalImg.src = product.images[1];
+            btnImgWhite.classList.add('active');
+            btnImgBlack.classList.remove('active');
+        };
+    } else {
+        // Если картинка только одна - прячем переключатель
+        modalImageSwitcher.style.display = 'none';
+    }
 
     linkBlack.value = ''; fileBlack.value = '';
     linkWhite.value = ''; fileWhite.value = '';
