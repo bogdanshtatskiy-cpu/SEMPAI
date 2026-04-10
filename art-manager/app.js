@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+// Добавлены функции setPersistence и browserLocalPersistence
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -25,6 +26,7 @@ let activeGroup = '';
 let favoriteCategories = JSON.parse(localStorage.getItem('sempai_fav_cats')) || [];
 let savedArts = {};
 let currentProduct = null;
+let isAppLoaded = false; // Флаг для защиты от двойной загрузки
 
 // DOM Элементы
 const grid = document.getElementById('productsGrid');
@@ -64,24 +66,54 @@ const delWhiteBtn = document.getElementById('delWhiteBtn');
 
 
 // ==========================================
-// 1. АВТОРИЗАЦИЯ
+// 1. АВТОРИЗАЦИЯ И СОХРАНЕНИЕ СЕССИИ
 // ==========================================
 onAuthStateChanged(auth, (user) => {
     if (user) {
         loginScreen.style.display = 'none';
         appContent.style.display = 'flex';
-        loadApp(); 
+        
+        // Загружаем приложение только один раз
+        if (!isAppLoaded) {
+            loadApp(); 
+            isAppLoaded = true;
+        }
     } else {
         loginScreen.style.display = 'flex';
         appContent.style.display = 'none';
     }
 });
 
-loginBtn.onclick = () => {
-    signInWithEmailAndPassword(auth, document.getElementById('emailInput').value, document.getElementById('passwordInput').value)
-        .catch(e => loginError.textContent = "Ошибка входа.");
+loginBtn.onclick = (e) => {
+    e.preventDefault(); // Блокируем случайную перезагрузку
+    const email = document.getElementById('emailInput').value;
+    const pass = document.getElementById('passwordInput').value;
+    loginError.textContent = "Вход...";
+    
+    // Жестко привязываем сессию к локальной памяти
+    setPersistence(auth, browserLocalPersistence)
+        .then(() => {
+            return signInWithEmailAndPassword(auth, email, pass);
+        })
+        .then(() => {
+            loginError.textContent = "";
+        })
+        .catch(error => {
+            console.error(error);
+            loginError.textContent = "Ошибка: неверный Email/Пароль.";
+        });
 };
-logoutBtn.onclick = () => signOut(auth);
+
+// Вход по нажатию Enter
+document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') loginBtn.click();
+});
+
+logoutBtn.onclick = () => {
+    signOut(auth).then(() => {
+        isAppLoaded = false; // Сбрасываем флаг при выходе
+    });
+};
 
 // ==========================================
 // МОБИЛЬНОЕ МЕНЮ
