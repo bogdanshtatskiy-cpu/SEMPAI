@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
 import styles from '../App.module.css';
@@ -21,8 +21,110 @@ export default function Cart() {
   const [city, setCity] = useState('');
   const [branch, setBranch] = useState('');
 
+  // NP State
+  const [cityQuery, setCityQuery] = useState('');
+  const [cities, setCities] = useState<any[]>([]);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [isFetchingCities, setIsFetchingCities] = useState(false);
+
+  const [branchQuery, setBranchQuery] = useState('');
+  const [branches, setBranches] = useState<any[]>([]);
+  const [filteredBranches, setFilteredBranches] = useState<any[]>([]);
+  const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
+  const [isFetchingBranches, setIsFetchingBranches] = useState(false);
+
   const baseTotalPrice = getTotalPrice();
   let totalPrice = baseTotalPrice;
+
+  // NP Effects
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (cityQuery.length < 2) {
+        setCities([]);
+        setIsCityDropdownOpen(false);
+        return;
+      }
+      setIsFetchingCities(true);
+      try {
+        const response = await fetch('/api/np', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            modelName: 'Address',
+            calledMethod: 'searchSettlements',
+            methodProperties: {
+              CityName: cityQuery,
+              Limit: "50"
+            }
+          })
+        });
+        const data = await response.json();
+        if (data.success) {
+          setCities(data.data[0]?.Addresses || []);
+          setIsCityDropdownOpen(true);
+        }
+      } catch (e) {
+        console.error('NP Cities Error', e);
+      } finally {
+        setIsFetchingCities(false);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchCities, 500);
+    return () => clearTimeout(timeoutId);
+  }, [cityQuery]);
+
+  useEffect(() => {
+    if (branchQuery) {
+      const lowerQuery = branchQuery.toLowerCase();
+      setFilteredBranches(branches.filter(b => b.Description.toLowerCase().includes(lowerQuery)));
+      setIsBranchDropdownOpen(true);
+    } else {
+      setFilteredBranches(branches);
+    }
+  }, [branchQuery, branches]);
+
+  const handleSelectCity = async (c: any) => {
+    setCity(c.Present);
+    setCityQuery(c.Present);
+    setIsCityDropdownOpen(false);
+    
+    setBranch('');
+    setBranchQuery('');
+    setBranches([]);
+    setFilteredBranches([]);
+    
+    setIsFetchingBranches(true);
+    try {
+      const response = await fetch('/api/np', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelName: 'Address',
+          calledMethod: 'getWarehouses',
+          methodProperties: {
+            CityRef: c.DeliveryCity
+          }
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setBranches(data.data || []);
+        setFilteredBranches(data.data || []);
+      }
+    } catch (e) {
+      console.error('NP Branches Error', e);
+    } finally {
+      setIsFetchingBranches(false);
+    }
+  };
+
+  const handleSelectBranch = (b: any) => {
+    setBranch(b.Description);
+    setBranchQuery(b.Description);
+    setIsBranchDropdownOpen(false);
+  };
+
   
   if (appliedPromo) {
     if (appliedPromo.discountType === 'percent') {
@@ -207,8 +309,57 @@ export default function Cart() {
               <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px'}}>
                 <h3 style={{margin: '0 0 8px 0'}}>Доставка (Нова Пошта)</h3>
                 <input type="tel" placeholder="Номер телефона (+380...)" value={phone} onChange={e => setPhone(e.target.value)} className={styles.inputField} />
-                <input type="text" placeholder="Город" value={city} onChange={e => setCity(e.target.value)} className={styles.inputField} />
-                <input type="text" placeholder="Отделение (например, №12)" value={branch} onChange={e => setBranch(e.target.value)} className={styles.inputField} />
+                
+                {/* Город */}
+                <div style={{position: 'relative'}}>
+                  <input 
+                    type="text" 
+                    placeholder={isFetchingCities ? "Ищем города..." : "Город"} 
+                    value={cityQuery} 
+                    onChange={e => {
+                      setCityQuery(e.target.value);
+                      if (e.target.value !== city) setCity(''); // reset city if edited
+                    }} 
+                    onFocus={() => { if(cities.length > 0) setIsCityDropdownOpen(true) }}
+                    className={styles.inputField} 
+                    style={{width: '100%', boxSizing: 'border-box'}}
+                  />
+                  {isCityDropdownOpen && cities.length > 0 && (
+                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}>
+                      {cities.map((c, idx) => (
+                        <div key={idx} onClick={() => handleSelectCity(c)} style={{padding: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer'}}>
+                          {c.Present}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Отделение */}
+                <div style={{position: 'relative'}}>
+                  <input 
+                    type="text" 
+                    placeholder={isFetchingBranches ? "Загрузка отделений..." : "Отделение (номер или улица)"} 
+                    value={branchQuery} 
+                    onChange={e => {
+                      setBranchQuery(e.target.value);
+                      if (e.target.value !== branch) setBranch('');
+                    }}
+                    onFocus={() => { if(filteredBranches.length > 0) setIsBranchDropdownOpen(true) }}
+                    className={styles.inputField} 
+                    style={{width: '100%', boxSizing: 'border-box'}}
+                    disabled={!city || branches.length === 0}
+                  />
+                  {isBranchDropdownOpen && filteredBranches.length > 0 && (
+                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}>
+                      {filteredBranches.map((b, idx) => (
+                        <div key={idx} onClick={() => handleSelectBranch(b)} style={{padding: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '14px'}}>
+                          {b.Description}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button 
