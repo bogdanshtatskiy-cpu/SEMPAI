@@ -96,6 +96,7 @@ export default function Cart() {
     setCity(c.Present);
     setCityQuery(c.Present);
     setIsCityDropdownOpen(false);
+    setCities([]);
     
     setBranch('');
     setBranchQuery('');
@@ -131,6 +132,7 @@ export default function Cart() {
     setBranch(b.Description);
     setBranchQuery(b.Description);
     setIsBranchDropdownOpen(false);
+    setFilteredBranches([]);
   };
 
   
@@ -377,9 +379,9 @@ export default function Cart() {
                     style={{width: '100%', boxSizing: 'border-box'}}
                   />
                   {isCityDropdownOpen && cities.length > 0 && (
-                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', backdropFilter: 'none'}}>
+                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)'}}>
                       {cities.map((c, idx) => (
-                        <div key={idx} onClick={() => handleSelectCity(c)} style={{padding: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer'}}>
+                        <div key={idx} onClick={() => handleSelectCity(c)} style={{padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', background: '#1a1a1f'}}>
                           {c.Present}
                         </div>
                       ))}
@@ -403,9 +405,9 @@ export default function Cart() {
                     disabled={!city || branches.length === 0}
                   />
                   {isBranchDropdownOpen && filteredBranches.length > 0 && (
-                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', backdropFilter: 'none'}}>
+                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)'}}>
                       {filteredBranches.map((b, idx) => (
-                        <div key={idx} onClick={() => handleSelectBranch(b)} style={{padding: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '14px'}}>
+                        <div key={idx} onClick={() => handleSelectBranch(b)} style={{padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: '14px', background: '#1a1a1f'}}>
                           {b.Description}
                         </div>
                       ))}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Routes, Route, NavLink } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
@@ -46,6 +46,22 @@ function App() {
     };
   }, [subscribeToProducts, subscribeToOrders, subscribeToPromos, loadFavorites]);
 
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const isKb = window.visualViewport.height < window.innerHeight * 0.75;
+        setIsKeyboardOpen(isKb);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => window.visualViewport?.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
   return (
     <div className={styles.appContainer}>
       <header className={styles.header}>
@@ -65,7 +81,7 @@ function App() {
         </Routes>
       </main>
 
-      <footer className={styles.bottomNav}>
+      <footer className={styles.bottomNav} style={isKeyboardOpen ? {display: 'none'} : undefined}>
         <NavLink 
           to="/" 
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.activeNav : ''}`}
