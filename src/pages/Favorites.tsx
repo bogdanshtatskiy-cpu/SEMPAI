@@ -32,7 +32,7 @@ export default function Favorites() {
             <div key={item.id} className={styles.productCard}>
               {(item.imageUrls?.[0] || item.imageUrl) ? (
                 <div style={{position: 'relative', width: '100%', aspectRatio: '1', overflow: 'hidden', borderRadius: '8px'}}>
-                  <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} />
+                  <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} loading="lazy" />
                 </div>
               ) : (
                 <div className={styles.productImagePlaceholder}></div>

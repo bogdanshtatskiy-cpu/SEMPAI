@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WebApp from '@twa-dev/sdk';
+import { collection, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { db, storage } from '../firebase';
 import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
 import { useOrdersStore, Order } from '../store/useOrdersStore';
 import { usePromoStore } from '../store/usePromoStore';
 import { Trash2, Edit2, Package, ShoppingBag, Tag } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
 
 export default function Admin() {
   const { t } = useTranslation();
@@ -17,7 +18,35 @@ export default function Admin() {
   const { promos, addPromo, deletePromo } = usePromoStore();
   
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
+  const [orderTab, setOrderTab] = useState<'active' | 'archive'>('active');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  // Проверка брошенных корзин
+  useEffect(() => {
+    const checkAbandonedCarts = async () => {
+      try {
+        const q = query(collection(db, 'carts'));
+        const snapshot = await getDocs(q);
+        
+        snapshot.forEach(async (cartDoc) => {
+          const cart = cartDoc.data();
+          const oneHourAgo = Date.now() - 3600000;
+          
+          if (cart.updatedAt < oneHourAgo) {
+            await fetch('/api/notify_abandoned', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cart })
+            });
+            await deleteDoc(doc(db, 'carts', cartDoc.id));
+          }
+        });
+      } catch (e) {
+        console.error('Error checking abandoned carts:', e);
+      }
+    };
+    checkAbandonedCarts();
+  }, []);
 
   // Уникальные значения для подсказок
   const existingCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
@@ -410,7 +439,7 @@ export default function Admin() {
                   <div key={item.id} className={styles.productCard}>
                     {(item.imageUrls?.[0] || item.imageUrl) ? (
                       <div style={{position: 'relative', width: '80px', height: '80px', overflow: 'hidden', borderRadius: '8px', flexShrink: 0}}>
-                        <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                        <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} style={{width: '100%', height: '100%', objectFit: 'cover'}} loading="lazy" />
                       </div>
                     ) : (<div className={styles.productImagePlaceholder}></div>
                     )}
@@ -442,8 +471,48 @@ export default function Admin() {
 
       {activeTab === 'orders' && (
         <div>
-          {ordersLoading ? <p>Загрузка заказов...</p> : orders.length === 0 ? <p>Заказов пока нет</p> : (
-            orders.map(order => (
+          {/* Статистика */}
+          <div className={styles.adminSection}>
+            <h3 style={{marginBottom: '16px'}}>Статистика (Выполненные)</h3>
+            <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+              <div style={{flex: 1, minWidth: '140px', background: 'var(--surface-color-light)', padding: '16px', borderRadius: '12px'}}>
+                <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Доход (7 дней)</p>
+                <h2 style={{margin: 0, color: 'var(--primary-color)'}}>
+                  ₴ {orders
+                      .filter(o => o.status === 'completed' && (new Date().getTime() - new Date(o.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000)
+                      .reduce((sum, o) => sum + o.totalPrice, 0)}
+                </h2>
+              </div>
+              <div style={{flex: 1, minWidth: '140px', background: 'var(--surface-color-light)', padding: '16px', borderRadius: '12px'}}>
+                <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Доход (30 дней)</p>
+                <h2 style={{margin: 0, color: 'var(--primary-color)'}}>
+                  ₴ {orders
+                      .filter(o => o.status === 'completed' && (new Date().getTime() - new Date(o.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000)
+                      .reduce((sum, o) => sum + o.totalPrice, 0)}
+                </h2>
+              </div>
+            </div>
+          </div>
+
+          <div style={{display: 'flex', gap: '8px', marginBottom: '16px', padding: '4px', background: 'var(--surface-color-light)', borderRadius: '12px'}}>
+            <button 
+              className={orderTab === 'active' ? styles.tabBtnActive : styles.tabBtn} 
+              style={{flex: 1, margin: 0, padding: '8px', borderRadius: '8px'}}
+              onClick={() => setOrderTab('active')}
+            >
+              Активные
+            </button>
+            <button 
+              className={orderTab === 'archive' ? styles.tabBtnActive : styles.tabBtn} 
+              style={{flex: 1, margin: 0, padding: '8px', borderRadius: '8px'}}
+              onClick={() => setOrderTab('archive')}
+            >
+              Архив
+            </button>
+          </div>
+
+          {ordersLoading ? <p>Загрузка заказов...</p> : orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).length === 0 ? <p>Заказов в этой категории нет</p> : (
+            orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).map(order => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div>
@@ -472,6 +541,12 @@ export default function Admin() {
                   <p style={{margin: '4px 0', fontSize: '14px', color: 'var(--primary-color)'}}>
                     ТТН: {order.ttn}
                   </p>
+                )}
+                {order.shippingDetails && (
+                  <div style={{margin: '8px 0', padding: '8px', background: 'var(--bg-color)', borderRadius: '8px', fontSize: '14px'}}>
+                    <p style={{margin: '0 0 4px 0'}}><strong>📞 Телефон:</strong> {order.shippingDetails.phone}</p>
+                    <p style={{margin: '0'}}><strong>📍 Новая Почта:</strong> г. {order.shippingDetails.city}, Отд. {order.shippingDetails.branch}</p>
+                  </div>
                 )}
                 <div>
                   <p style={{margin: '8px 0'}}><strong>Товары:</strong></p>

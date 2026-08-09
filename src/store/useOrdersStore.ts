@@ -11,6 +11,11 @@ export interface Order {
   lastName?: string;
   items: CartItem[];
   totalPrice: number;
+  shippingDetails?: {
+    phone: string;
+    city: string;
+    branch: string;
+  };
   status: 'new' | 'processing' | 'shipped' | 'completed' | 'cancelled';
   ttn?: string;
   createdAt: number;

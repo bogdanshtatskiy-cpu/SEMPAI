@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import WebApp from '@twa-dev/sdk';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface Product {
   id: string;
@@ -72,3 +75,30 @@ export const useCartStore = create<CartState>((set, get) => ({
     }, 0);
   },
 }));
+
+let syncTimeout: NodeJS.Timeout;
+
+useCartStore.subscribe((state) => {
+  const user = WebApp.initDataUnsafe?.user;
+  if (!user) return;
+  
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    try {
+      if (state.items.length === 0) {
+        await deleteDoc(doc(db, 'carts', user.id.toString()));
+      } else {
+        await setDoc(doc(db, 'carts', user.id.toString()), {
+          userId: user.id,
+          username: user.username,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          items: state.items,
+          updatedAt: Date.now()
+        });
+      }
+    } catch (e) {
+      console.error('Failed to sync cart:', e);
+    }
+  }, 1500);
+});

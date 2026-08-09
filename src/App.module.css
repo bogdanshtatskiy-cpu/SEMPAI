@@ -254,6 +254,28 @@
   margin-top: 12px;
 }
 
+.adminSection {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.tabBtn {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabBtnActive {
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
 .inputField {
   padding: 12px;
   border-radius: 8px;

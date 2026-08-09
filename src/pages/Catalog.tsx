@@ -150,7 +150,7 @@ export default function Catalog() {
             </button>
             {(item.imageUrls?.[0] || item.imageUrl) ? (
               <div style={{position: 'relative', width: '100%', aspectRatio: '1', overflow: 'hidden', borderRadius: '8px'}}>
-                <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} />
+                <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} loading="lazy" />
               </div>
             ) : (
               <div className={styles.productImagePlaceholder}></div>
@@ -190,11 +190,11 @@ export default function Catalog() {
               {selectedProduct.imageUrls && selectedProduct.imageUrls.length > 1 ? (
                 <div className={styles.modalGalleryScroll}>
                   {selectedProduct.imageUrls.map((url, idx) => (
-                    <img key={idx} src={url} alt={`${selectedProduct.title} ${idx + 1}`} className={styles.modalImage} />
+                    <img key={idx} src={url} alt={`${selectedProduct.title} ${idx + 1}`} className={styles.modalImage} loading="lazy" />
                   ))}
                 </div>
               ) : selectedProduct.imageUrls?.[0] || selectedProduct.imageUrl ? (
-                <img src={selectedProduct.imageUrls?.[0] || selectedProduct.imageUrl} alt={selectedProduct.title} className={styles.modalImage} />
+                <img src={selectedProduct.imageUrls?.[0] || selectedProduct.imageUrl} alt={selectedProduct.title} className={styles.modalImage} loading="lazy" />
               ) : (
                 <div className={styles.productImagePlaceholder}></div>
               )}

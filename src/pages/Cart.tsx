@@ -17,6 +17,10 @@ export default function Cart() {
   const [inputPromo, setInputPromo] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
 
+  const [phone, setPhone] = useState('');
+  const [city, setCity] = useState('');
+  const [branch, setBranch] = useState('');
+
   const baseTotalPrice = getTotalPrice();
   let totalPrice = baseTotalPrice;
   
@@ -65,6 +69,11 @@ export default function Cart() {
       return;
     }
 
+    if (!phone || !city || !branch) {
+      alert("Пожалуйста, заполните все поля доставки (Телефон, Город, Отделение).");
+      return;
+    }
+
     setIsOrdering(true);
     
     if (appliedPromo) {
@@ -82,7 +91,12 @@ export default function Cart() {
       firstName: user.first_name,
       lastName: user.last_name,
       items: items,
-      totalPrice: totalPrice
+      totalPrice: totalPrice,
+      shippingDetails: {
+        phone,
+        city,
+        branch
+      }
     });
     
     setIsOrdering(false);
@@ -102,7 +116,8 @@ export default function Cart() {
               firstName: user.first_name,
               lastName: user.last_name,
               items: items,
-              totalPrice: totalPrice
+              totalPrice: totalPrice,
+              shippingDetails: { phone, city, branch }
             }
           })
         });
@@ -189,6 +204,13 @@ export default function Cart() {
                 )}
               </div>
               
+              <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px'}}>
+                <h3 style={{margin: '0 0 8px 0'}}>Доставка (Нова Пошта)</h3>
+                <input type="tel" placeholder="Номер телефона (+380...)" value={phone} onChange={e => setPhone(e.target.value)} className={styles.inputField} />
+                <input type="text" placeholder="Город" value={city} onChange={e => setCity(e.target.value)} className={styles.inputField} />
+                <input type="text" placeholder="Отделение (например, №12)" value={branch} onChange={e => setBranch(e.target.value)} className={styles.inputField} />
+              </div>
+
               <button 
                 className={styles.checkoutBtn} 
                 onClick={handleCheckout}
