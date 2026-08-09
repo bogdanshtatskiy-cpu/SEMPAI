@@ -1,0 +1,78 @@
+:root {
+  /* Dark theme variables (default) */
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --surface-color-light: #31424a;
+  --primary-color: #16f1ff;
+  --text-color: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --danger-color: #ff4757;
+  --border-color: rgba(49, 66, 74, 0.5);
+  
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+button {
+  border: none;
+  background: var(--primary-color);
+  color: #000;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(22, 241, 255, 0.3);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
