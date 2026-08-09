@@ -7,6 +7,8 @@ import { useProductsStore } from '../store/useProductsStore';
 import { useOrdersStore, Order } from '../store/useOrdersStore';
 import { usePromoStore } from '../store/usePromoStore';
 import { Trash2, Edit2, Package, ShoppingBag, Tag } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase';
 
 export default function Admin() {
   const { t } = useTranslation();
@@ -49,20 +51,11 @@ export default function Admin() {
 
   const uploadFile = async (file: File) => {
     setUploading(true);
-    const formData = new FormData();
-    formData.append('image', file);
-    
     try {
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=635fbb60fb63ff2f38ccf618a80d5004`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      if (data.success) {
-        setImages(prev => [...prev, data.data.url]);
-      } else {
-        alert('Ошибка при загрузке картинки');
-      }
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setImages(prev => [...prev, url]);
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Ошибка при загрузке картинки');
