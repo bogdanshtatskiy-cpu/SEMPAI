@@ -453,3 +453,13 @@
   align-self: flex-start;
 }
 
+
+.userInfo {
+  background: var(--surface-color-light);
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+.userInfo p { margin: 4px 0; font-size: 16px; }
+.userId { font-size: 12px !important; color: var(--text-secondary); margin-top: 8px !important; }
+

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import WebApp from '@twa-dev/sdk';
 import { storage } from '../firebase';
 import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
@@ -18,6 +19,10 @@ export default function Admin() {
   const [material, setMaterial] = useState('');
   const [colorsStr, setColorsStr] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  const user = WebApp.initDataUnsafe?.user;
+  const adminId = import.meta.env.VITE_ADMIN_TELEGRAM_ID;
+  const isAdmin = user && String(user.id) === String(adminId);
 
   const uploadFile = async (file: File) => {
     setUploading(true);
@@ -75,6 +80,15 @@ export default function Admin() {
     setMaterial('');
     setColorsStr('');
   };
+
+  if (!isAdmin) {
+    return (
+      <div className={styles.welcome}>
+        <h2>Доступ запрещен</h2>
+        <p>Эта страница доступна только администратору магазина.</p>
+      </div>
+    );
+  }
 
   return (
     <div>

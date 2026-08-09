@@ -7,6 +7,7 @@ export default function Profile() {
   const { t, i18n } = useTranslation();
   
   const user = WebApp.initDataUnsafe?.user;
+  const adminId = import.meta.env.VITE_ADMIN_TELEGRAM_ID;
 
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -14,16 +15,16 @@ export default function Profile() {
 
   return (
     <div>
-      <h2>{t('Profile')}</h2>
-      
-      <div className={styles.profileCard}>
+      <div className={styles.welcome}>
+        <h2>{t('Profile')}</h2>
         {user ? (
-          <>
-            <p><strong>{t('Name')}:</strong> {user.first_name} {user.last_name}</p>
-            <p><strong>{t('Username')}:</strong> @{user.username}</p>
-          </>
+          <div className={styles.userInfo}>
+            <p><strong>Имя:</strong> {user.first_name} {user.last_name}</p>
+            {user.username && <p><strong>Username:</strong> @{user.username}</p>}
+            <p className={styles.userId}>ID: {user.id}</p>
+          </div>
         ) : (
-          <p>{t('Guest')}</p>
+          <p>Авторизация через Telegram...</p>
         )}
       </div>
 
@@ -36,12 +37,13 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* For demo purposes, we always show the admin button. In a real app, check user.id or role */}
-      <div className={styles.settingsSection}>
-        <Link to="/admin">
-          <button className={styles.submitBtn}>{t('Admin_Panel')}</button>
-        </Link>
-      </div>
+      {user && String(user.id) === String(adminId) && (
+        <div className={styles.settingsSection}>
+          <Link to="/admin">
+            <button className={styles.submitBtn}>{t('Admin_Panel')}</button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
