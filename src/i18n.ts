@@ -77,7 +77,10 @@ const resources = {
       "Nothing_Found": "Нічого не знайдено",
       "Material_Label": "Матеріал:",
       "Dimensions_Label": "Розміри:",
-      "Color_Label": "Колір:"
+      "Color_Label": "Колір:",
+      "Promo_Min_Order": "Діє від ₴{{amount}}",
+      "Min_Order_Error": "Мінімальна сума замовлення — ₴250",
+      "Order_Success_Promo": "🎁 Ваш подарунок — промокод NEXT5 на знижку 5% на наступні замовлення!"
     }
   },
   ru: {
@@ -152,7 +155,10 @@ const resources = {
       "Nothing_Found": "Ничего не найдено",
       "Material_Label": "Материал:",
       "Dimensions_Label": "Размеры:",
-      "Color_Label": "Цвет:"
+      "Color_Label": "Цвет:",
+      "Promo_Min_Order": "Действует от ₴{{amount}}",
+      "Min_Order_Error": "Минимальная сумма заказа — ₴250",
+      "Order_Success_Promo": "🎁 Ваш подарок — промокод NEXT5 на скидку 5% на следующие заказы!"
     }
   },
   en: {
@@ -183,7 +189,10 @@ const resources = {
       "Product_Price": "Price",
       "Product_Image_URL": "Image URL",
       "Manage_Products": "Manage Products",
-      "Delete": "Delete"
+      "Delete": "Delete",
+      "Promo_Min_Order": "Valid from ₴{{amount}}",
+      "Min_Order_Error": "Minimum order amount is ₴250",
+      "Order_Success_Promo": "🎁 Your gift — promo code NEXT5 for a 5% discount on your next orders!"
     }
   }
 };

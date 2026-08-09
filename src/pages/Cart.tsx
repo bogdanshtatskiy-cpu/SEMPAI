@@ -47,7 +47,7 @@ export default function Cart() {
       return;
     }
     if (promo.minOrderAmount && baseTotalPrice < promo.minOrderAmount) {
-      alert(`Действует от ₴${promo.minOrderAmount}`);
+      alert(t('Promo_Min_Order').replace('{{amount}}', promo.minOrderAmount.toString()));
       return;
     }
     setAppliedPromo(promo);
@@ -57,6 +57,11 @@ export default function Cart() {
     const user = WebApp.initDataUnsafe?.user;
     if (!user) {
       alert("Не удалось получить данные Telegram.");
+      return;
+    }
+
+    if (baseTotalPrice < 250) {
+      alert(t('Min_Order_Error', 'Минимальная сумма заказа — 250 ₴.'));
       return;
     }
 
@@ -115,13 +120,10 @@ export default function Cart() {
         <h2>🎉 {t('Order_success_title')}</h2>
         <p>{t('Order_success_message')}</p>
         
-        {baseTotalPrice >= 500 && (
-          <div style={{marginTop: '20px', padding: '16px', background: 'rgba(255, 215, 0, 0.1)', border: '1px solid var(--primary-color)', borderRadius: '12px'}}>
-            <h3 style={{margin: '0 0 8px 0', color: 'var(--primary-color)'}}>🎁 Ваш бонус!</h3>
-            <p style={{margin: '0 0 8px 0'}}>Промокод на наступне замовлення (від 500 ₴):</p>
-            <h2 style={{margin: 0, letterSpacing: '2px'}}>NEXT5</h2>
-          </div>
-        )}
+        <div style={{marginTop: '20px', padding: '16px', background: 'rgba(255, 215, 0, 0.1)', border: '1px solid var(--primary-color)', borderRadius: '12px'}}>
+          <p style={{margin: '0 0 8px 0', fontSize: '15px', lineHeight: '1.5'}}>{t('Order_Success_Promo')}</p>
+          <h2 style={{margin: 0, letterSpacing: '2px', color: 'var(--primary-color)'}}>NEXT5</h2>
+        </div>
 
         <button className={styles.checkoutBtn} onClick={() => setOrderSuccess(false)} style={{marginTop: '20px'}}>
           {t('Back')}
