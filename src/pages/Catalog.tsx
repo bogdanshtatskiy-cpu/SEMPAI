@@ -148,8 +148,10 @@ export default function Catalog() {
             >
               {favorites.includes(item.id) ? '❤️' : '🤍'}
             </button>
-            {item.imageUrl ? (
-              <img src={item.imageUrl} alt={item.title} className={styles.productImage} />
+            {(item.imageUrls?.[0] || item.imageUrl) ? (
+              <div style={{position: 'relative', width: '100%', aspectRatio: '1', overflow: 'hidden', borderRadius: '8px'}}>
+                <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} />
+              </div>
             ) : (
               <div className={styles.productImagePlaceholder}></div>
             )}
@@ -185,8 +187,14 @@ export default function Catalog() {
             <button className={styles.modalClose} onClick={closeModal}>&times;</button>
             
             <div className={styles.modalImageContainer}>
-              {selectedProduct.imageUrl ? (
-                <img src={selectedProduct.imageUrl} alt={selectedProduct.title} className={styles.modalImage} />
+              {selectedProduct.imageUrls && selectedProduct.imageUrls.length > 1 ? (
+                <div className={styles.modalGalleryScroll}>
+                  {selectedProduct.imageUrls.map((url, idx) => (
+                    <img key={idx} src={url} alt={`${selectedProduct.title} ${idx + 1}`} className={styles.modalImage} />
+                  ))}
+                </div>
+              ) : selectedProduct.imageUrls?.[0] || selectedProduct.imageUrl ? (
+                <img src={selectedProduct.imageUrls?.[0] || selectedProduct.imageUrl} alt={selectedProduct.title} className={styles.modalImage} />
               ) : (
                 <div className={styles.productImagePlaceholder}></div>
               )}

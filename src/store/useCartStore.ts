@@ -4,7 +4,8 @@ export interface Product {
   id: string;
   title: string;
   price: number;
-  imageUrl?: string;
+  imageUrl?: string; // Legacy
+  imageUrls?: string[];
   description?: string;
   category?: string;
   dimensions?: string;

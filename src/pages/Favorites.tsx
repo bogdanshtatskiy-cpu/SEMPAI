@@ -30,8 +30,10 @@ export default function Favorites() {
         <div className={styles.productsGrid}>
           {favoriteProducts.map((item) => (
             <div key={item.id} className={styles.productCard}>
-              {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.title} className={styles.productImage} />
+              {(item.imageUrls?.[0] || item.imageUrl) ? (
+                <div style={{position: 'relative', width: '100%', aspectRatio: '1', overflow: 'hidden', borderRadius: '8px'}}>
+                  <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} />
+                </div>
               ) : (
                 <div className={styles.productImagePlaceholder}></div>
               )}

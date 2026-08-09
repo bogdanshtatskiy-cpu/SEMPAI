@@ -1,9 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import WebApp from '@twa-dev/sdk';
-import { storage } from '../firebase';
 import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
 import { useOrdersStore, Order } from '../store/useOrdersStore';
@@ -26,7 +24,7 @@ export default function Admin() {
 
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [dimensions, setDimensions] = useState('');
@@ -51,35 +49,65 @@ export default function Admin() {
 
   const uploadFile = async (file: File) => {
     setUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+    
     try {
-      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      setImageUrl(url);
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=635fbb60fb63ff2f38ccf618a80d5004`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.success) {
+        setImages(prev => [...prev, data.data.url]);
+      } else {
+        alert('Ошибка при загрузке картинки');
+      }
     } catch (error) {
-      console.error("Upload error:", error);
-      alert("Ошибка при загрузке картинки");
+      console.error('Upload failed:', error);
+      alert('Ошибка при загрузке картинки');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      uploadFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadFile(file);
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement> | ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const file = items[i].getAsFile();
-        if (file) uploadFile(file);
+    
+    for (const item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          await uploadFile(file);
+        }
+        break; // Upload only first image found
       }
     }
   };
+
+  // Global paste handler
+  useEffect(() => {
+    if (activeTab !== 'products') return;
+    const globalPasteListener = (e: ClipboardEvent) => {
+      // Don't intercept if user is typing text in an input/textarea (but allow if pasting image)
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'file') return;
+      if (target.tagName === 'TEXTAREA') return;
+      
+      handlePaste(e);
+    };
+    window.addEventListener('paste', globalPasteListener);
+    return () => window.removeEventListener('paste', globalPasteListener);
+  }, [activeTab]);
 
   const handleStatusChange = async (order: Order, newStatus: Order['status']) => {
     let ttn;
@@ -115,7 +143,13 @@ export default function Admin() {
       title,
       price: Number(price),
     };
-    if (imageUrl) productData.imageUrl = imageUrl;
+    if (images.length > 0) {
+      productData.imageUrls = images;
+      productData.imageUrl = images[0];
+    } else {
+      productData.imageUrls = null;
+      productData.imageUrl = null;
+    }
     if (description) productData.description = description;
     if (category) productData.category = category;
     if (dimensions) productData.dimensions = dimensions;
@@ -132,7 +166,7 @@ export default function Admin() {
 
     setTitle('');
     setPrice('');
-    setImageUrl('');
+    setImages([]);
     setDescription('');
     setCategory('');
     setDimensions('');
@@ -140,12 +174,11 @@ export default function Admin() {
     setColorsStr('');
     setDiscountValue('');
   };
-
   const handleEditProduct = (item: any) => {
     setEditingProductId(item.id);
     setTitle(item.title);
     setPrice(item.price.toString());
-    setImageUrl(item.imageUrl || '');
+    setImages(item.imageUrls || (item.imageUrl ? [item.imageUrl] : []));
     setDescription(item.description || '');
     setCategory(item.category || '');
     setDimensions(item.dimensions || '');
@@ -240,8 +273,22 @@ export default function Admin() {
                   {uploading ? t('Upload_Loading', 'Загрузка...') : t('Upload_Placeholder', 'Выберите файл или вставьте (Ctrl+V)')}
                 </p>
               </div>
-              {imageUrl && (
-                <img src={imageUrl} alt="Preview" className={styles.imagePreview} />
+              
+              {images.length > 0 && (
+                <div className={styles.adminImagesGrid}>
+                  {images.map((img, index) => (
+                    <div key={index} className={styles.adminImageThumb}>
+                      <img src={img} alt="Preview" className={styles.imagePreview} />
+                      <button 
+                        type="button" 
+                        className={styles.removeImageBtn} 
+                        onClick={() => setImages(prev => prev.filter((_, i) => i !== index))}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
 
               <input 
@@ -258,13 +305,6 @@ export default function Admin() {
                 value={price} 
                 onChange={(e) => setPrice(e.target.value)} 
                 required 
-                className={styles.inputField}
-              />
-              <input 
-                type="url" 
-                placeholder={t('Product_Image_URL') + ' (Опционально)'} 
-                value={imageUrl} 
-                onChange={(e) => setImageUrl(e.target.value)} 
                 className={styles.inputField}
               />
               <textarea 
@@ -375,10 +415,11 @@ export default function Admin() {
               <div className={styles.productsGrid}>
                 {products.map((item) => (
                   <div key={item.id} className={styles.productCard}>
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.title} className={styles.productImage} />
-                    ) : (
-                      <div className={styles.productImagePlaceholder}></div>
+                    {(item.imageUrls?.[0] || item.imageUrl) ? (
+                      <div style={{position: 'relative', width: '80px', height: '80px', overflow: 'hidden', borderRadius: '8px', flexShrink: 0}}>
+                        <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                      </div>
+                    ) : (<div className={styles.productImagePlaceholder}></div>
                     )}
                     <h3>{item.title}</h3>
                     <p className={styles.price}>₴ {item.price}</p>
