@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import WebApp from '@twa-dev/sdk';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -32,9 +33,11 @@ interface CartState {
   getTotalPrice: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  addItem: (product, selectedColor) => {
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      addItem: (product, selectedColor) => {
     set((state) => {
       const cartItemId = `${product.id}-${selectedColor || 'default'}`;
       const existingItem = state.items.find((item) => item.cartItemId === cartItemId);
@@ -74,7 +77,12 @@ export const useCartStore = create<CartState>((set, get) => ({
       return total + currentPrice * item.quantity;
     }, 0);
   },
-}));
+    }),
+    {
+      name: 'cart-storage',
+    }
+  )
+);
 
 let syncTimeout: NodeJS.Timeout;
 

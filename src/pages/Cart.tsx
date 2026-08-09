@@ -41,7 +41,7 @@ export default function Cart() {
   // NP Effects
   useEffect(() => {
     const fetchCities = async () => {
-      if (cityQuery.length < 2) {
+      if (cityQuery.length < 2 || cityQuery === city) {
         setCities([]);
         setIsCityDropdownOpen(false);
         return;
@@ -80,17 +80,17 @@ export default function Cart() {
 
     const timeoutId = setTimeout(fetchCities, 500);
     return () => clearTimeout(timeoutId);
-  }, [cityQuery]);
+  }, [cityQuery, city]);
 
   useEffect(() => {
-    if (branchQuery) {
+    if (branchQuery && branchQuery !== branch) {
       const lowerQuery = branchQuery.toLowerCase();
       setFilteredBranches(branches.filter(b => b.Description.toLowerCase().includes(lowerQuery)));
       setIsBranchDropdownOpen(true);
     } else {
       setFilteredBranches(branches);
     }
-  }, [branchQuery, branches]);
+  }, [branchQuery, branches, branch]);
 
   const handleSelectCity = async (c: any) => {
     setCity(c.Present);
