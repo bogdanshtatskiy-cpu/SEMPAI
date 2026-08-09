@@ -1,18 +1,21 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import WebApp from '@twa-dev/sdk';
 import { storage } from '../firebase';
 import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
-import { useOrdersStore } from '../store/useOrdersStore';
+import { useOrdersStore, Order } from '../store/useOrdersStore';
+import { usePromoStore } from '../store/usePromoStore';
 
 export default function Admin() {
   const { t } = useTranslation();
   const { products, addProduct, deleteProduct, loading } = useProductsStore();
   const { orders, updateOrderStatus, loading: ordersLoading } = useOrdersStore();
+  const { promos, addPromo, deletePromo } = usePromoStore();
   
-  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
 
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
@@ -22,7 +25,15 @@ export default function Admin() {
   const [dimensions, setDimensions] = useState('');
   const [material, setMaterial] = useState('');
   const [colorsStr, setColorsStr] = useState('');
+  const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('percent');
+  const [discountValue, setDiscountValue] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  // Promo states
+  const [promoCode, setPromoCode] = useState('');
+  const [promoType, setPromoType] = useState<'percent' | 'fixed'>('percent');
+  const [promoValue, setPromoValue] = useState('');
+  const [promoUsageLimit, setPromoUsageLimit] = useState('');
 
   const user = WebApp.initDataUnsafe?.user;
   const adminId = import.meta.env.VITE_ADMIN_TELEGRAM_ID;
@@ -60,6 +71,32 @@ export default function Admin() {
     }
   };
 
+  const handleStatusChange = async (order: Order, newStatus: Order['status']) => {
+    let ttn;
+    if (newStatus === 'shipped') {
+      ttn = prompt('Введите номер ТТН:');
+      if (ttn === null) return; // User cancelled
+    }
+    
+    await updateOrderStatus(order.id, newStatus, ttn);
+
+    // Уведомляем клиента
+    try {
+      await fetch('/api/notify_client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: order.userId,
+          orderId: order.id,
+          status: newStatus,
+          ttn: ttn
+        })
+      });
+    } catch (e) {
+      console.error("Failed to notify client", e);
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !price) return;
@@ -72,7 +109,8 @@ export default function Admin() {
       category: category || undefined,
       dimensions: dimensions || undefined,
       material: material || undefined,
-      colors: colorsStr ? colorsStr.split(',').map(c => c.trim()).filter(Boolean) : undefined
+      colors: colorsStr ? colorsStr.split(',').map(c => c.trim()).filter(Boolean) : undefined,
+      discount: discountValue ? { type: discountType, value: Number(discountValue) } : undefined
     });
 
     setTitle('');
@@ -83,6 +121,23 @@ export default function Admin() {
     setDimensions('');
     setMaterial('');
     setColorsStr('');
+    setDiscountValue('');
+  };
+
+  const handleAddPromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoCode || !promoValue) return;
+
+    await addPromo({
+      code: promoCode,
+      discountType: promoType,
+      discountValue: Number(promoValue),
+      usageLimit: promoUsageLimit ? Number(promoUsageLimit) : undefined
+    });
+
+    setPromoCode('');
+    setPromoValue('');
+    setPromoUsageLimit('');
   };
 
   if (!isAdmin) {
@@ -110,6 +165,12 @@ export default function Admin() {
           onClick={() => setActiveTab('orders')}
         >
           Заказы {orders.filter(o => o.status === 'new').length > 0 && `(${orders.filter(o => o.status === 'new').length})`}
+        </button>
+        <button 
+          className={`${styles.tabBtn} ${activeTab === 'promos' ? styles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('promos')}
+        >
+          Промокоды
         </button>
       </div>
 
@@ -195,6 +256,25 @@ export default function Admin() {
                 onChange={(e) => setColorsStr(e.target.value)} 
                 className={styles.inputField}
               />
+              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                <select 
+                  value={discountType}
+                  onChange={e => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                  className={styles.inputField}
+                  style={{width: '120px'}}
+                >
+                  <option value="percent">% (Скидка)</option>
+                  <option value="fixed">₴ (Скидка)</option>
+                </select>
+                <input 
+                  type="number" 
+                  placeholder="Скидка (0 - нет)"
+                  value={discountValue}
+                  onChange={e => setDiscountValue(e.target.value)}
+                  className={styles.inputField}
+                  style={{flex: 1}}
+                />
+              </div>
               <button type="submit" className={styles.submitBtn} disabled={uploading}>
                 {t('Add_Product')}
               </button>
@@ -244,22 +324,32 @@ export default function Admin() {
                     <p style={{margin: 0, fontSize: '12px'}}>{new Date(order.createdAt).toLocaleString()}</p>
                     <select 
                       className={styles.statusSelect}
+                      style={order.status === 'cancelled' ? { backgroundColor: 'var(--danger-color)', color: 'white' } : {}}
                       value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
+                      onChange={(e) => handleStatusChange(order, e.target.value as any)}
                     >
                       <option value="new">Новый</option>
                       <option value="processing">В работе</option>
-                      <option value="completed">Готов</option>
-                      <option value="cancelled">Отменен</option>
+                      <option value="shipped">Отправлен</option>
+                      <option value="completed">Выполнен</option>
+                      <option value="cancelled">❌ Отменен</option>
                     </select>
                   </div>
                 </div>
+                {order.ttn && (
+                  <p style={{margin: '4px 0', fontSize: '14px', color: 'var(--primary-color)'}}>
+                    ТТН: {order.ttn}
+                  </p>
+                )}
                 <div>
                   <p style={{margin: '8px 0'}}><strong>Товары:</strong></p>
                   <ul style={{paddingLeft: '20px', margin: 0}}>
                     {order.items.map(item => (
                       <li key={item.cartItemId}>
-                        {item.title} {item.selectedColor ? `(Цвет: ${item.selectedColor})` : ''} - {item.quantity} шт.
+                        <Link to={`/?productId=${item.id}`} style={{color: 'var(--primary-color)', textDecoration: 'none'}}>
+                          {item.title}
+                        </Link>
+                        {item.selectedColor ? ` (Цвет: ${item.selectedColor})` : ''} - {item.quantity} шт.
                       </li>
                     ))}
                   </ul>
@@ -269,6 +359,77 @@ export default function Admin() {
             ))
           )}
         </div>
+      )}
+
+      {activeTab === 'promos' && (
+        <>
+          <div className={styles.adminFormContainer}>
+            <h3>Создать промокод</h3>
+            <form onSubmit={handleAddPromo} className={styles.adminForm}>
+              <input 
+                type="text" 
+                placeholder="Код (например: SUMMER2024)" 
+                value={promoCode} 
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())} 
+                required 
+                className={styles.inputField}
+              />
+              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                <select 
+                  value={promoType}
+                  onChange={e => setPromoType(e.target.value as 'percent' | 'fixed')}
+                  className={styles.inputField}
+                  style={{width: '120px'}}
+                >
+                  <option value="percent">% (Скидка)</option>
+                  <option value="fixed">₴ (Скидка)</option>
+                </select>
+                <input 
+                  type="number" 
+                  placeholder="Скидка"
+                  value={promoValue}
+                  onChange={e => setPromoValue(e.target.value)}
+                  className={styles.inputField}
+                  required
+                  style={{flex: 1}}
+                />
+              </div>
+              <input 
+                type="number" 
+                placeholder="Лимит использований (Опционально)" 
+                value={promoUsageLimit} 
+                onChange={(e) => setPromoUsageLimit(e.target.value)} 
+                className={styles.inputField}
+              />
+              <button type="submit" className={styles.submitBtn}>
+                Добавить промокод
+              </button>
+            </form>
+          </div>
+
+          <div className={styles.adminProductsList}>
+            <h3>Активные промокоды</h3>
+            {promos.map(promo => (
+              <div key={promo.id} className={styles.adminProductCard}>
+                <div>
+                  <strong>{promo.code}</strong>
+                  <p className={styles.price} style={{margin: '4px 0'}}>
+                    Скидка: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `₴${promo.discountValue}`}
+                  </p>
+                  <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
+                    Использовано: {promo.usageCount} {promo.usageLimit ? `/ ${promo.usageLimit}` : ''}
+                  </p>
+                </div>
+                <button 
+                  className={`${styles.addToCart} ${styles.removeBtn}`} 
+                  onClick={() => deletePromo(promo.id)}
+                >
+                  {t('Delete')}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

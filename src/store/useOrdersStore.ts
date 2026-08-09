@@ -11,7 +11,8 @@ export interface Order {
   lastName?: string;
   items: CartItem[];
   totalPrice: number;
-  status: 'new' | 'processing' | 'completed' | 'cancelled';
+  status: 'new' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+  ttn?: string;
   createdAt: number;
 }
 
@@ -20,7 +21,7 @@ interface OrdersState {
   loading: boolean;
   subscribeToOrders: () => () => void;
   createOrder: (orderData: Omit<Order, 'id' | 'createdAt' | 'status'>) => Promise<boolean>;
-  updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
+  updateOrderStatus: (id: string, status: Order['status'], ttn?: string) => Promise<void>;
 }
 
 export const useOrdersStore = create<OrdersState>((set) => ({
@@ -58,9 +59,14 @@ export const useOrdersStore = create<OrdersState>((set) => ({
     }
   },
 
-  updateOrderStatus: async (id, status) => {
+  updateOrderStatus: async (id, status, ttn) => {
     try {
-      await updateDoc(doc(db, 'orders', id), { status });
+      const orderRef = doc(db, 'orders', id);
+      const updateData: any = { status };
+      if (ttn !== undefined) {
+        updateData.ttn = ttn;
+      }
+      await updateDoc(orderRef, updateData);
     } catch (error) {
       console.error('Error updating order status:', error);
     }

@@ -9,29 +9,41 @@ import Catalog from './pages/Catalog';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import Favorites from './pages/Favorites';
 import { useCartStore } from './store/useCartStore';
 import { useProductsStore } from './store/useProductsStore';
 import { useOrdersStore } from './store/useOrdersStore';
+import { useFavoritesStore } from './store/useFavoritesStore';
+import { usePromoStore } from './store/usePromoStore';
 
 function App() {
   const { t } = useTranslation();
   const cartItemsCount = useCartStore(state => state.items.reduce((total, item) => total + item.quantity, 0));
   const subscribeToProducts = useProductsStore(state => state.subscribeToProducts);
   const subscribeToOrders = useOrdersStore(state => state.subscribeToOrders);
+  const subscribeToPromos = usePromoStore(state => state.subscribeToPromos);
+  const loadFavorites = useFavoritesStore(state => state.loadFavorites);
 
   useEffect(() => {
     WebApp.ready();
     WebApp.expand();
     document.documentElement.setAttribute('data-theme', 'dark');
     
+    if (WebApp.initDataUnsafe?.user?.id) {
+      loadFavorites(WebApp.initDataUnsafe.user.id);
+    }
+
     // Подписываемся на обновления БД глобально при запуске
     const unsubscribeProducts = subscribeToProducts();
     const unsubscribeOrders = subscribeToOrders();
+    const unsubscribePromos = subscribeToPromos();
+
     return () => {
       unsubscribeProducts();
       unsubscribeOrders();
+      unsubscribePromos();
     };
-  }, [subscribeToProducts, subscribeToOrders]);
+  }, [subscribeToProducts, subscribeToOrders, subscribeToPromos, loadFavorites]);
 
   return (
     <div className={styles.appContainer}>
@@ -46,6 +58,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Catalog />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/favorites" element={<Favorites />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
@@ -65,10 +78,10 @@ function App() {
           {t('Cart')}
           {cartItemsCount > 0 && <span className={styles.cartBadge}>{cartItemsCount}</span>}
         </NavLink>
-        <NavLink 
-          to="/profile" 
-          className={({ isActive }) => `${styles.navItem} ${isActive ? styles.activeNav : ''}`}
-        >
+        <NavLink to="/favorites" className={({isActive}) => isActive ? `${styles.navItem} ${styles.activeNav}` : styles.navItem}>
+          ❤️
+        </NavLink>
+        <NavLink to="/profile" className={({isActive}) => isActive ? `${styles.navItem} ${styles.activeNav}` : styles.navItem}>
           {t('Profile')}
         </NavLink>
       </footer>

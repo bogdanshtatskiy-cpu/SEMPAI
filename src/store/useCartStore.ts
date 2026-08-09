@@ -10,6 +10,7 @@ export interface Product {
   dimensions?: string;
   material?: string;
   colors?: string[];
+  discount?: { type: 'percent' | 'fixed', value: number };
 }
 
 export interface CartItem extends Product {
@@ -57,6 +58,16 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
   clearCart: () => set({ items: [] }),
   getTotalPrice: () => {
-    return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
+    return get().items.reduce((total, item) => {
+      let currentPrice = item.price;
+      if (item.discount) {
+        if (item.discount.type === 'percent') {
+          currentPrice = Math.round(currentPrice * (1 - item.discount.value / 100));
+        } else if (item.discount.type === 'fixed') {
+          currentPrice = currentPrice - item.discount.value;
+        }
+      }
+      return total + currentPrice * item.quantity;
+    }, 0);
   },
 }));

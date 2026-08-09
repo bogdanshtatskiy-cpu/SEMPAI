@@ -71,13 +71,16 @@
 
 .productCard {
   background-color: var(--surface-color);
-  border-radius: 12px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid var(--border-color);
 }
 
 .productCard:hover {
@@ -111,19 +114,17 @@
 }
 
 .bottomNav {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background-color: var(--surface-color);
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-around;
   align-items: center;
   padding-bottom: env(safe-area-inset-bottom);
-  backdrop-filter: blur(10px);
-  background-color: rgba(30, 30, 30, 0.8);
+  z-index: 100;
 }
 
 .navItem {
@@ -337,17 +338,18 @@
 }
 
 .modalContent {
-  background-color: var(--surface-color);
+  background-color: rgba(30, 30, 30, 0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
+  height: 90vh;
   border-radius: 24px 24px 0 0;
-  padding: 24px;
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -567,5 +569,91 @@
 .tabBtnActive {
   background: var(--primary-color);
   color: #000;
+}
+
+
+/* Search and Filters */
+.searchContainer {
+  padding: 0 20px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  font-size: 16px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(22, 241, 255, 0.2);
+}
+
+.categoriesScroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.categoriesScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryPill {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.2s ease;
+}
+
+.categoryPillActive {
+  background-color: var(--primary-color);
+  color: #000;
+  border-color: var(--primary-color);
+}
+
+
+.favoriteBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.2s;
+  font-size: 16px;
+}
+
+.favoriteBtn:active {
+  transform: scale(0.8);
 }
 
