@@ -1,11 +1,9 @@
-import { useTranslation } from 'react-i18next';
 import { useFavoritesStore } from '../store/useFavoritesStore';
-import { useProductsStore, Product } from '../store/useProductsStore';
+import { useProductsStore } from '../store/useProductsStore';
 import WebApp from '@twa-dev/sdk';
 import styles from '../App.module.css';
 
 export default function Favorites() {
-  const { t } = useTranslation();
   const { favorites, toggleFavorite } = useFavoritesStore();
   const { products } = useProductsStore();
 
