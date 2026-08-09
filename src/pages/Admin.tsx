@@ -632,22 +632,22 @@ export default function Admin() {
                 {order.shippingDetails && (
                   <div style={{margin: '8px 0', padding: '8px', background: 'var(--bg-color)', borderRadius: '8px', fontSize: '14px'}}>
                     <p style={{margin: '0 0 4px 0'}}><strong>📞 Телефон:</strong> {order.shippingDetails.phone}</p>
-                    <p style={{margin: '0'}}><strong>📍 Новая Почта:</strong> г. {order.shippingDetails.city}, Отд. {order.shippingDetails.branch}</p>
+                    <p style={{margin: '0'}}><strong>📍 Нова Пошта:</strong> м. {order.shippingDetails.city}, Відд. {order.shippingDetails.branch}</p>
                   </div>
                 )}
                 <div>
-                  <p style={{margin: '8px 0'}}><strong>Товары:</strong></p>
+                  <p style={{margin: '8px 0'}}><strong>Товари:</strong></p>
                   <ul style={{paddingLeft: '20px', margin: 0}}>
                     {order.items.map(item => (
                       <li key={item.cartItemId}>
                         <Link to={`/?productId=${item.id}`} style={{color: 'var(--primary-color)', textDecoration: 'none'}}>
                           {item.title}
                         </Link>
-                        {item.selectedColor ? ` (Цвет: ${item.selectedColor})` : ''} - {item.quantity} шт.
+                        {item.selectedColor ? ` (Колір: ${item.selectedColor})` : ''} - {item.quantity} шт.
                       </li>
                     ))}
                   </ul>
-                  <p style={{marginTop: '8px', fontWeight: 'bold'}}>Сумма: ₴ {order.totalPrice}</p>
+                  <p style={{marginTop: '8px', fontWeight: 'bold'}}>Сума: ₴ {order.totalPrice}</p>
                 </div>
               </div>
             ))
@@ -658,11 +658,11 @@ export default function Admin() {
       {activeTab === 'promos' && (
         <>
           <div className={styles.adminFormContainer}>
-            <h3>Создать промокод</h3>
+            <h3>Створити промокод</h3>
             <form onSubmit={handleAddPromo} className={styles.adminForm}>
               <input 
                 type="text" 
-                placeholder="Код (например: SUMMER2024)" 
+                placeholder="Код (наприклад: SUMMER2024)" 
                 value={promoCode} 
                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())} 
                 required 
@@ -675,12 +675,12 @@ export default function Admin() {
                   className={styles.inputField}
                   style={{width: '120px'}}
                 >
-                  <option value="percent">% (Скидка)</option>
-                  <option value="fixed">₴ (Скидка)</option>
+                  <option value="percent">% (Знижка)</option>
+                  <option value="fixed">₴ (Знижка)</option>
                 </select>
                 <input 
                   type="number" 
-                  placeholder="Скидка"
+                  placeholder="Знижка"
                   value={promoValue}
                   onChange={e => setPromoValue(e.target.value)}
                   className={styles.inputField}
@@ -729,7 +729,7 @@ export default function Admin() {
           </div>
 
           <div className={styles.adminProductsList}>
-            <h3>Активные промокоды</h3>
+            <h3>Активні промокоди</h3>
             {promos.map(promo => (
               <div key={promo.id} className={styles.adminProductCard}>
                 <div>
@@ -747,7 +747,7 @@ export default function Admin() {
                   )}
                   {(promo.validFrom || promo.validUntil) && (
                     <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
-                      {promo.validFrom ? new Date(promo.validFrom).toLocaleDateString() : '∞'} - {promo.validUntil ? new Date(promo.validUntil).toLocaleDateString() : '∞'}
+                      {promo.validFrom ? new Date(promo.validFrom).toLocaleDateString('uk-UA', { month: 'long', day: 'numeric', year: 'numeric' }) : '∞'} - {promo.validUntil ? new Date(promo.validUntil).toLocaleDateString('uk-UA', { month: 'long', day: 'numeric', year: 'numeric' }) : '∞'}
                     </p>
                   )}
                 </div>
