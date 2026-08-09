@@ -31,15 +31,23 @@ export default function Cart() {
   const handleApplyPromo = () => {
     const promo = promos.find(p => p.code === inputPromo.toUpperCase());
     if (!promo) {
-      alert('Промокод не найден');
+      alert(t('Promo_Not_Found', 'Промокод не найден'));
       return;
     }
-    if (promo.expiresAt && Date.now() > promo.expiresAt) {
-      alert('Промокод истек');
+    if (promo.validFrom && Date.now() < promo.validFrom) {
+      alert(t('Promo_Expired', 'Промокод еще не активен'));
+      return;
+    }
+    if (promo.validUntil && Date.now() > promo.validUntil) {
+      alert(t('Promo_Expired', 'Промокод истек'));
       return;
     }
     if (promo.usageLimit && promo.usageCount >= promo.usageLimit) {
-      alert('Лимит использований исчерпан');
+      alert(t('Promo_Limit_Reached', 'Лимит использований исчерпан'));
+      return;
+    }
+    if (promo.minOrderAmount && baseTotalPrice < promo.minOrderAmount) {
+      alert(`Действует от ₴${promo.minOrderAmount}`);
       return;
     }
     setAppliedPromo(promo);
@@ -106,6 +114,15 @@ export default function Cart() {
       <div className={styles.welcome}>
         <h2>🎉 {t('Order_success_title')}</h2>
         <p>{t('Order_success_message')}</p>
+        
+        {baseTotalPrice >= 500 && (
+          <div style={{marginTop: '20px', padding: '16px', background: 'rgba(255, 215, 0, 0.1)', border: '1px solid var(--primary-color)', borderRadius: '12px'}}>
+            <h3 style={{margin: '0 0 8px 0', color: 'var(--primary-color)'}}>🎁 Ваш бонус!</h3>
+            <p style={{margin: '0 0 8px 0'}}>Промокод на наступне замовлення (від 500 ₴):</p>
+            <h2 style={{margin: 0, letterSpacing: '2px'}}>NEXT5</h2>
+          </div>
+        )}
+
         <button className={styles.checkoutBtn} onClick={() => setOrderSuccess(false)} style={{marginTop: '20px'}}>
           {t('Back')}
         </button>
@@ -140,7 +157,7 @@ export default function Cart() {
           {items.length > 0 && (
             <div className={styles.cartFooter}>
               <div style={{marginBottom: '16px'}}>
-                <p style={{margin: '0 0 8px 0'}}>Промокод:</p>
+                <p style={{margin: '0 0 8px 0'}}>{t('Promo_Code')}:</p>
                 <div style={{display: 'flex', gap: '8px'}}>
                   <input 
                     type="text" 
@@ -148,13 +165,13 @@ export default function Cart() {
                     onChange={e => setInputPromo(e.target.value)} 
                     className={styles.inputField} 
                     style={{margin: 0, textTransform: 'uppercase'}}
-                    placeholder="PROMO2026"
+                    placeholder={t('Promo_Code_Placeholder')}
                     disabled={!!appliedPromo}
                   />
                   {!appliedPromo ? (
-                    <button onClick={handleApplyPromo} className={styles.submitBtn} style={{margin: 0}}>Применить</button>
+                    <button onClick={handleApplyPromo} className={styles.submitBtn} style={{margin: 0}}>{t('Promo_Apply')}</button>
                   ) : (
-                    <button onClick={() => setAppliedPromo(null)} className={styles.submitBtn} style={{margin: 0, background: 'var(--danger-color)', color: '#fff'}}>Отменить</button>
+                    <button onClick={() => setAppliedPromo(null)} className={styles.submitBtn} style={{margin: 0, background: 'var(--danger-color)', color: '#fff'}}>{t('Promo_Cancel')}</button>
                   )}
                 </div>
               </div>

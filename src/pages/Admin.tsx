@@ -8,14 +8,16 @@ import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
 import { useOrdersStore, Order } from '../store/useOrdersStore';
 import { usePromoStore } from '../store/usePromoStore';
+import { Trash2, Edit2, Package, ShoppingBag, Tag } from 'lucide-react';
 
 export default function Admin() {
   const { t } = useTranslation();
-  const { products, addProduct, deleteProduct, loading } = useProductsStore();
+  const { products, addProduct, updateProduct, deleteProduct, loading } = useProductsStore();
   const { orders, updateOrderStatus, loading: ordersLoading } = useOrdersStore();
   const { promos, addPromo, deletePromo } = usePromoStore();
   
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
@@ -34,6 +36,9 @@ export default function Admin() {
   const [promoType, setPromoType] = useState<'percent' | 'fixed'>('percent');
   const [promoValue, setPromoValue] = useState('');
   const [promoUsageLimit, setPromoUsageLimit] = useState('');
+  const [promoMinOrder, setPromoMinOrder] = useState('');
+  const [promoValidFrom, setPromoValidFrom] = useState('');
+  const [promoValidUntil, setPromoValidUntil] = useState('');
 
   const user = WebApp.initDataUnsafe?.user;
   const adminId = import.meta.env.VITE_ADMIN_TELEGRAM_ID;
@@ -101,7 +106,7 @@ export default function Admin() {
     e.preventDefault();
     if (!title || !price) return;
 
-    await addProduct({
+    const productData = {
       title,
       price: Number(price),
       imageUrl: imageUrl || undefined,
@@ -111,7 +116,14 @@ export default function Admin() {
       material: material || undefined,
       colors: colorsStr ? colorsStr.split(',').map(c => c.trim()).filter(Boolean) : undefined,
       discount: discountValue ? { type: discountType, value: Number(discountValue) } : undefined
-    });
+    };
+
+    if (editingProductId) {
+      await updateProduct(editingProductId, productData);
+      setEditingProductId(null);
+    } else {
+      await addProduct(productData);
+    }
 
     setTitle('');
     setPrice('');
@@ -124,6 +136,27 @@ export default function Admin() {
     setDiscountValue('');
   };
 
+  const handleEditProduct = (item: any) => {
+    setEditingProductId(item.id);
+    setTitle(item.title);
+    setPrice(item.price.toString());
+    setImageUrl(item.imageUrl || '');
+    setDescription(item.description || '');
+    setCategory(item.category || '');
+    setDimensions(item.dimensions || '');
+    setMaterial(item.material || '');
+    setColorsStr(item.colors ? item.colors.join(', ') : '');
+    if (item.discount) {
+      setDiscountType(item.discount.type);
+      setDiscountValue(item.discount.value.toString());
+    } else {
+      setDiscountType('percent');
+      setDiscountValue('');
+    }
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleAddPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoCode || !promoValue) return;
@@ -132,19 +165,25 @@ export default function Admin() {
       code: promoCode,
       discountType: promoType,
       discountValue: Number(promoValue),
-      usageLimit: promoUsageLimit ? Number(promoUsageLimit) : undefined
+      usageLimit: promoUsageLimit ? Number(promoUsageLimit) : undefined,
+      minOrderAmount: promoMinOrder ? Number(promoMinOrder) : undefined,
+      validFrom: promoValidFrom ? new Date(promoValidFrom).getTime() : undefined,
+      validUntil: promoValidUntil ? new Date(promoValidUntil).getTime() : undefined
     });
 
     setPromoCode('');
     setPromoValue('');
     setPromoUsageLimit('');
+    setPromoMinOrder('');
+    setPromoValidFrom('');
+    setPromoValidUntil('');
   };
 
   if (!isAdmin) {
     return (
       <div className={styles.welcome}>
-        <h2>Доступ запрещен</h2>
-        <p>Эта страница доступна только администратору магазина.</p>
+        <h2>{t('Admin_Access_Denied')}</h2>
+        <p>{t('Admin_Access_Denied_Desc')}</p>
       </div>
     );
   }
@@ -158,26 +197,26 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('products')}
         >
-          Товары
+          <Package size={16} /> {t('Admin_Products_Tab')}
         </button>
         <button 
           className={`${styles.tabBtn} ${activeTab === 'orders' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('orders')}
         >
-          Заказы {orders.filter(o => o.status === 'new').length > 0 && `(${orders.filter(o => o.status === 'new').length})`}
+          <ShoppingBag size={16} /> {t('Admin_Orders_Tab')} {orders.filter(o => o.status === 'new').length > 0 && `(${orders.filter(o => o.status === 'new').length})`}
         </button>
         <button 
           className={`${styles.tabBtn} ${activeTab === 'promos' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('promos')}
         >
-          Промокоды
+          <Tag size={16} /> {t('Admin_Promos_Tab')}
         </button>
       </div>
 
       {activeTab === 'products' && (
         <>
           <div className={styles.adminFormContainer}>
-            <h3>{t('Add_Product')}</h3>
+            <h3>{editingProductId ? t('Product_Title') : t('Add_Product')}</h3>
             <form onSubmit={handleAddProduct} className={styles.adminForm}>
               <div 
                 className={styles.uploadArea} 
@@ -276,7 +315,7 @@ export default function Admin() {
                 />
               </div>
               <button type="submit" className={styles.submitBtn} disabled={uploading}>
-                {t('Add_Product')}
+                {editingProductId ? t('Save_Changes', 'Зберегти зміни') : t('Add_Product')}
               </button>
             </form>
           </div>
@@ -294,12 +333,22 @@ export default function Admin() {
                     )}
                     <h3>{item.title}</h3>
                     <p className={styles.price}>₴ {item.price}</p>
-                    <button 
-                      className={`${styles.addToCart} ${styles.removeBtn}`} 
-                      onClick={() => deleteProduct(item.id)}
-                    >
-                      {t('Delete')}
-                    </button>
+                    <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
+                      <button 
+                        className={styles.submitBtn} 
+                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px'}}
+                        onClick={() => handleEditProduct(item)}
+                      >
+                        <Edit2 size={16} /> Edit
+                      </button>
+                      <button 
+                        className={`${styles.submitBtn} ${styles.removeBtn}`} 
+                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px'}}
+                        onClick={() => deleteProduct(item.id)}
+                      >
+                        <Trash2 size={16} /> {t('Delete')}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -328,11 +377,11 @@ export default function Admin() {
                       value={order.status}
                       onChange={(e) => handleStatusChange(order, e.target.value as any)}
                     >
-                      <option value="new">Новый</option>
-                      <option value="processing">В работе</option>
-                      <option value="shipped">Отправлен</option>
-                      <option value="completed">Выполнен</option>
-                      <option value="cancelled">❌ Отменен</option>
+                      <option value="new">{t('Status_New')}</option>
+                      <option value="processing">{t('Status_Processing')}</option>
+                      <option value="shipped">{t('Status_Shipped')}</option>
+                      <option value="completed">{t('Status_Completed')}</option>
+                      <option value="cancelled">{t('Status_Cancelled')}</option>
                     </select>
                   </div>
                 </div>
@@ -396,13 +445,40 @@ export default function Admin() {
               </div>
               <input 
                 type="number" 
-                placeholder="Лимит использований (Опционально)" 
+                placeholder={t('Promo_Limit')} 
                 value={promoUsageLimit} 
                 onChange={(e) => setPromoUsageLimit(e.target.value)} 
                 className={styles.inputField}
               />
+              <input 
+                type="number" 
+                placeholder="Мінімальна сума замовлення (Опціонально)" 
+                value={promoMinOrder} 
+                onChange={(e) => setPromoMinOrder(e.target.value)} 
+                className={styles.inputField}
+              />
+              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                <div style={{flex: 1}}>
+                  <label style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Діє З:</label>
+                  <input 
+                    type="date" 
+                    value={promoValidFrom} 
+                    onChange={(e) => setPromoValidFrom(e.target.value)} 
+                    className={styles.inputField}
+                  />
+                </div>
+                <div style={{flex: 1}}>
+                  <label style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Діє ДО:</label>
+                  <input 
+                    type="date" 
+                    value={promoValidUntil} 
+                    onChange={(e) => setPromoValidUntil(e.target.value)} 
+                    className={styles.inputField}
+                  />
+                </div>
+              </div>
               <button type="submit" className={styles.submitBtn}>
-                Добавить промокод
+                {t('Promo_Add_Btn')}
               </button>
             </form>
           </div>
@@ -414,17 +490,28 @@ export default function Admin() {
                 <div>
                   <strong>{promo.code}</strong>
                   <p className={styles.price} style={{margin: '4px 0'}}>
-                    Скидка: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `₴${promo.discountValue}`}
+                    {t('Promo_Value')}: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `₴${promo.discountValue}`}
                   </p>
                   <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
-                    Использовано: {promo.usageCount} {promo.usageLimit ? `/ ${promo.usageLimit}` : ''}
+                    {t('Promo_Used')}: {promo.usageCount} {promo.usageLimit ? `/ ${promo.usageLimit}` : ''}
                   </p>
+                  {promo.minOrderAmount && (
+                    <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
+                      Від суми: ₴ {promo.minOrderAmount}
+                    </p>
+                  )}
+                  {(promo.validFrom || promo.validUntil) && (
+                    <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
+                      {promo.validFrom ? new Date(promo.validFrom).toLocaleDateString() : '∞'} - {promo.validUntil ? new Date(promo.validUntil).toLocaleDateString() : '∞'}
+                    </p>
+                  )}
                 </div>
                 <button 
-                  className={`${styles.addToCart} ${styles.removeBtn}`} 
+                  className={`${styles.submitBtn} ${styles.removeBtn}`}
+                  style={{margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
                   onClick={() => deletePromo(promo.id)}
                 >
-                  {t('Delete')}
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Routes, Route, NavLink } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
+import { LayoutGrid, ShoppingCart, Heart, User } from 'lucide-react';
 import styles from './App.module.css';
 
 // Pages
@@ -69,20 +70,26 @@ function App() {
           to="/" 
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.activeNav : ''}`}
         >
-          {t('Catalog')}
+          <LayoutGrid size={24} />
+          <span>{t('Catalog')}</span>
         </NavLink>
         <NavLink 
           to="/cart" 
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.activeNav : ''}`}
         >
-          {t('Cart')}
-          {cartItemsCount > 0 && <span className={styles.cartBadge}>{cartItemsCount}</span>}
+          <div style={{position: 'relative'}}>
+            <ShoppingCart size={24} />
+            {cartItemsCount > 0 && <span className={styles.cartBadge}>{cartItemsCount}</span>}
+          </div>
+          <span>{t('Cart')}</span>
         </NavLink>
         <NavLink to="/favorites" className={({isActive}) => isActive ? `${styles.navItem} ${styles.activeNav}` : styles.navItem}>
-          ❤️
+          <Heart size={24} />
+          <span>Избранное</span>
         </NavLink>
         <NavLink to="/profile" className={({isActive}) => isActive ? `${styles.navItem} ${styles.activeNav}` : styles.navItem}>
-          {t('Profile')}
+          <User size={24} />
+          <span>{t('Profile')}</span>
         </NavLink>
       </footer>
     </div>

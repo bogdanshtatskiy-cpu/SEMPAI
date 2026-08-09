@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { collection, addDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Product } from './useCartStore';
 
@@ -8,6 +8,7 @@ interface ProductsState {
   loading: boolean;
   subscribeToProducts: () => () => void;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  updateProduct: (id: string, product: Partial<Omit<Product, 'id'>>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 }
 
@@ -34,6 +35,13 @@ export const useProductsStore = create<ProductsState>((set) => ({
       // onSnapshot automatically updates the local state, so we don't need to manually update it here
     } catch (error) {
       console.error('Error adding product:', error);
+    }
+  },
+  updateProduct: async (id, productData) => {
+    try {
+      await updateDoc(doc(db, 'products', id), productData);
+    } catch (error) {
+      console.error('Error updating product:', error);
     }
   },
   deleteProduct: async (id) => {

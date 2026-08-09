@@ -7,7 +7,9 @@ export interface PromoCode {
   code: string;
   discountType: 'percent' | 'fixed';
   discountValue: number;
-  expiresAt?: number; // timestamp
+  minOrderAmount?: number;
+  validFrom?: number;
+  validUntil?: number;
   usageLimit?: number;
   usageCount: number;
 }
@@ -63,7 +65,8 @@ export const usePromoStore = create<PromoState>((set, get) => ({
   usePromo: async (code) => {
     const promo = get().promos.find(p => p.code === code.toUpperCase());
     if (!promo) return false;
-    if (promo.expiresAt && Date.now() > promo.expiresAt) return false;
+    if (promo.validFrom && Date.now() < promo.validFrom) return false;
+    if (promo.validUntil && Date.now() > promo.validUntil) return false;
     if (promo.usageLimit && promo.usageCount >= promo.usageLimit) return false;
 
     // Increment usage

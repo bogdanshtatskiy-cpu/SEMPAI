@@ -1,9 +1,12 @@
 import { useFavoritesStore } from '../store/useFavoritesStore';
 import { useProductsStore } from '../store/useProductsStore';
 import WebApp from '@twa-dev/sdk';
+import { Heart, HeartOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import styles from '../App.module.css';
 
 export default function Favorites() {
+  const { t } = useTranslation();
   const { favorites, toggleFavorite } = useFavoritesStore();
   const { products } = useProductsStore();
 
@@ -12,12 +15,16 @@ export default function Favorites() {
   return (
     <div>
       <div className={styles.welcome}>
-        <h2>Избранное ❤️</h2>
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px'}}>
+          <Heart fill="var(--danger-color)" color="var(--danger-color)" size={28} />
+          <h2 style={{margin: 0}}>{t('Favorites_Title')}</h2>
+        </div>
       </div>
 
       {favorites.length === 0 ? (
         <div className={styles.welcome}>
-          <p style={{color: 'var(--text-secondary)'}}>Список избранного пуст</p>
+          <HeartOff size={48} color="var(--text-secondary)" style={{marginBottom: '16px', opacity: 0.5}} />
+          <p style={{color: 'var(--text-secondary)'}}>{t('Favorites_Empty')}</p>
         </div>
       ) : (
         <div className={styles.productsGrid}>
@@ -40,7 +47,7 @@ export default function Favorites() {
                   }
                 }}
               >
-                Удалить
+                {t('Remove')}
               </button>
             </div>
           ))}
