@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import WebApp from '@twa-dev/sdk';
 import { collection, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db, storage } from '../firebase';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { db, storage, auth } from '../firebase';
 import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
 import { useOrdersStore, Order } from '../store/useOrdersStore';
@@ -20,6 +20,39 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
   const [orderTab, setOrderTab] = useState<'active' | 'archive'>('active');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  // Auth States
+  const [isAdminAuth, setIsAdminAuth] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAdminAuth(true);
+      } else {
+        setIsAdminAuth(false);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err: any) {
+      setAuthError('Невірний email або пароль');
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   // Проверка брошенных корзин
   useEffect(() => {
@@ -74,9 +107,6 @@ export default function Admin() {
   const [promoValidFrom, setPromoValidFrom] = useState('');
   const [promoValidUntil, setPromoValidUntil] = useState('');
 
-  const user = WebApp.initDataUnsafe?.user;
-  const adminId = import.meta.env.VITE_ADMIN_TELEGRAM_ID;
-  const isAdmin = user && String(user.id) === String(adminId);
 
   const uploadFile = async (file: File) => {
     setUploading(true);
@@ -147,6 +177,7 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           userId: order.userId, 
+          orderId: order.id,
           status: newStatus,
           ttn 
         })
@@ -253,19 +284,60 @@ export default function Admin() {
     setPromoValidUntil('');
   };
 
-  if (!isAdmin) {
+  if (authLoading) {
     return (
-      <div className={styles.welcome}>
-        <h2>{t('Admin_Access_Denied')}</h2>
-        <p>{t('Admin_Access_Denied_Desc')}</p>
+      <div className={styles.container}>
+        <p>Завантаження...</p>
+      </div>
+    );
+  }
+
+  if (!isAdminAuth) {
+    return (
+      <div className={styles.container} style={{ maxWidth: '400px', margin: '40px auto' }}>
+        <div style={{ background: 'var(--surface-color)', padding: '32px 24px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '8px', color: 'var(--text-color)' }}>Вхід для адміністратора</h2>
+          <p style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--text-secondary)', fontSize: '14px' }}>Введіть email та пароль з Firebase Console</p>
+          
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <input 
+              type="email" 
+              placeholder="Email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={styles.inputField} 
+              required
+            />
+            <input 
+              type="password" 
+              placeholder="Пароль" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={styles.inputField} 
+              required
+            />
+            {authError && <p style={{ color: 'var(--danger-color)', fontSize: '14px', textAlign: 'center' }}>{authError}</p>}
+            <button type="submit" className={styles.checkoutBtn} style={{ marginTop: '8px' }}>
+              Увійти
+            </button>
+          </form>
+          
+          <Link to="/" style={{ display: 'block', textAlign: 'center', marginTop: '20px', color: 'var(--primary-color)', textDecoration: 'none', fontSize: '14px' }}>
+            Повернутися в магазин
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <h2>{t('Admin_Panel')}</h2>
-
+    <div className={styles.container}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0 }}>{t('Admin_Panel')}</h2>
+        <button onClick={handleLogout} className={styles.deleteBtn} style={{ padding: '8px 16px', margin: 0 }}>
+          Вийти
+        </button>
+      </div>
       <div className={styles.adminTabs}>
         <button 
           className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
