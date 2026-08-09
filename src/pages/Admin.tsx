@@ -14,7 +14,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 export default function Admin() {
   const { t } = useTranslation();
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProductsStore();
-  const { orders, updateOrderStatus, loading: ordersLoading } = useOrdersStore();
+  const { orders, updateOrderStatus, loading: ordersLoading, subscribeToOrders } = useOrdersStore();
   const { promos, addPromo, deletePromo } = usePromoStore();
   
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
@@ -39,6 +39,13 @@ export default function Admin() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isAdminAuth) {
+      const unsubscribe = subscribeToOrders();
+      return () => unsubscribe();
+    }
+  }, [isAdminAuth, subscribeToOrders]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

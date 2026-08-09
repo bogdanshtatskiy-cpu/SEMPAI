@@ -13,7 +13,7 @@ import Admin from './pages/Admin';
 import Favorites from './pages/Favorites';
 import { useCartStore } from './store/useCartStore';
 import { useProductsStore } from './store/useProductsStore';
-import { useOrdersStore } from './store/useOrdersStore';
+
 import { useFavoritesStore } from './store/useFavoritesStore';
 import { usePromoStore } from './store/usePromoStore';
 
@@ -21,7 +21,6 @@ function App() {
   const { t } = useTranslation();
   const cartItemsCount = useCartStore(state => state.items.reduce((total, item) => total + item.quantity, 0));
   const subscribeToProducts = useProductsStore(state => state.subscribeToProducts);
-  const subscribeToOrders = useOrdersStore(state => state.subscribeToOrders);
   const subscribeToPromos = usePromoStore(state => state.subscribeToPromos);
   const loadFavorites = useFavoritesStore(state => state.loadFavorites);
 
@@ -36,15 +35,13 @@ function App() {
 
     // Подписываемся на обновления БД глобально при запуске
     const unsubscribeProducts = subscribeToProducts();
-    const unsubscribeOrders = subscribeToOrders();
     const unsubscribePromos = subscribeToPromos();
 
     return () => {
       unsubscribeProducts();
-      unsubscribeOrders();
       unsubscribePromos();
     };
-  }, [subscribeToProducts, subscribeToOrders, subscribeToPromos, loadFavorites]);
+  }, [subscribeToProducts, subscribeToPromos, loadFavorites]);
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
