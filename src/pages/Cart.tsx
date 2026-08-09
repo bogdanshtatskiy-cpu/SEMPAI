@@ -58,10 +58,16 @@ export default function Cart() {
             }
           })
         });
+        if (!response.ok) {
+          console.error('NP API response not ok:', response.status, response.statusText);
+          return;
+        }
         const data = await response.json();
         if (data.success) {
           setCities(data.data[0]?.Addresses || []);
           setIsCityDropdownOpen(true);
+        } else {
+          console.error('NP API returned success:false', data);
         }
       } catch (e) {
         console.error('NP Cities Error', e);
@@ -162,7 +168,7 @@ export default function Cart() {
   const handleCheckout = async () => {
     const user = WebApp.initDataUnsafe?.user;
     if (!user) {
-      alert("Не удалось получить данные Telegram.");
+      alert("Не вдалося отримати дані Telegram.");
       return;
     }
 
@@ -171,8 +177,8 @@ export default function Cart() {
       return;
     }
 
-    if (!phone || !city || !branch) {
-      alert("Пожалуйста, заполните все поля доставки (Телефон, Город, Отделение).");
+    if (!phone || phone.length < 9 || !city || !branch) {
+      alert("Будь ласка, заповніть всі поля доставки (Телефон, Місто, Відділення).");
       return;
     }
 
@@ -181,7 +187,7 @@ export default function Cart() {
     if (appliedPromo) {
       const promoSuccess = await usePromo(appliedPromo.code);
       if (!promoSuccess) {
-        alert("Ошибка применения промокода, возможно он больше недействителен.");
+        alert("Помилка застосування промокоду, можливо він вже недійсний.");
         setIsOrdering(false);
         return;
       }
@@ -195,7 +201,7 @@ export default function Cart() {
       items: items,
       totalPrice: totalPrice,
       shippingDetails: {
-        phone,
+        phone: "+380" + phone,
         city,
         branch
       }
@@ -219,7 +225,7 @@ export default function Cart() {
               lastName: user.last_name,
               items: items,
               totalPrice: totalPrice,
-              shippingDetails: { phone, city, branch }
+              shippingDetails: { phone: "+380" + phone, city, branch }
             }
           })
         });
@@ -227,7 +233,7 @@ export default function Cart() {
         console.error("Failed to send notification", e);
       }
     } else {
-      alert("Ошибка при оформлении заказа. Попробуйте позже.");
+      alert("Помилка при оформленні замовлення. Спробуйте пізніше.");
     }
   };
 
@@ -308,17 +314,30 @@ export default function Cart() {
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px'}}>
                 <h3 style={{margin: '0 0 8px 0'}}>Доставка (Нова Пошта)</h3>
-                <input type="tel" placeholder="Номер телефона (+380...)" value={phone} onChange={e => setPhone(e.target.value)} className={styles.inputField} />
+                
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px'}}>
+                  <span style={{fontWeight: 'bold', color: 'var(--text-color)'}}>+380</span>
+                  <input 
+                    type="tel" 
+                    placeholder="ХХ ХХХ ХХ ХХ" 
+                    value={phone} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setPhone(val.slice(0, 9));
+                    }} 
+                    style={{border: 'none', background: 'transparent', color: 'var(--text-color)', width: '100%', outline: 'none', padding: '12px 0'}} 
+                  />
+                </div>
                 
                 {/* Город */}
                 <div style={{position: 'relative'}}>
                   <input 
                     type="text" 
-                    placeholder={isFetchingCities ? "Ищем города..." : "Город"} 
+                    placeholder={isFetchingCities ? "Шукаємо міста..." : "Місто"} 
                     value={cityQuery} 
                     onChange={e => {
                       setCityQuery(e.target.value);
-                      if (e.target.value !== city) setCity(''); // reset city if edited
+                      if (e.target.value !== city) setCity('');
                     }} 
                     onFocus={() => { if(cities.length > 0) setIsCityDropdownOpen(true) }}
                     className={styles.inputField} 
@@ -339,7 +358,7 @@ export default function Cart() {
                 <div style={{position: 'relative'}}>
                   <input 
                     type="text" 
-                    placeholder={isFetchingBranches ? "Загрузка отделений..." : "Отделение (номер или улица)"} 
+                    placeholder={isFetchingBranches ? "Завантаження відділень..." : "Відділення (номер або вулиця)"} 
                     value={branchQuery} 
                     onChange={e => {
                       setBranchQuery(e.target.value);

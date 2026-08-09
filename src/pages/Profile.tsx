@@ -4,14 +4,10 @@ import WebApp from '@twa-dev/sdk';
 import styles from '../App.module.css';
 
 export default function Profile() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   
   const user = WebApp.initDataUnsafe?.user;
   const adminId = import.meta.env.VITE_ADMIN_TELEGRAM_ID;
-
-  const changeLanguage = (lang: string) => {
-    i18n.changeLanguage(lang);
-  };
 
   return (
     <div>
@@ -19,22 +15,13 @@ export default function Profile() {
         <h2>{t('Profile')}</h2>
         {user ? (
           <div className={styles.userInfo}>
-            <p><strong>Имя:</strong> {user.first_name} {user.last_name}</p>
-            {user.username && <p><strong>Username:</strong> @{user.username}</p>}
+            <p><strong>{t('Name')}:</strong> {user.first_name} {user.last_name}</p>
+            {user.username && <p><strong>{t('Username')}:</strong> @{user.username}</p>}
             <p className={styles.userId}>ID: {user.id}</p>
           </div>
         ) : (
-          <p>Авторизация через Telegram...</p>
+          <p>Авторизація через Telegram...</p>
         )}
-      </div>
-
-      <div className={styles.settingsSection}>
-        <h3>{t('Settings')}</h3>
-        <div className={styles.languageToggle}>
-          <button onClick={() => changeLanguage('ua')}>UA</button>
-          <button onClick={() => changeLanguage('ru')}>RU</button>
-          <button onClick={() => changeLanguage('en')}>EN</button>
-        </div>
       </div>
 
       {user && String(user.id) === String(adminId) && (

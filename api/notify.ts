@@ -21,19 +21,19 @@ export default async function handler(req: any, res: any) {
     `- ${item.title} ${item.selectedColor ? `(${item.selectedColor})` : ''} x${item.quantity}`
   ).join('\n');
 
-  const text = `🚨 *НОВЫЙ ЗАКАЗ!* 🚨
-От: ${order.firstName} ${order.lastName || ''} ${order.username ? `(@${order.username})` : ''}
+  const text = `🚨 *НОВЕ ЗАМОВЛЕННЯ!* 🚨
+Від: ${order.firstName} ${order.lastName || ''} ${order.username ? `(@${order.username})` : ''}
 
 *Доставка (НП):*
-📞 ${order.shippingDetails?.phone || 'Не указан'}
-📍 ${order.shippingDetails?.city || 'Не указан'}, Отд. ${order.shippingDetails?.branch || 'Не указано'}
+📞 ${order.shippingDetails?.phone || 'Не вказано'}
+📍 ${order.shippingDetails?.city || 'Не вказано'}, Відд. ${order.shippingDetails?.branch || 'Не вказано'}
 
-*Товары:*
+*Товари:*
 ${itemsText}
 
-*Сумма:* ₴ ${order.totalPrice}
+*Сума:* ₴ ${order.totalPrice}
 
-Откройте Админ-панель для просмотра деталей.`;
+Відкрийте Адмін-панель для перегляду деталей.`;
 
   try {
     const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

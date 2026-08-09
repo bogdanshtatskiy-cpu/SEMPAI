@@ -87,7 +87,7 @@ export default function Admin() {
       setImages(prev => [...prev, url]);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Ошибка при загрузке картинки');
+      alert('Помилка при завантаженні картинки');
     } finally {
       setUploading(false);
     }
@@ -134,7 +134,7 @@ export default function Admin() {
   const handleStatusChange = async (order: Order, newStatus: Order['status']) => {
     let ttn;
     if (newStatus === 'shipped') {
-      ttn = prompt('Введите номер ТТН:');
+      ttn = prompt(t('TTN_Prompt', 'Введіть номер ТТН:'));
       if (ttn === null) return; // User cancelled
     }
     
@@ -146,16 +146,28 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          userId: order.userId,
-          orderId: order.id,
+          userId: order.userId, 
           status: newStatus,
-          ttn: ttn
+          ttn 
         })
       });
     } catch (e) {
-      console.error("Failed to notify client", e);
+      console.error('Failed to notify client', e);
     }
   };
+
+  const calculateStats = (days: number) => {
+    return orders
+      .filter(o => o.status === 'completed' && (new Date().getTime() - new Date(o.createdAt).getTime()) < days * 24 * 60 * 60 * 1000)
+      .reduce((sum, o) => {
+        let income = sum.income + o.totalPrice;
+        let count = sum.count + 1;
+        return { income, count };
+      }, { income: 0, count: 0 });
+  };
+
+  const stats7Days = calculateStats(7);
+  const stats30Days = calculateStats(30);
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -472,47 +484,43 @@ export default function Admin() {
       {activeTab === 'orders' && (
         <div>
           {/* Статистика */}
-          <div className={styles.adminSection}>
-            <h3 style={{marginBottom: '16px'}}>Статистика (Выполненные)</h3>
-            <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
-              <div style={{flex: 1, minWidth: '140px', background: 'var(--surface-color-light)', padding: '16px', borderRadius: '12px'}}>
-                <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Доход (7 дней)</p>
-                <h2 style={{margin: 0, color: 'var(--primary-color)'}}>
-                  ₴ {orders
-                      .filter(o => o.status === 'completed' && (new Date().getTime() - new Date(o.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000)
-                      .reduce((sum, o) => sum + o.totalPrice, 0)}
-                </h2>
-              </div>
-              <div style={{flex: 1, minWidth: '140px', background: 'var(--surface-color-light)', padding: '16px', borderRadius: '12px'}}>
-                <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Доход (30 дней)</p>
-                <h2 style={{margin: 0, color: 'var(--primary-color)'}}>
-                  ₴ {orders
-                      .filter(o => o.status === 'completed' && (new Date().getTime() - new Date(o.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000)
-                      .reduce((sum, o) => sum + o.totalPrice, 0)}
-                </h2>
+          {orderTab === 'archive' && (
+            <div style={{background: 'var(--surface-color)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border-color)'}}>
+              <h3 style={{marginBottom: '16px'}}>Статистика (Виконані)</h3>
+              <div style={{display: 'flex', gap: '16px'}}>
+                <div style={{flex: 1, background: 'var(--bg-color)', padding: '12px', borderRadius: '8px'}}>
+                  <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Дохід (7 днів)</p>
+                  <p style={{margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-color)'}}>₴ {stats7Days.income}</p>
+                  <p style={{margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)'}}>{stats7Days.count} замовлень</p>
+                </div>
+                <div style={{flex: 1, background: 'var(--bg-color)', padding: '12px', borderRadius: '8px'}}>
+                  <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Дохід (30 днів)</p>
+                  <p style={{margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-color)'}}>₴ {stats30Days.income}</p>
+                  <p style={{margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)'}}>{stats30Days.count} замовлень</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div style={{display: 'flex', gap: '8px', marginBottom: '16px', padding: '4px', background: 'var(--surface-color-light)', borderRadius: '12px'}}>
+          <div style={{display: 'flex', gap: '12px', marginBottom: '16px'}}>
             <button 
               className={orderTab === 'active' ? styles.tabBtnActive : styles.tabBtn} 
-              style={{flex: 1, margin: 0, padding: '8px', borderRadius: '8px'}}
               onClick={() => setOrderTab('active')}
+              style={{flex: 1, padding: '8px', borderRadius: '8px'}}
             >
-              Активные
+              Активні
             </button>
             <button 
               className={orderTab === 'archive' ? styles.tabBtnActive : styles.tabBtn} 
-              style={{flex: 1, margin: 0, padding: '8px', borderRadius: '8px'}}
               onClick={() => setOrderTab('archive')}
+              style={{flex: 1, padding: '8px', borderRadius: '8px'}}
             >
-              Архив
+              Архів
             </button>
           </div>
 
-          {ordersLoading ? <p>Загрузка заказов...</p> : orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).length === 0 ? <p>Заказов в этой категории нет</p> : (
-            orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).map(order => (
+          {ordersLoading ? <p>Завантаження замовлень...</p> : orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).length === 0 ? <p>Замовлень у цій категорії немає</p> : (
+            orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).map((order) => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div>
