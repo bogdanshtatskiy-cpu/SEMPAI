@@ -54,7 +54,16 @@ export default function Catalog() {
       </div>
 
       <div className={styles.productsGrid}>
-        {loading ? <p>Loading...</p> : products.map((item) => (
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={styles.skeletonCard}>
+              <div className={styles.skeletonImage}></div>
+              <div className={styles.skeletonText}></div>
+              <div className={styles.skeletonTextShort}></div>
+              <div className={styles.skeletonButton}></div>
+            </div>
+          ))
+        ) : products.map((item) => (
           <div key={item.id} className={styles.productCard} onClick={() => openModal(item)}>
             {item.imageUrl ? (
               <img src={item.imageUrl} alt={item.title} className={styles.productImage} />

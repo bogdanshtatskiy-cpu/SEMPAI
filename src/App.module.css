@@ -463,3 +463,109 @@
 .userInfo p { margin: 4px 0; font-size: 16px; }
 .userId { font-size: 12px !important; color: var(--text-secondary); margin-top: 8px !important; }
 
+
+/* Skeleton Loader */
+.skeletonCard {
+  background-color: var(--surface-color);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeletonImage {
+  width: 100%;
+  aspect-ratio: 1;
+  background-color: var(--surface-color-light);
+  border-radius: 8px;
+}
+
+.skeletonText {
+  height: 20px;
+  background-color: var(--surface-color-light);
+  border-radius: 4px;
+  width: 80%;
+}
+
+.skeletonTextShort {
+  height: 20px;
+  background-color: var(--surface-color-light);
+  border-radius: 4px;
+  width: 40%;
+}
+
+.skeletonButton {
+  height: 40px;
+  background-color: var(--surface-color-light);
+  border-radius: 20px;
+  margin-top: 8px;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Orders */
+.orderCard {
+  background-color: var(--surface-color-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.orderStatus {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-new { background: #3b82f6; color: white; }
+.status-processing { background: #f59e0b; color: white; }
+.status-completed { background: #10b981; color: white; }
+.status-cancelled { background: #ef4444; color: white; }
+
+.statusSelect {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.adminTabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tabBtn {
+  background: var(--surface-color-light);
+  color: var(--text-color);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.tabBtnActive {
+  background: var(--primary-color);
+  color: #000;
+}
+

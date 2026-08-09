@@ -11,11 +11,13 @@ import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import { useCartStore } from './store/useCartStore';
 import { useProductsStore } from './store/useProductsStore';
+import { useOrdersStore } from './store/useOrdersStore';
 
 function App() {
   const { t } = useTranslation();
   const cartItemsCount = useCartStore(state => state.items.reduce((total, item) => total + item.quantity, 0));
   const subscribeToProducts = useProductsStore(state => state.subscribeToProducts);
+  const subscribeToOrders = useOrdersStore(state => state.subscribeToOrders);
 
   useEffect(() => {
     WebApp.ready();
@@ -23,9 +25,13 @@ function App() {
     document.documentElement.setAttribute('data-theme', 'dark');
     
     // Подписываемся на обновления БД глобально при запуске
-    const unsubscribe = subscribeToProducts();
-    return () => unsubscribe();
-  }, [subscribeToProducts]);
+    const unsubscribeProducts = subscribeToProducts();
+    const unsubscribeOrders = subscribeToOrders();
+    return () => {
+      unsubscribeProducts();
+      unsubscribeOrders();
+    };
+  }, [subscribeToProducts, subscribeToOrders]);
 
   return (
     <div className={styles.appContainer}>
