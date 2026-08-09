@@ -44,6 +44,17 @@ export default function Catalog() {
     }
   }, [searchParams, products, setSearchParams]);
 
+  useEffect(() => {
+    if (selectedProduct) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [selectedProduct]);
+
   const openModal = (product: Product) => {
     setSelectedProduct(product);
     if (product.colors && product.colors.length > 0) {
@@ -182,35 +193,53 @@ export default function Catalog() {
             </div>
             
             <div className={styles.modalScrollableInfo}>
-              <h2 style={{margin: '0 0 8px 0'}}>{selectedProduct.title}</h2>
-              {selectedProduct.discount ? (
-                <div style={{display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px'}}>
-                  <p className={styles.price} style={{margin: 0, fontSize: '24px', color: 'var(--danger-color)'}}>
-                    ₴ {selectedProduct.discount.type === 'percent' ? Math.round(selectedProduct.price * (1 - selectedProduct.discount.value / 100)) : selectedProduct.price - selectedProduct.discount.value}
-                  </p>
-                  <p style={{textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '16px', margin: 0}}>
-                    ₴ {selectedProduct.price}
-                  </p>
-                  <span style={{background: 'var(--danger-color)', color: '#fff', padding: '4px 8px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold'}}>
-                    -{selectedProduct.discount.type === 'percent' ? `${selectedProduct.discount.value}%` : `₴${selectedProduct.discount.value}`}
-                  </span>
+              <div className={styles.modalHeaderInfo}>
+                <h2 className={styles.modalTitle}>{selectedProduct.title}</h2>
+                <div className={styles.modalPriceContainer}>
+                  {selectedProduct.discount ? (
+                    <>
+                      <p className={styles.priceLargeDiscounted}>
+                        ₴ {selectedProduct.discount.type === 'percent' ? Math.round(selectedProduct.price * (1 - selectedProduct.discount.value / 100)) : selectedProduct.price - selectedProduct.discount.value}
+                      </p>
+                      <p className={styles.priceOld}>₴ {selectedProduct.price}</p>
+                      <span className={styles.discountBadge}>
+                        -{selectedProduct.discount.type === 'percent' ? `${selectedProduct.discount.value}%` : `₴${selectedProduct.discount.value}`}
+                      </span>
+                    </>
+                  ) : (
+                    <p className={styles.priceLarge}>₴ {selectedProduct.price}</p>
+                  )}
                 </div>
-              ) : (
-                <p className={styles.price} style={{margin: '0 0 16px 0', fontSize: '24px'}}>₴ {selectedProduct.price}</p>
-              )}
+              </div>
               
               {selectedProduct.description && (
-                <p className={styles.modalDescription}>{selectedProduct.description}</p>
+                <div className={styles.modalSection}>
+                  <p className={styles.modalDescription}>{selectedProduct.description}</p>
+                </div>
               )}
               
-              <div className={styles.modalSpecs}>
-                {selectedProduct.material && <p><strong>{t('Material_Label', 'Материал:')}</strong> {selectedProduct.material}</p>}
-                {selectedProduct.dimensions && <p><strong>{t('Dimensions_Label', 'Размеры:')}</strong> {selectedProduct.dimensions}</p>}
-              </div>
+              {(selectedProduct.material || selectedProduct.dimensions) && (
+                <div className={styles.modalSection}>
+                  <div className={styles.modalSpecsGrid}>
+                    {selectedProduct.material && (
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>{t('Material_Label', 'Материал:')}</span>
+                        <span className={styles.specValue}>{selectedProduct.material}</span>
+                      </div>
+                    )}
+                    {selectedProduct.dimensions && (
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>{t('Dimensions_Label', 'Размеры:')}</span>
+                        <span className={styles.specValue}>{selectedProduct.dimensions}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {selectedProduct.colors && selectedProduct.colors.length > 0 && (
-                <div className={styles.colorSelection}>
-                  <p><strong>{t('Color_Label', 'Цвет:')}</strong></p>
+                <div className={styles.modalSection}>
+                  <p className={styles.sectionTitle}>{t('Color_Label', 'Цвет:')}</p>
                   <div className={styles.colorOptions}>
                     {selectedProduct.colors.map(color => (
                       <button 

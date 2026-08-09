@@ -19,6 +19,11 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
+  // Уникальные значения для подсказок
+  const existingCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+  const existingMaterials = Array.from(new Set(products.map(p => p.material).filter(Boolean))) as string[];
+  const existingColors = Array.from(new Set(products.flatMap(p => p.colors || []).filter(Boolean))) as string[];
+
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -269,20 +274,40 @@ export default function Admin() {
                 className={styles.inputField}
                 rows={3}
               />
-              <input 
-                type="text" 
-                placeholder={t('Product_Category', 'Категория (например, Фигурки)')} 
-                value={category} 
-                onChange={(e) => setCategory(e.target.value)} 
-                className={styles.inputField}
-              />
-              <input 
-                type="text" 
-                placeholder={t('Product_Material', 'Материал (например, PLA пластик)')} 
-                value={material} 
-                onChange={(e) => setMaterial(e.target.value)} 
-                className={styles.inputField}
-              />
+              <div>
+                <input 
+                  type="text" 
+                  placeholder={t('Product_Category', 'Категория (например, Фигурки)')} 
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value)} 
+                  className={styles.inputField}
+                  style={{width: '100%'}}
+                />
+                {existingCategories.length > 0 && (
+                  <div className={styles.suggestionsScroll}>
+                    {existingCategories.map(cat => (
+                      <button key={cat} type="button" className={styles.suggestionPill} onClick={() => setCategory(cat)}>{cat}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <input 
+                  type="text" 
+                  placeholder={t('Product_Material', 'Материал (например, PLA пластик)')} 
+                  value={material} 
+                  onChange={(e) => setMaterial(e.target.value)} 
+                  className={styles.inputField}
+                  style={{width: '100%'}}
+                />
+                {existingMaterials.length > 0 && (
+                  <div className={styles.suggestionsScroll}>
+                    {existingMaterials.map(mat => (
+                      <button key={mat} type="button" className={styles.suggestionPill} onClick={() => setMaterial(mat)}>{mat}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input 
                 type="text" 
                 placeholder={t('Product_Dimensions', 'Размеры (например, 10x5x5 см)')} 
@@ -290,13 +315,35 @@ export default function Admin() {
                 onChange={(e) => setDimensions(e.target.value)} 
                 className={styles.inputField}
               />
-              <input 
-                type="text" 
-                placeholder={t('Product_Colors', 'Цвета (через запятую: Черный, Белый)')} 
-                value={colorsStr} 
-                onChange={(e) => setColorsStr(e.target.value)} 
-                className={styles.inputField}
-              />
+              <div>
+                <input 
+                  type="text" 
+                  placeholder={t('Product_Colors', 'Цвета (через запятую: Черный, Белый)')} 
+                  value={colorsStr} 
+                  onChange={(e) => setColorsStr(e.target.value)} 
+                  className={styles.inputField}
+                  style={{width: '100%'}}
+                />
+                {existingColors.length > 0 && (
+                  <div className={styles.suggestionsScroll}>
+                    {existingColors.map(color => (
+                      <button 
+                        key={color} 
+                        type="button" 
+                        className={styles.suggestionPill} 
+                        onClick={() => {
+                          const currentColors = colorsStr ? colorsStr.split(',').map(c => c.trim()).filter(Boolean) : [];
+                          if (!currentColors.includes(color)) {
+                            setColorsStr(currentColors.length > 0 ? `${colorsStr}, ${color}` : color);
+                          }
+                        }}
+                      >
+                        {color}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
                 <select 
                   value={discountType}
