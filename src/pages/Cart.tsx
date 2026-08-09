@@ -20,6 +20,8 @@ export default function Cart() {
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [branch, setBranch] = useState('');
+  const [customerFirstName, setCustomerFirstName] = useState('');
+  const [customerLastName, setCustomerLastName] = useState('');
 
   // NP State
   const [cityQuery, setCityQuery] = useState('');
@@ -177,7 +179,12 @@ export default function Cart() {
       return;
     }
 
-    if (!phone || phone.length < 9 || !city || !branch) {
+    if (!customerFirstName || !customerLastName) {
+      alert("Будь ласка, вкажіть ваше прізвище та ім'я.");
+      return;
+    }
+
+    if (!phone || phone.replace(/\s/g, '').length < 9 || !city || !branch) {
       alert("Будь ласка, заповніть всі поля доставки (Телефон, Місто, Відділення).");
       return;
     }
@@ -193,15 +200,16 @@ export default function Cart() {
       }
     }
 
+    const cleanPhone = "+380" + phone.replace(/\s/g, '');
     const success = await createOrder({
       userId: user.id,
       username: user.username,
-      firstName: user.first_name,
-      lastName: user.last_name,
+      firstName: customerFirstName,
+      lastName: customerLastName,
       items: items,
       totalPrice: totalPrice,
       shippingDetails: {
-        phone: "+380" + phone,
+        phone: cleanPhone,
         city,
         branch
       }
@@ -221,11 +229,11 @@ export default function Cart() {
             order: {
               userId: user.id,
               username: user.username,
-              firstName: user.first_name,
-              lastName: user.last_name,
+              firstName: customerFirstName,
+              lastName: customerLastName,
               items: items,
               totalPrice: totalPrice,
-              shippingDetails: { phone: "+380" + phone, city, branch }
+              shippingDetails: { phone: cleanPhone, city, branch }
             }
           })
         });
@@ -312,20 +320,45 @@ export default function Cart() {
                 )}
               </div>
               
-              <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px'}}>
-                <h3 style={{margin: '0 0 8px 0'}}>Доставка (Нова Пошта)</h3>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px'}}>
+                <h3 style={{margin: '0 0 4px 0'}}>Доставка (Нова Пошта)</h3>
+
+                <input 
+                  type="text" 
+                  placeholder="Прізвище" 
+                  value={customerLastName} 
+                  onChange={e => setCustomerLastName(e.target.value)} 
+                  className={styles.inputField}
+                  style={{width: '100%', boxSizing: 'border-box'}}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Ім'я" 
+                  value={customerFirstName} 
+                  onChange={e => setCustomerFirstName(e.target.value)} 
+                  className={styles.inputField}
+                  style={{width: '100%', boxSizing: 'border-box'}}
+                />
                 
-                <div style={{display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px'}}>
-                  <span style={{fontWeight: 'bold', color: 'var(--text-color)'}}>+380</span>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px'}}>
+                  <span style={{fontWeight: '600', color: 'var(--text-secondary)', fontSize: '16px', letterSpacing: '0.5px', whiteSpace: 'nowrap'}}>+380</span>
                   <input 
                     type="tel" 
-                    placeholder="ХХ ХХХ ХХ ХХ" 
+                    placeholder="XX XXX XX XX" 
                     value={phone} 
                     onChange={e => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      setPhone(val.slice(0, 9));
+                      const raw = e.target.value.replace(/[^\d\s]/g, '');
+                      const digits = raw.replace(/\s/g, '');
+                      if (digits.length > 9) return;
+                      // format: XX XXX XX XX
+                      let formatted = '';
+                      for (let i = 0; i < digits.length; i++) {
+                        if (i === 2 || i === 5 || i === 7) formatted += ' ';
+                        formatted += digits[i];
+                      }
+                      setPhone(formatted);
                     }} 
-                    style={{border: 'none', background: 'transparent', color: 'var(--text-color)', width: '100%', outline: 'none', padding: '12px 0'}} 
+                    style={{border: 'none', background: 'transparent', color: 'var(--text-color)', width: '100%', outline: 'none', padding: '12px 8px', fontSize: '16px', letterSpacing: '1px'}} 
                   />
                 </div>
                 
@@ -344,7 +377,7 @@ export default function Cart() {
                     style={{width: '100%', boxSizing: 'border-box'}}
                   />
                   {isCityDropdownOpen && cities.length > 0 && (
-                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}>
+                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', backdropFilter: 'none'}}>
                       {cities.map((c, idx) => (
                         <div key={idx} onClick={() => handleSelectCity(c)} style={{padding: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer'}}>
                           {c.Present}
@@ -370,7 +403,7 @@ export default function Cart() {
                     disabled={!city || branches.length === 0}
                   />
                   {isBranchDropdownOpen && filteredBranches.length > 0 && (
-                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}>
+                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', backdropFilter: 'none'}}>
                       {filteredBranches.map((b, idx) => (
                         <div key={idx} onClick={() => handleSelectBranch(b)} style={{padding: '12px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '14px'}}>
                           {b.Description}
