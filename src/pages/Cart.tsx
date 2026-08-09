@@ -35,6 +35,26 @@ export default function Cart() {
     if (success) {
       setOrderSuccess(true);
       clearCart();
+      
+      // Отправляем уведомление админу через наш безопасный сервер Vercel
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            order: {
+              userId: user.id,
+              username: user.username,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              items: items,
+              totalPrice: totalPrice
+            }
+          })
+        });
+      } catch (e) {
+        console.error("Failed to send notification", e);
+      }
     } else {
       alert("Ошибка при оформлении заказа. Попробуйте позже.");
     }
