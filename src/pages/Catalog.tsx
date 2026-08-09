@@ -87,7 +87,7 @@ export default function Catalog() {
       <div className={styles.searchContainer}>
         <input 
           type="text" 
-          placeholder="Поиск товаров..." 
+          placeholder={t('Search_Placeholder', 'Пошук товарів...')} 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={styles.searchInput}
@@ -99,7 +99,7 @@ export default function Catalog() {
               className={`${styles.categoryPill} ${activeCategory === null ? styles.categoryPillActive : ''}`}
               onClick={() => setActiveCategory(null)}
             >
-              Все
+              {t('All_Categories', 'Всі товари')}
             </button>
             {categories.map(cat => (
               <button 

@@ -85,7 +85,7 @@ function App() {
         </NavLink>
         <NavLink to="/favorites" className={({isActive}) => isActive ? `${styles.navItem} ${styles.activeNav}` : styles.navItem}>
           <Heart size={24} />
-          <span>Избранное</span>
+          <span>{t('Favorites_Title')}</span>
         </NavLink>
         <NavLink to="/profile" className={({isActive}) => isActive ? `${styles.navItem} ${styles.activeNav}` : styles.navItem}>
           <User size={24} />

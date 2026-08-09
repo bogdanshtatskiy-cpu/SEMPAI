@@ -106,17 +106,17 @@ export default function Admin() {
     e.preventDefault();
     if (!title || !price) return;
 
-    const productData = {
+    const productData: any = {
       title,
       price: Number(price),
-      imageUrl: imageUrl || undefined,
-      description: description || undefined,
-      category: category || undefined,
-      dimensions: dimensions || undefined,
-      material: material || undefined,
-      colors: colorsStr ? colorsStr.split(',').map(c => c.trim()).filter(Boolean) : undefined,
-      discount: discountValue ? { type: discountType, value: Number(discountValue) } : undefined
     };
+    if (imageUrl) productData.imageUrl = imageUrl;
+    if (description) productData.description = description;
+    if (category) productData.category = category;
+    if (dimensions) productData.dimensions = dimensions;
+    if (material) productData.material = material;
+    if (colorsStr) productData.colors = colorsStr.split(',').map(c => c.trim()).filter(Boolean);
+    if (discountValue) productData.discount = { type: discountType, value: Number(discountValue) };
 
     if (editingProductId) {
       await updateProduct(editingProductId, productData);
@@ -161,15 +161,17 @@ export default function Admin() {
     e.preventDefault();
     if (!promoCode || !promoValue) return;
 
-    await addPromo({
+    const promoData: any = {
       code: promoCode,
       discountType: promoType,
       discountValue: Number(promoValue),
-      usageLimit: promoUsageLimit ? Number(promoUsageLimit) : undefined,
-      minOrderAmount: promoMinOrder ? Number(promoMinOrder) : undefined,
-      validFrom: promoValidFrom ? new Date(promoValidFrom).getTime() : undefined,
-      validUntil: promoValidUntil ? new Date(promoValidUntil).getTime() : undefined
-    });
+    };
+    if (promoUsageLimit) promoData.usageLimit = Number(promoUsageLimit);
+    if (promoMinOrder) promoData.minOrderAmount = Number(promoMinOrder);
+    if (promoValidFrom) promoData.validFrom = new Date(promoValidFrom).getTime();
+    if (promoValidUntil) promoData.validUntil = new Date(promoValidUntil).getTime();
+
+    await addPromo(promoData);
 
     setPromoCode('');
     setPromoValue('');
@@ -336,17 +338,17 @@ export default function Admin() {
                     <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
                       <button 
                         className={styles.submitBtn} 
-                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px'}}
+                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px'}}
                         onClick={() => handleEditProduct(item)}
                       >
-                        <Edit2 size={16} /> Edit
+                        <Edit2 size={20} />
                       </button>
                       <button 
                         className={`${styles.submitBtn} ${styles.removeBtn}`} 
-                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px'}}
+                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px'}}
                         onClick={() => deleteProduct(item.id)}
                       >
-                        <Trash2 size={16} /> {t('Delete')}
+                        <Trash2 size={20} />
                       </button>
                     </div>
                   </div>
