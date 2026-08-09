@@ -223,7 +223,7 @@ export default function Admin() {
               <div 
                 className={styles.uploadArea} 
                 onPaste={handlePaste} 
-                title="Вы можете нажать сюда и вставить картинку через Ctrl+V"
+                title={t('Upload_Hint', 'Вы можете нажать сюда и вставить картинку через Ctrl+V')}
               >
                 <input 
                   type="file" 
@@ -232,7 +232,7 @@ export default function Admin() {
                   className={styles.fileInput} 
                 />
                 <p className={styles.pasteHint}>
-                  {uploading ? 'Загрузка...' : 'Выберите файл или вставьте (Ctrl+V)'}
+                  {uploading ? t('Upload_Loading', 'Загрузка...') : t('Upload_Placeholder', 'Выберите файл или вставьте (Ctrl+V)')}
                 </p>
               </div>
               {imageUrl && (
@@ -263,7 +263,7 @@ export default function Admin() {
                 className={styles.inputField}
               />
               <textarea 
-                placeholder="Описание товара" 
+                placeholder={t('Product_Desc', 'Описание товара')} 
                 value={description} 
                 onChange={(e) => setDescription(e.target.value)} 
                 className={styles.inputField}
@@ -271,28 +271,28 @@ export default function Admin() {
               />
               <input 
                 type="text" 
-                placeholder="Категория (например, Фигурки)" 
+                placeholder={t('Product_Category', 'Категория (например, Фигурки)')} 
                 value={category} 
                 onChange={(e) => setCategory(e.target.value)} 
                 className={styles.inputField}
               />
               <input 
                 type="text" 
-                placeholder="Материал (например, PLA пластик)" 
+                placeholder={t('Product_Material', 'Материал (например, PLA пластик)')} 
                 value={material} 
                 onChange={(e) => setMaterial(e.target.value)} 
                 className={styles.inputField}
               />
               <input 
                 type="text" 
-                placeholder="Размеры (например, 10x5x5 см)" 
+                placeholder={t('Product_Dimensions', 'Размеры (например, 10x5x5 см)')} 
                 value={dimensions} 
                 onChange={(e) => setDimensions(e.target.value)} 
                 className={styles.inputField}
               />
               <input 
                 type="text" 
-                placeholder="Цвета (через запятую: Черный, Белый)" 
+                placeholder={t('Product_Colors', 'Цвета (через запятую: Черный, Белый)')} 
                 value={colorsStr} 
                 onChange={(e) => setColorsStr(e.target.value)} 
                 className={styles.inputField}
@@ -309,7 +309,7 @@ export default function Admin() {
                 </select>
                 <input 
                   type="number" 
-                  placeholder="Скидка (0 - нет)"
+                  placeholder={t('Discount_Zero', 'Скидка (0 - нет)')}
                   value={discountValue}
                   onChange={e => setDiscountValue(e.target.value)}
                   className={styles.inputField}

@@ -163,7 +163,7 @@ export default function Catalog() {
         ))}
         {!loading && filteredProducts.length === 0 && (
           <p style={{textAlign: 'center', gridColumn: '1 / -1', color: 'var(--text-secondary)'}}>
-            Ничего не найдено
+            {t('Nothing_Found', 'Ничего не найдено')}
           </p>
         )}
       </div>
@@ -204,13 +204,13 @@ export default function Catalog() {
               )}
               
               <div className={styles.modalSpecs}>
-                {selectedProduct.material && <p><strong>Материал:</strong> {selectedProduct.material}</p>}
-                {selectedProduct.dimensions && <p><strong>Размеры:</strong> {selectedProduct.dimensions}</p>}
+                {selectedProduct.material && <p><strong>{t('Material_Label', 'Материал:')}</strong> {selectedProduct.material}</p>}
+                {selectedProduct.dimensions && <p><strong>{t('Dimensions_Label', 'Размеры:')}</strong> {selectedProduct.dimensions}</p>}
               </div>
 
               {selectedProduct.colors && selectedProduct.colors.length > 0 && (
                 <div className={styles.colorSelection}>
-                  <p><strong>Цвет:</strong></p>
+                  <p><strong>{t('Color_Label', 'Цвет:')}</strong></p>
                   <div className={styles.colorOptions}>
                     {selectedProduct.colors.map(color => (
                       <button 

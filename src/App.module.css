@@ -333,7 +333,7 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(5px);
-  z-index: 100;
+  z-index: 1000;
   display: flex;
   align-items: flex-end; /* Mobile friendly bottom sheet */
   justify-content: center;
@@ -398,6 +398,16 @@
   display: block;
 }
 
+.modalScrollableInfo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: env(safe-area-inset-bottom, 24px); /* Extra padding for bottom */
+}
+
 .modalInfo {
   display: flex;
   flex-direction: column;
@@ -448,9 +458,11 @@
 }
 
 .modalAddToCart {
-  margin-top: 16px;
+  margin-top: auto;
   padding: 16px;
   font-size: 18px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(22, 241, 255, 0.2);
 }
 
 .categoryBadge {

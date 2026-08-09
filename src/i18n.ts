@@ -62,7 +62,22 @@ const resources = {
       "Promo_Not_Found": "Промокод не знайдено",
       "Promo_Expired": "Промокод закінчився",
       "Promo_Limit_Reached": "Ліміт використань вичерпано",
-      "Order_Products_Title": "Товари:"
+      "Upload_Loading": "Завантаження...",
+      "Upload_Placeholder": "Виберіть файл або вставте (Ctrl+V)",
+      "Upload_Hint": "Ви можете натиснути сюди і вставити картинку через Ctrl+V",
+      "Product_Desc": "Опис товару",
+      "Product_Category": "Категорія (наприклад, Фігурки)",
+      "Product_Material": "Матеріал (наприклад, PLA пластик)",
+      "Product_Dimensions": "Розміри (наприклад, 10x5x5 см)",
+      "Product_Colors": "Кольори (через кому: Чорний, Білий)",
+      "Discount_Zero": "Знижка (0 - немає)",
+      "Save_Changes": "Зберегти зміни",
+      "Search_Placeholder": "Пошук товарів...",
+      "All_Categories": "Всі товари",
+      "Nothing_Found": "Нічого не знайдено",
+      "Material_Label": "Матеріал:",
+      "Dimensions_Label": "Розміри:",
+      "Color_Label": "Колір:"
     }
   },
   ru: {
@@ -122,7 +137,22 @@ const resources = {
       "Promo_Not_Found": "Промокод не найден",
       "Promo_Expired": "Промокод истек",
       "Promo_Limit_Reached": "Лимит использований исчерпан",
-      "Order_Products_Title": "Товары:"
+      "Upload_Loading": "Загрузка...",
+      "Upload_Placeholder": "Выберите файл или вставьте (Ctrl+V)",
+      "Upload_Hint": "Вы можете нажать сюда и вставить картинку через Ctrl+V",
+      "Product_Desc": "Описание товара",
+      "Product_Category": "Категория (например, Фигурки)",
+      "Product_Material": "Материал (например, PLA пластик)",
+      "Product_Dimensions": "Размеры (например, 10x5x5 см)",
+      "Product_Colors": "Цвета (через запятую: Черный, Белый)",
+      "Discount_Zero": "Скидка (0 - нет)",
+      "Save_Changes": "Сохранить изменения",
+      "Search_Placeholder": "Поиск товаров...",
+      "All_Categories": "Все товары",
+      "Nothing_Found": "Ничего не найдено",
+      "Material_Label": "Материал:",
+      "Dimensions_Label": "Размеры:",
+      "Color_Label": "Цвет:"
     }
   },
   en: {
