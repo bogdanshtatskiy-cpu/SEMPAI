@@ -34,12 +34,24 @@ export default async function handler(req: any, res: any) {
       await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
     }
     
-    // Check if user has a completed order
-    const q = query(collection(db, 'orders'), where('userId', '==', telegramId), where('status', '==', 'completed'));
-    const snapshot = await getDocs(q);
+    // Check how many completed orders the user has
+    const qOrders = query(collection(db, 'orders'), where('userId', '==', telegramId), where('status', '==', 'completed'));
+    const snapshotOrders = await getDocs(qOrders);
+    const completedOrdersCount = snapshotOrders.size;
     
-    if (snapshot.empty) {
+    if (completedOrdersCount === 0) {
       return res.status(200).json({ success: true }); // Ignore messages from users without completed orders
+    }
+
+    // Check how many reviews the user has already left
+    const qReviews = query(collection(db, 'reviews'), where('userId', '==', telegramId));
+    const snapshotReviews = await getDocs(qReviews);
+    const reviewsCount = snapshotReviews.size;
+
+    // Only allow leaving a review if they have more completed orders than existing reviews
+    if (reviewsCount >= completedOrdersCount) {
+      // User has already reviewed all their completed orders, ignore further messages
+      return res.status(200).json({ success: true });
     }
 
     // Save review to firestore
@@ -48,7 +60,8 @@ export default async function handler(req: any, res: any) {
       username: username || '',
       firstName: message.from.first_name || '',
       text: text,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      orderCountAtReview: completedOrdersCount
     });
 
     // Forward to reviews channel
