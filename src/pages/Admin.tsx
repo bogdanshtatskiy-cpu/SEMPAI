@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { collection, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { db, storage, auth } from '../firebase';
+import { storage, auth } from '../firebase';
 import styles from '../App.module.css';
 import { useProductsStore } from '../store/useProductsStore';
 import { useOrdersStore, Order } from '../store/useOrdersStore';
@@ -14,9 +13,12 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 export default function Admin() {
   const { t } = useTranslation();
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProductsStore();
-  const { orders, updateOrderStatus, loading: ordersLoading, subscribeToOrders } = useOrdersStore();
+  const { 
+    orders, archivedOrders, loadArchivedOrders, hasMoreArchived, 
+    archivedLoading, updateOrderStatus, subscribeToActiveOrders, getStats, loading: ordersLoading
+  } = useOrdersStore();
   const { promos, addPromo, deletePromo } = usePromoStore();
-  
+
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'promos'>('products');
   const [orderTab, setOrderTab] = useState<'active' | 'archive'>('active');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -40,12 +42,22 @@ export default function Admin() {
     return () => unsubscribe();
   }, []);
 
+  const [stats, setStats] = useState({ stats7: { income: 0, count: 0 }, stats30: { income: 0, count: 0 } });
+
   useEffect(() => {
     if (isAdminAuth) {
-      const unsubscribe = subscribeToOrders();
+      const unsubscribe = subscribeToActiveOrders();
+      getStats(7).then(s7 => getStats(30).then(s30 => setStats({ stats7: s7, stats30: s30 })));
       return () => unsubscribe();
     }
-  }, [isAdminAuth, subscribeToOrders]);
+  }, [isAdminAuth, subscribeToActiveOrders, getStats]);
+
+  useEffect(() => {
+    if (orderTab === 'archive' && archivedOrders.length === 0) {
+      loadArchivedOrders(true);
+    }
+  }, [orderTab]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,32 +73,6 @@ export default function Admin() {
     await signOut(auth);
   };
 
-  // Проверка брошенных корзин
-  useEffect(() => {
-    const checkAbandonedCarts = async () => {
-      try {
-        const q = query(collection(db, 'carts'));
-        const snapshot = await getDocs(q);
-        
-        snapshot.forEach(async (cartDoc) => {
-          const cart = cartDoc.data();
-          const oneHourAgo = Date.now() - 3600000;
-          
-          if (cart.updatedAt < oneHourAgo) {
-            await fetch('/api/notify_abandoned', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cart })
-            });
-            await deleteDoc(doc(db, 'carts', cartDoc.id));
-          }
-        });
-      } catch (e) {
-        console.error('Error checking abandoned carts:', e);
-      }
-    };
-    checkAbandonedCarts();
-  }, []);
 
   // Уникальные значения для подсказок
   const existingCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
@@ -140,7 +126,7 @@ export default function Admin() {
   const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement> | ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
-    
+
     for (const item of items) {
       if (item.type.indexOf('image') !== -1) {
         e.preventDefault();
@@ -161,7 +147,7 @@ export default function Admin() {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'file') return;
       if (target.tagName === 'TEXTAREA') return;
-      
+
       handlePaste(e);
     };
     window.addEventListener('paste', globalPasteListener);
@@ -174,7 +160,7 @@ export default function Admin() {
       ttn = prompt(t('TTN_Prompt', 'Введіть номер ТТН:'));
       if (ttn === null) return; // User cancelled
     }
-    
+
     await updateOrderStatus(order.id, newStatus, ttn);
 
     // Уведомляем клиента
@@ -182,11 +168,11 @@ export default function Admin() {
       await fetch('/api/notify_client', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: order.userId, 
+        body: JSON.stringify({
+          userId: order.userId,
           orderId: order.id,
           status: newStatus,
-          ttn 
+          ttn
         })
       });
     } catch (e) {
@@ -194,18 +180,8 @@ export default function Admin() {
     }
   };
 
-  const calculateStats = (days: number) => {
-    return orders
-      .filter(o => o.status === 'completed' && (new Date().getTime() - new Date(o.createdAt).getTime()) < days * 24 * 60 * 60 * 1000)
-      .reduce((sum, o) => {
-        let income = sum.income + o.totalPrice;
-        let count = sum.count + 1;
-        return { income, count };
-      }, { income: 0, count: 0 });
-  };
-
-  const stats7Days = calculateStats(7);
-  const stats30Days = calculateStats(30);
+  const stats7Days = stats.stats7;
+  const stats30Days = stats.stats30;
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -305,22 +281,22 @@ export default function Admin() {
         <div style={{ background: 'var(--surface-color)', padding: '32px 24px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '8px', color: 'var(--text-color)' }}>Вхід для адміністратора</h2>
           <p style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--text-secondary)', fontSize: '14px' }}>Введіть email та пароль з Firebase Console</p>
-          
+
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <input 
-              type="email" 
-              placeholder="Email" 
+            <input
+              type="email"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={styles.inputField} 
+              className={styles.inputField}
               required
             />
-            <input 
-              type="password" 
-              placeholder="Пароль" 
+            <input
+              type="password"
+              placeholder="Пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={styles.inputField} 
+              className={styles.inputField}
               required
             />
             {authError && <p style={{ color: 'var(--danger-color)', fontSize: '14px', textAlign: 'center' }}>{authError}</p>}
@@ -328,7 +304,7 @@ export default function Admin() {
               Увійти
             </button>
           </form>
-          
+
           <Link to="/" style={{ display: 'block', textAlign: 'center', marginTop: '20px', color: 'var(--primary-color)', textDecoration: 'none', fontSize: '14px' }}>
             Повернутися в магазин
           </Link>
@@ -346,19 +322,19 @@ export default function Admin() {
         </button>
       </div>
       <div className={styles.adminTabs}>
-        <button 
+        <button
           className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('products')}
         >
           <Package size={16} /> {t('Admin_Products_Tab')}
         </button>
-        <button 
+        <button
           className={`${styles.tabBtn} ${activeTab === 'orders' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('orders')}
         >
           <ShoppingBag size={16} /> {t('Admin_Orders_Tab')} {orders.filter(o => o.status === 'new').length > 0 && `(${orders.filter(o => o.status === 'new').length})`}
         </button>
-        <button 
+        <button
           className={`${styles.tabBtn} ${activeTab === 'promos' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('promos')}
         >
@@ -371,30 +347,30 @@ export default function Admin() {
           <div className={styles.adminFormContainer}>
             <h3>{editingProductId ? t('Product_Title') : t('Add_Product')}</h3>
             <form onSubmit={handleAddProduct} className={styles.adminForm}>
-              <div 
-                className={styles.uploadArea} 
-                onPaste={handlePaste} 
+              <div
+                className={styles.uploadArea}
+                onPaste={handlePaste}
                 title={t('Upload_Hint', 'Вы можете нажать сюда и вставить картинку через Ctrl+V')}
               >
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                  className={styles.fileInput} 
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className={styles.fileInput}
                 />
                 <p className={styles.pasteHint}>
                   {uploading ? t('Upload_Loading', 'Загрузка...') : t('Upload_Placeholder', 'Выберите файл или вставьте (Ctrl+V)')}
                 </p>
               </div>
-              
+
               {images.length > 0 && (
                 <div className={styles.adminImagesGrid}>
                   {images.map((img, index) => (
                     <div key={index} className={styles.adminImageThumb}>
                       <img src={img} alt="Preview" className={styles.imagePreview} />
-                      <button 
-                        type="button" 
-                        className={styles.removeImageBtn} 
+                      <button
+                        type="button"
+                        className={styles.removeImageBtn}
                         onClick={() => setImages(prev => prev.filter((_, i) => i !== index))}
                       >
                         &times;
@@ -404,37 +380,37 @@ export default function Admin() {
                 </div>
               )}
 
-              <input 
-                type="text" 
-                placeholder={t('Product_Title')} 
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
-                required 
+              <input
+                type="text"
+                placeholder={t('Product_Title')}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
                 className={styles.inputField}
               />
-              <input 
-                type="number" 
-                placeholder={t('Product_Price')} 
-                value={price} 
-                onChange={(e) => setPrice(e.target.value)} 
-                required 
+              <input
+                type="number"
+                placeholder={t('Product_Price')}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
                 className={styles.inputField}
               />
-              <textarea 
-                placeholder={t('Product_Desc', 'Описание товара')} 
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)} 
+              <textarea
+                placeholder={t('Product_Desc', 'Описание товара')}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className={styles.inputField}
                 rows={3}
               />
               <div>
-                <input 
-                  type="text" 
-                  placeholder={t('Product_Category', 'Категория (например, Фигурки)')} 
-                  value={category} 
-                  onChange={(e) => setCategory(e.target.value)} 
+                <input
+                  type="text"
+                  placeholder={t('Product_Category', 'Категория (например, Фигурки)')}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
                   className={styles.inputField}
-                  style={{width: '100%'}}
+                  style={{ width: '100%' }}
                 />
                 {existingCategories.length > 0 && (
                   <div className={styles.suggestionsScroll}>
@@ -445,13 +421,13 @@ export default function Admin() {
                 )}
               </div>
               <div>
-                <input 
-                  type="text" 
-                  placeholder={t('Product_Material', 'Материал (например, PLA пластик)')} 
-                  value={material} 
-                  onChange={(e) => setMaterial(e.target.value)} 
+                <input
+                  type="text"
+                  placeholder={t('Product_Material', 'Материал (например, PLA пластик)')}
+                  value={material}
+                  onChange={(e) => setMaterial(e.target.value)}
                   className={styles.inputField}
-                  style={{width: '100%'}}
+                  style={{ width: '100%' }}
                 />
                 {existingMaterials.length > 0 && (
                   <div className={styles.suggestionsScroll}>
@@ -461,29 +437,29 @@ export default function Admin() {
                   </div>
                 )}
               </div>
-              <input 
-                type="text" 
-                placeholder={t('Product_Dimensions', 'Размеры (например, 10x5x5 см)')} 
-                value={dimensions} 
-                onChange={(e) => setDimensions(e.target.value)} 
+              <input
+                type="text"
+                placeholder={t('Product_Dimensions', 'Размеры (например, 10x5x5 см)')}
+                value={dimensions}
+                onChange={(e) => setDimensions(e.target.value)}
                 className={styles.inputField}
               />
               <div>
-                <input 
-                  type="text" 
-                  placeholder={t('Product_Colors', 'Цвета (через запятую: Черный, Белый)')} 
-                  value={colorsStr} 
-                  onChange={(e) => setColorsStr(e.target.value)} 
+                <input
+                  type="text"
+                  placeholder={t('Product_Colors', 'Цвета (через запятую: Черный, Белый)')}
+                  value={colorsStr}
+                  onChange={(e) => setColorsStr(e.target.value)}
                   className={styles.inputField}
-                  style={{width: '100%'}}
+                  style={{ width: '100%' }}
                 />
                 {existingColors.length > 0 && (
                   <div className={styles.suggestionsScroll}>
                     {existingColors.map(color => (
-                      <button 
-                        key={color} 
-                        type="button" 
-                        className={styles.suggestionPill} 
+                      <button
+                        key={color}
+                        type="button"
+                        className={styles.suggestionPill}
                         onClick={() => {
                           const currentColors = colorsStr ? colorsStr.split(',').map(c => c.trim()).filter(Boolean) : [];
                           if (!currentColors.includes(color)) {
@@ -497,23 +473,23 @@ export default function Admin() {
                   </div>
                 )}
               </div>
-              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
-                <select 
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <select
                   value={discountType}
                   onChange={e => setDiscountType(e.target.value as 'percent' | 'fixed')}
                   className={styles.inputField}
-                  style={{width: '120px'}}
+                  style={{ width: '120px' }}
                 >
                   <option value="percent">% (Скидка)</option>
                   <option value="fixed">₴ (Скидка)</option>
                 </select>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   placeholder={t('Discount_Zero', 'Скидка (0 - нет)')}
                   value={discountValue}
                   onChange={e => setDiscountValue(e.target.value)}
                   className={styles.inputField}
-                  style={{flex: 1}}
+                  style={{ flex: 1 }}
                 />
               </div>
               <button type="submit" className={styles.submitBtn} disabled={uploading}>
@@ -529,24 +505,24 @@ export default function Admin() {
                 {products.map((item) => (
                   <div key={item.id} className={styles.productCard}>
                     {(item.imageUrls?.[0] || item.imageUrl) ? (
-                      <div style={{position: 'relative', width: '80px', height: '80px', overflow: 'hidden', borderRadius: '8px', flexShrink: 0}}>
-                        <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} style={{width: '100%', height: '100%', objectFit: 'cover'}} loading="lazy" />
+                      <div style={{ position: 'relative', width: '80px', height: '80px', overflow: 'hidden', borderRadius: '8px', flexShrink: 0 }}>
+                        <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.title} className={styles.productImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                       </div>
                     ) : (<div className={styles.productImagePlaceholder}></div>
                     )}
                     <h3>{item.title}</h3>
                     <p className={styles.price}>₴ {item.price}</p>
-                    <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
-                      <button 
-                        className={styles.submitBtn} 
-                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px'}}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button
+                        className={styles.submitBtn}
+                        style={{ flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px' }}
                         onClick={() => handleEditProduct(item)}
                       >
                         <Edit2 size={20} />
                       </button>
-                      <button 
-                        className={`${styles.submitBtn} ${styles.removeBtn}`} 
-                        style={{flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px'}}
+                      <button
+                        className={`${styles.submitBtn} ${styles.removeBtn}`}
+                        style={{ flex: 1, margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '8px' }}
                         onClick={() => deleteProduct(item.id)}
                       >
                         <Trash2 size={20} />
@@ -564,53 +540,54 @@ export default function Admin() {
         <div>
           {/* Статистика */}
           {orderTab === 'archive' && (
-            <div style={{background: 'var(--surface-color)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border-color)'}}>
-              <h3 style={{marginBottom: '16px'}}>Статистика (Виконані)</h3>
-              <div style={{display: 'flex', gap: '16px'}}>
-                <div style={{flex: 1, background: 'var(--bg-color)', padding: '12px', borderRadius: '8px'}}>
-                  <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Дохід (7 днів)</p>
-                  <p style={{margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-color)'}}>₴ {stats7Days.income}</p>
-                  <p style={{margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)'}}>{stats7Days.count} замовлень</p>
+            <div style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
+              <h3 style={{ marginBottom: '16px' }}>Статистика (Виконані)</h3>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1, background: 'var(--bg-color)', padding: '12px', borderRadius: '8px' }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Дохід (7 днів)</p>
+                  <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-color)' }}>₴ {stats7Days.income}</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>{stats7Days.count} замовлень</p>
                 </div>
-                <div style={{flex: 1, background: 'var(--bg-color)', padding: '12px', borderRadius: '8px'}}>
-                  <p style={{margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)'}}>Дохід (30 днів)</p>
-                  <p style={{margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-color)'}}>₴ {stats30Days.income}</p>
-                  <p style={{margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)'}}>{stats30Days.count} замовлень</p>
+                <div style={{ flex: 1, background: 'var(--bg-color)', padding: '12px', borderRadius: '8px' }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Дохід (30 днів)</p>
+                  <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--primary-color)' }}>₴ {stats30Days.income}</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>{stats30Days.count} замовлень</p>
                 </div>
               </div>
             </div>
           )}
 
-          <div style={{display: 'flex', gap: '12px', marginBottom: '16px'}}>
-            <button 
-              className={orderTab === 'active' ? styles.tabBtnActive : styles.tabBtn} 
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+            <button
+              className={orderTab === 'active' ? styles.tabBtnActive : styles.tabBtn}
               onClick={() => setOrderTab('active')}
-              style={{flex: 1, padding: '8px', borderRadius: '8px'}}
+              style={{ flex: 1, padding: '8px', borderRadius: '8px' }}
             >
               Активні
             </button>
-            <button 
-              className={orderTab === 'archive' ? styles.tabBtnActive : styles.tabBtn} 
+            <button
+              className={orderTab === 'archive' ? styles.tabBtnActive : styles.tabBtn}
               onClick={() => setOrderTab('archive')}
-              style={{flex: 1, padding: '8px', borderRadius: '8px'}}
+              style={{ flex: 1, padding: '8px', borderRadius: '8px' }}
             >
               Архів
             </button>
           </div>
 
-          {ordersLoading ? <p>Завантаження замовлень...</p> : orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).length === 0 ? <p>Замовлень у цій категорії немає</p> : (
-            orders.filter(o => orderTab === 'active' ? (o.status !== 'completed' && o.status !== 'cancelled') : (o.status === 'completed' || o.status === 'cancelled')).map((order) => (
-              <div key={order.id} className={styles.orderCard}>
+          {(orderTab === 'active' ? ordersLoading : archivedLoading) ? <p>Завантаження замовлень...</p> : (orderTab === 'active' ? orders : archivedOrders).length === 0 ? <p>Замовлень у цій категорії немає</p> : (
+            <>
+              {(orderTab === 'active' ? orders : archivedOrders).map((order) => (
+                <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div>
                     <strong>{order.firstName} {order.lastName}</strong>
                     {order.username && (
-                      <p style={{margin: 0}}><a href={`https://t.me/${order.username}`} target="_blank" rel="noreferrer">@{order.username}</a></p>
+                      <p style={{ margin: 0 }}><a href={`https://t.me/${order.username}`} target="_blank" rel="noreferrer">@{order.username}</a></p>
                     )}
                   </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{margin: 0, fontSize: '12px'}}>{new Date(order.createdAt).toLocaleString()}</p>
-                    <select 
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: '12px' }}>{new Date(order.createdAt).toLocaleString()}</p>
+                    <select
                       className={styles.statusSelect}
                       style={order.status === 'cancelled' ? { backgroundColor: 'var(--danger-color)', color: 'white' } : {}}
                       value={order.status}
@@ -625,32 +602,44 @@ export default function Admin() {
                   </div>
                 </div>
                 {order.ttn && (
-                  <p style={{margin: '4px 0', fontSize: '14px', color: 'var(--primary-color)'}}>
+                  <p style={{ margin: '4px 0', fontSize: '14px', color: 'var(--primary-color)' }}>
                     ТТН: {order.ttn}
                   </p>
                 )}
                 {order.shippingDetails && (
-                  <div style={{margin: '8px 0', padding: '8px', background: 'var(--bg-color)', borderRadius: '8px', fontSize: '14px'}}>
-                    <p style={{margin: '0 0 4px 0'}}><strong>📞 Телефон:</strong> {order.shippingDetails.phone}</p>
-                    <p style={{margin: '0'}}><strong>📍 Нова Пошта:</strong> м. {order.shippingDetails.city}, Відд. {order.shippingDetails.branch}</p>
+                  <div style={{ margin: '8px 0', padding: '8px', background: 'var(--bg-color)', borderRadius: '8px', fontSize: '14px' }}>
+                    <p style={{ margin: '0 0 4px 0' }}><strong>📞 Телефон:</strong> {order.shippingDetails.phone}</p>
+                    <p style={{ margin: '0' }}><strong>📍 Нова Пошта:</strong> м. {order.shippingDetails.city}, Відд. {order.shippingDetails.branch}</p>
                   </div>
                 )}
                 <div>
-                  <p style={{margin: '8px 0'}}><strong>Товари:</strong></p>
-                  <ul style={{paddingLeft: '20px', margin: 0}}>
+                  <p style={{ margin: '8px 0' }}><strong>Товари:</strong></p>
+                  <ul style={{ paddingLeft: '20px', margin: 0 }}>
                     {order.items.map(item => (
                       <li key={item.cartItemId}>
-                        <Link to={`/?productId=${item.id}`} style={{color: 'var(--primary-color)', textDecoration: 'none'}}>
+                        <Link to={`/?productId=${item.id}`} style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>
                           {item.title}
                         </Link>
                         {item.selectedColor ? ` (Колір: ${item.selectedColor})` : ''} - {item.quantity} шт.
                       </li>
                     ))}
                   </ul>
-                  <p style={{marginTop: '8px', fontWeight: 'bold'}}>Сума: ₴ {order.totalPrice}</p>
+                  <p style={{ marginTop: '8px', fontWeight: 'bold' }}>Сума: ₴ {order.totalPrice}</p>
                 </div>
               </div>
-            ))
+              ))}
+              
+              {orderTab === 'archive' && hasMoreArchived && (
+                <button 
+                  onClick={() => loadArchivedOrders()} 
+                  className={styles.submitBtn} 
+                  disabled={archivedLoading}
+                  style={{marginTop: '16px'}}
+                >
+                  {archivedLoading ? 'Завантаження...' : 'Завантажити ще'}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
@@ -660,64 +649,64 @@ export default function Admin() {
           <div className={styles.adminFormContainer}>
             <h3>Створити промокод</h3>
             <form onSubmit={handleAddPromo} className={styles.adminForm}>
-              <input 
-                type="text" 
-                placeholder="Код (наприклад: SUMMER2024)" 
-                value={promoCode} 
-                onChange={(e) => setPromoCode(e.target.value.toUpperCase())} 
-                required 
+              <input
+                type="text"
+                placeholder="Код (наприклад: SUMMER2024)"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                required
                 className={styles.inputField}
               />
-              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
-                <select 
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <select
                   value={promoType}
                   onChange={e => setPromoType(e.target.value as 'percent' | 'fixed')}
                   className={styles.inputField}
-                  style={{width: '120px'}}
+                  style={{ width: '120px' }}
                 >
                   <option value="percent">% (Знижка)</option>
                   <option value="fixed">₴ (Знижка)</option>
                 </select>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   placeholder="Знижка"
                   value={promoValue}
                   onChange={e => setPromoValue(e.target.value)}
                   className={styles.inputField}
                   required
-                  style={{flex: 1}}
+                  style={{ flex: 1 }}
                 />
               </div>
-              <input 
-                type="number" 
-                placeholder={t('Promo_Limit')} 
-                value={promoUsageLimit} 
-                onChange={(e) => setPromoUsageLimit(e.target.value)} 
+              <input
+                type="number"
+                placeholder={t('Promo_Limit')}
+                value={promoUsageLimit}
+                onChange={(e) => setPromoUsageLimit(e.target.value)}
                 className={styles.inputField}
               />
-              <input 
-                type="number" 
-                placeholder="Мінімальна сума замовлення (Опціонально)" 
-                value={promoMinOrder} 
-                onChange={(e) => setPromoMinOrder(e.target.value)} 
+              <input
+                type="number"
+                placeholder="Мінімальна сума замовлення (Опціонально)"
+                value={promoMinOrder}
+                onChange={(e) => setPromoMinOrder(e.target.value)}
                 className={styles.inputField}
               />
-              <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
-                <div style={{flex: 1}}>
-                  <label style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Діє З:</label>
-                  <input 
-                    type="date" 
-                    value={promoValidFrom} 
-                    onChange={(e) => setPromoValidFrom(e.target.value)} 
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Діє З:</label>
+                  <input
+                    type="date"
+                    value={promoValidFrom}
+                    onChange={(e) => setPromoValidFrom(e.target.value)}
                     className={styles.inputField}
                   />
                 </div>
-                <div style={{flex: 1}}>
-                  <label style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Діє ДО:</label>
-                  <input 
-                    type="date" 
-                    value={promoValidUntil} 
-                    onChange={(e) => setPromoValidUntil(e.target.value)} 
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Діє ДО:</label>
+                  <input
+                    type="date"
+                    value={promoValidUntil}
+                    onChange={(e) => setPromoValidUntil(e.target.value)}
                     className={styles.inputField}
                   />
                 </div>
@@ -734,26 +723,26 @@ export default function Admin() {
               <div key={promo.id} className={styles.adminProductCard}>
                 <div>
                   <strong>{promo.code}</strong>
-                  <p className={styles.price} style={{margin: '4px 0'}}>
+                  <p className={styles.price} style={{ margin: '4px 0' }}>
                     {t('Promo_Value')}: {promo.discountType === 'percent' ? `${promo.discountValue}%` : `₴${promo.discountValue}`}
                   </p>
-                  <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
                     {t('Promo_Used')}: {promo.usageCount} {promo.usageLimit ? `/ ${promo.usageLimit}` : ''}
                   </p>
                   {promo.minOrderAmount && (
-                    <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
                       Від суми: ₴ {promo.minOrderAmount}
                     </p>
                   )}
                   {(promo.validFrom || promo.validUntil) && (
-                    <p style={{margin: 0, fontSize: '12px', color: 'var(--text-secondary)'}}>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {promo.validFrom ? new Date(promo.validFrom).toLocaleDateString('uk-UA', { month: 'long', day: 'numeric', year: 'numeric' }) : '∞'} - {promo.validUntil ? new Date(promo.validUntil).toLocaleDateString('uk-UA', { month: 'long', day: 'numeric', year: 'numeric' }) : '∞'}
                     </p>
                   )}
                 </div>
-                <button 
+                <button
                   className={`${styles.submitBtn} ${styles.removeBtn}`}
-                  style={{margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                  style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={() => deletePromo(promo.id)}
                 >
                   <Trash2 size={16} />

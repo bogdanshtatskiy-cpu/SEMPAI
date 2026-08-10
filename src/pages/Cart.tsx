@@ -11,7 +11,7 @@ export default function Cart() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
   const createOrder = useOrdersStore(state => state.createOrder);
   const { promos, usePromo } = usePromoStore();
-  
+
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [inputPromo, setInputPromo] = useState('');
@@ -97,12 +97,12 @@ export default function Cart() {
     setCityQuery(c.Present);
     setIsCityDropdownOpen(false);
     setCities([]);
-    
+
     setBranch('');
     setBranchQuery('');
     setBranches([]);
     setFilteredBranches([]);
-    
+
     setIsFetchingBranches(true);
     try {
       const response = await fetch('/api/np', {
@@ -135,7 +135,7 @@ export default function Cart() {
     setFilteredBranches([]);
   };
 
-  
+
   if (appliedPromo) {
     if (appliedPromo.discountType === 'percent') {
       totalPrice = Math.round(baseTotalPrice * (1 - appliedPromo.discountValue / 100));
@@ -192,7 +192,7 @@ export default function Cart() {
     }
 
     setIsOrdering(true);
-    
+
     if (appliedPromo) {
       const promoSuccess = await usePromo(appliedPromo.code);
       if (!promoSuccess) {
@@ -216,27 +216,27 @@ export default function Cart() {
         branch
       }
     });
-    
+
     setIsOrdering(false);
     if (success) {
       setOrderSuccess(true);
       clearCart();
-      
+
       // Отправляем уведомление админу через наш безопасный сервер Vercel
       try {
         await fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             order: {
-              userId: user.id,
-              username: user.username,
               firstName: customerFirstName,
               lastName: customerLastName,
+              username: user.username,
               items: items,
               totalPrice: totalPrice,
               shippingDetails: { phone: cleanPhone, city, branch }
-            }
+            },
+            initData: WebApp.initData
           })
         });
       } catch (e) {
@@ -252,13 +252,13 @@ export default function Cart() {
       <div className={styles.welcome}>
         <h2>🎉 {t('Order_success_title')}</h2>
         <p>{t('Order_success_message')}</p>
-        
-        <div style={{marginTop: '20px', padding: '16px', background: 'rgba(255, 215, 0, 0.1)', border: '1px solid var(--primary-color)', borderRadius: '12px'}}>
-          <p style={{margin: '0 0 8px 0', fontSize: '15px', lineHeight: '1.5'}}>{t('Order_Success_Promo')}</p>
-          <h2 style={{margin: 0, letterSpacing: '2px', color: 'var(--primary-color)'}}>NEXT5</h2>
+
+        <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(255, 215, 0, 0.1)', border: '1px solid var(--primary-color)', borderRadius: '12px' }}>
+          <p style={{ margin: '0 0 8px 0', fontSize: '15px', lineHeight: '1.5' }}>{t('Order_Success_Promo')}</p>
+          <h2 style={{ margin: 0, letterSpacing: '2px', color: 'var(--primary-color)' }}>NEXT5</h2>
         </div>
 
-        <button className={styles.checkoutBtn} onClick={() => setOrderSuccess(false)} style={{marginTop: '20px'}}>
+        <button className={styles.checkoutBtn} onClick={() => setOrderSuccess(false)} style={{ marginTop: '20px' }}>
           {t('Back')}
         </button>
       </div>
@@ -268,7 +268,7 @@ export default function Cart() {
   return (
     <div>
       <h2>{t('Cart')}</h2>
-      
+
       {items.length === 0 ? (
         <p>{t('Cart_empty')}</p>
       ) : (
@@ -288,66 +288,66 @@ export default function Cart() {
               </div>
             </div>
           ))}
-          
+
           {items.length > 0 && (
             <div className={styles.cartFooter}>
-              <div style={{marginBottom: '16px'}}>
-                <p style={{margin: '0 0 8px 0'}}>{t('Promo_Code')}:</p>
-                <div style={{display: 'flex', gap: '8px'}}>
-                  <input 
-                    type="text" 
-                    value={inputPromo} 
-                    onChange={e => setInputPromo(e.target.value)} 
-                    className={styles.inputField} 
-                    style={{margin: 0, textTransform: 'uppercase'}}
+              <div style={{ marginBottom: '16px' }}>
+                <p style={{ margin: '0 0 8px 0' }}>{t('Promo_Code')}:</p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={inputPromo}
+                    onChange={e => setInputPromo(e.target.value)}
+                    className={styles.inputField}
+                    style={{ margin: 0, textTransform: 'uppercase' }}
                     placeholder={t('Promo_Code_Placeholder')}
                     disabled={!!appliedPromo}
                   />
                   {!appliedPromo ? (
-                    <button onClick={handleApplyPromo} className={styles.submitBtn} style={{margin: 0}}>{t('Promo_Apply')}</button>
+                    <button onClick={handleApplyPromo} className={styles.submitBtn} style={{ margin: 0 }}>{t('Promo_Apply')}</button>
                   ) : (
-                    <button onClick={() => setAppliedPromo(null)} className={styles.submitBtn} style={{margin: 0, background: 'var(--danger-color)', color: '#fff'}}>{t('Promo_Cancel')}</button>
+                    <button onClick={() => setAppliedPromo(null)} className={styles.submitBtn} style={{ margin: 0, background: 'var(--danger-color)', color: '#fff' }}>{t('Promo_Cancel')}</button>
                   )}
                 </div>
               </div>
-              
+
               <div className={styles.cartTotal}>
                 {appliedPromo ? (
-                  <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end'}}>
-                    <span style={{textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '14px'}}>₴ {baseTotalPrice}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '14px' }}>₴ {baseTotalPrice}</span>
                     <span>{t('Total')}: ₴ {totalPrice}</span>
                   </div>
                 ) : (
                   <span>{t('Total')}: ₴ {totalPrice}</span>
                 )}
               </div>
-              
-              <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px'}}>
-                <h3 style={{margin: '0 0 4px 0'}}>Доставка (Нова Пошта)</h3>
 
-                <input 
-                  type="text" 
-                  placeholder="Прізвище" 
-                  value={customerLastName} 
-                  onChange={e => setCustomerLastName(e.target.value)} 
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                <h3 style={{ margin: '0 0 4px 0' }}>Доставка (Нова Пошта)</h3>
+
+                <input
+                  type="text"
+                  placeholder="Прізвище"
+                  value={customerLastName}
+                  onChange={e => setCustomerLastName(e.target.value)}
                   className={styles.inputField}
-                  style={{width: '100%', boxSizing: 'border-box'}}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
-                <input 
-                  type="text" 
-                  placeholder="Ім'я" 
-                  value={customerFirstName} 
-                  onChange={e => setCustomerFirstName(e.target.value)} 
+                <input
+                  type="text"
+                  placeholder="Ім'я"
+                  value={customerFirstName}
+                  onChange={e => setCustomerFirstName(e.target.value)}
                   className={styles.inputField}
-                  style={{width: '100%', boxSizing: 'border-box'}}
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
-                
-                <div style={{display: 'flex', alignItems: 'center', gap: '0', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px'}}>
-                  <span style={{fontWeight: '600', color: 'var(--text-secondary)', fontSize: '16px', letterSpacing: '0.5px', whiteSpace: 'nowrap'}}>+380</span>
-                  <input 
-                    type="tel" 
-                    placeholder="XX XXX XX XX" 
-                    value={phone} 
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0 12px' }}>
+                  <span style={{ fontWeight: '600', color: 'var(--text-secondary)', fontSize: '16px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>+380</span>
+                  <input
+                    type="tel"
+                    placeholder="XX XXX XX XX"
+                    value={phone}
                     onChange={e => {
                       const raw = e.target.value.replace(/[^\d\s]/g, '');
                       const digits = raw.replace(/\s/g, '');
@@ -359,29 +359,29 @@ export default function Cart() {
                         formatted += digits[i];
                       }
                       setPhone(formatted);
-                    }} 
-                    style={{border: 'none', background: 'transparent', color: 'var(--text-color)', width: '100%', outline: 'none', padding: '12px 8px', fontSize: '16px', letterSpacing: '1px'}} 
+                    }}
+                    style={{ border: 'none', background: 'transparent', color: 'var(--text-color)', width: '100%', outline: 'none', padding: '12px 8px', fontSize: '16px', letterSpacing: '1px' }}
                   />
                 </div>
-                
+
                 {/* Город */}
-                <div style={{position: 'relative'}}>
-                  <input 
-                    type="text" 
-                    placeholder={isFetchingCities ? "Шукаємо міста..." : "Місто"} 
-                    value={cityQuery} 
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder={isFetchingCities ? "Шукаємо міста..." : "Місто"}
+                    value={cityQuery}
                     onChange={e => {
                       setCityQuery(e.target.value);
                       if (e.target.value !== city) setCity('');
-                    }} 
-                    onFocus={() => { if(cities.length > 0) setIsCityDropdownOpen(true) }}
-                    className={styles.inputField} 
-                    style={{width: '100%', boxSizing: 'border-box'}}
+                    }}
+                    onFocus={() => { if (cities.length > 0) setIsCityDropdownOpen(true) }}
+                    className={styles.inputField}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
                   />
                   {isCityDropdownOpen && cities.length > 0 && (
-                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)'}}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
                       {cities.map((c, idx) => (
-                        <div key={idx} onClick={() => handleSelectCity(c)} style={{padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', background: '#1a1a1f'}}>
+                        <div key={idx} onClick={() => handleSelectCity(c)} style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', background: '#1a1a1f' }}>
                           {c.Present}
                         </div>
                       ))}
@@ -390,24 +390,24 @@ export default function Cart() {
                 </div>
 
                 {/* Отделение */}
-                <div style={{position: 'relative'}}>
-                  <input 
-                    type="text" 
-                    placeholder={isFetchingBranches ? "Завантаження відділень..." : "Відділення (номер або вулиця)"} 
-                    value={branchQuery} 
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder={isFetchingBranches ? "Завантаження відділень..." : "Відділення (номер або вулиця)"}
+                    value={branchQuery}
                     onChange={e => {
                       setBranchQuery(e.target.value);
                       if (e.target.value !== branch) setBranch('');
                     }}
-                    onFocus={() => { if(filteredBranches.length > 0) setIsBranchDropdownOpen(true) }}
-                    className={styles.inputField} 
-                    style={{width: '100%', boxSizing: 'border-box'}}
+                    onFocus={() => { if (filteredBranches.length > 0) setIsBranchDropdownOpen(true) }}
+                    className={styles.inputField}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
                     disabled={!city || branches.length === 0}
                   />
                   {isBranchDropdownOpen && filteredBranches.length > 0 && (
-                    <div style={{position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)'}}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1a1a1f', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', zIndex: 100, maxHeight: '200px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
                       {filteredBranches.map((b, idx) => (
-                        <div key={idx} onClick={() => handleSelectBranch(b)} style={{padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: '14px', background: '#1a1a1f'}}>
+                        <div key={idx} onClick={() => handleSelectBranch(b)} style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: '14px', background: '#1a1a1f' }}>
                           {b.Description}
                         </div>
                       ))}
@@ -416,11 +416,11 @@ export default function Cart() {
                 </div>
               </div>
 
-              <button 
-                className={styles.checkoutBtn} 
+              <button
+                className={styles.checkoutBtn}
                 onClick={handleCheckout}
                 disabled={isOrdering}>
-                  {isOrdering ? t('Ordering') : t('Checkout')}
+                {isOrdering ? t('Ordering') : t('Checkout')}
               </button>
             </div>
           )}

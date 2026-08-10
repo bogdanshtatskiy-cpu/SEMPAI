@@ -4,7 +4,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const { userId, orderId, status, ttn } = req.body;
-  
+
   if (!userId || !status) {
     return res.status(400).json({ error: 'Missing userId or status' });
   }
@@ -25,7 +25,7 @@ export default async function handler(req: any, res: any) {
       text = `📦 Ваше замовлення #${orderId.slice(0, 5)} відправлено!\n\nНомер ТТН: ${ttn || 'Уточнюється'}\nПосилка вже прямує до вас!`;
       break;
     case 'completed':
-      text = `✅ Ваше замовлення #${orderId.slice(0, 5)} успішно виконано! Дякуємо, що обрали нас.`;
+      text = `✅ Ваше замовлення #${orderId.slice(0, 5)} успішно виконано! Дякуємо, що обрали нас.\n\nБудь ласка, напишіть ваш відгук прямо сюди, у чат з ботом 👇`;
       break;
     case 'cancelled':
       text = `❌ Ваше замовлення #${orderId.slice(0, 5)} скасовано. Якщо у вас є питання, зверніться до підтримки.`;

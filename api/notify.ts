@@ -1,12 +1,35 @@
+import crypto from 'crypto';
+
+// Вспомогательная функция для проверки Telegram initData
+function verifyInitData(telegramInitData: string, botToken: string): boolean {
+  try {
+    const urlParams = new URLSearchParams(telegramInitData);
+    const hash = urlParams.get('hash');
+    urlParams.delete('hash');
+    
+    const dataCheckString = Array.from(urlParams.entries())
+      .map(([key, value]) => `${key}=${value}`)
+      .sort()
+      .join('\n');
+
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+    return calculatedHash === hash;
+  } catch (e) {
+    return false;
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { order } = req.body;
-  
-  if (!order) {
-    return res.status(400).json({ error: 'No order data provided' });
+  const { order, initData } = req.body;
+
+  if (!order || !initData) {
+    return res.status(400).json({ error: 'No order data or initData provided' });
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -17,7 +40,11 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const itemsText = order.items.map((item: any) => 
+  if (!verifyInitData(initData, token)) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid Telegram Data' });
+  }
+
+  const itemsText = order.items.map((item: any) =>
     `- ${item.title} ${item.selectedColor ? `(${item.selectedColor})` : ''} x${item.quantity}`
   ).join('\n');
 

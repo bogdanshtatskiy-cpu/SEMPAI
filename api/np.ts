@@ -11,7 +11,14 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // В req.body клиент передает { modelName, calledMethod, methodProperties }
+    const { modelName, calledMethod, methodProperties } = req.body;
+    
+    // Белый список разрешенных методов для клиента
+    const allowedMethods = ['searchSettlements', 'getWarehouses'];
+    if (!allowedMethods.includes(calledMethod)) {
+      return res.status(403).json({ error: 'Forbidden method' });
+    }
+
     const response = await fetch('https://api.novaposhta.ua/v2.0/json/', {
       method: 'POST',
       headers: {
@@ -19,7 +26,9 @@ export default async function handler(req: any, res: any) {
       },
       body: JSON.stringify({
         apiKey,
-        ...req.body
+        modelName,
+        calledMethod,
+        methodProperties
       }),
     });
 
