@@ -72,12 +72,14 @@ export default async function handler(req: any, res: any) {
 
     const q = query(
       collection(db, 'orders'), 
-      where('userId', '==', Number(userId)),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', Number(userId))
     );
     
     const snapshot = await getDocs(q);
     const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Сортируем в памяти, чтобы не требовать создания Composite Index в Firestore
+    orders.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
 
     return res.status(200).json({ success: true, orders });
   } catch (error: any) {
