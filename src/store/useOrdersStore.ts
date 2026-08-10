@@ -28,6 +28,7 @@ interface OrdersState {
   archivedLoading: boolean;
   hasMoreArchived: boolean;
   lastArchivedDoc: any;
+  indexError: string | null;
   
   subscribeToActiveOrders: () => () => void;
   loadArchivedOrders: (reset?: boolean) => Promise<void>;
@@ -43,6 +44,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
   archivedLoading: false,
   hasMoreArchived: true,
   lastArchivedDoc: null,
+  indexError: null,
   
   subscribeToActiveOrders: () => {
     set({ loading: true });
@@ -56,10 +58,11 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
       snapshot.forEach((doc) => {
         ordersData.push({ id: doc.id, ...doc.data() } as Order);
       });
-      set({ orders: ordersData, loading: false });
-    }, (error) => {
+      set({ orders: ordersData, loading: false, indexError: null });
+    }, (error: any) => {
       console.error('Error in onSnapshot (orders):', error);
-      set({ loading: false });
+      const msg = error?.message || '';
+      set({ loading: false, indexError: msg.includes('requires an index') ? msg : null });
     });
     return unsubscribe;
   },
@@ -90,8 +93,12 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
         hasMoreArchived: snapshot.docs.length === 20,
         archivedLoading: false
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching archived orders:', error);
+      const msg = error?.message || '';
+      if (msg.includes('requires an index')) {
+        set({ indexError: msg });
+      }
       set({ archivedLoading: false });
     }
   },
@@ -112,8 +119,12 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
           count: sum.count + 1
         };
       }, { income: 0, count: 0 });
-    } catch (e) {
-      console.error('Error fetching stats:', e);
+    } catch (error: any) {
+      console.error('Error fetching stats:', error);
+      const msg = error?.message || '';
+      if (msg.includes('requires an index')) {
+        set({ indexError: msg });
+      }
       return { income: 0, count: 0 };
     }
   },

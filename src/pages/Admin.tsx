@@ -15,7 +15,8 @@ export default function Admin() {
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProductsStore();
   const { 
     orders, archivedOrders, loadArchivedOrders, hasMoreArchived, 
-    archivedLoading, updateOrderStatus, subscribeToActiveOrders, getStats, loading: ordersLoading
+    archivedLoading, updateOrderStatus, subscribeToActiveOrders, getStats, loading: ordersLoading,
+    indexError
   } = useOrdersStore();
   const { promos, addPromo, deletePromo } = usePromoStore();
 
@@ -573,6 +574,35 @@ export default function Admin() {
               Архів
             </button>
           </div>
+
+          {indexError && (
+            <div style={{ background: '#ffebee', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #ffcdd2' }}>
+              <h4 style={{ color: '#d32f2f', margin: '0 0 8px 0' }}>⚠️ Потрібно створити Індекс в базі даних!</h4>
+              <p style={{ color: '#c62828', margin: '0 0 12px 0', fontSize: '14px' }}>
+                Firestore вимагає Composite Index для фільтрації та сортування замовлень. Будь ласка, перейдіть за посиланням нижче, щоб автоматично його створити:
+              </p>
+              <a 
+                href={indexError.match(/https:\/\/console\.firebase\.google\.com[^\s]*/)?.[0] || '#'} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ 
+                  display: 'inline-block', 
+                  background: '#d32f2f', 
+                  color: 'white', 
+                  padding: '8px 16px', 
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '14px'
+                }}
+              >
+                Створити Індекс в Firebase
+              </a>
+              <p style={{ fontSize: '12px', color: '#c62828', marginTop: '12px', marginBottom: 0 }}>
+                Після створення індексу зачекайте 1-2 хвилини, поки він побудується (статус "Building" змінится на "Enabled" у консолі Firebase), після чого перезавантажте сторінку.
+              </p>
+            </div>
+          )}
 
           {(orderTab === 'active' ? ordersLoading : archivedLoading) ? <p>Завантаження замовлень...</p> : (orderTab === 'active' ? orders : archivedOrders).length === 0 ? <p>Замовлень у цій категорії немає</p> : (
             <>
