@@ -61,8 +61,7 @@ export default async function handler(req: any, res: any) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: channelId,
-          text: `📝 *Новий відгук!*\nВід: ${message.from.first_name} ${username ? `(@${username})` : ''}\n\n"${text}"`,
-          parse_mode: 'Markdown'
+          text: `📝 Новий відгук!\nВід: ${message.from.first_name}\n\n"${text}"`
         })
       });
       
