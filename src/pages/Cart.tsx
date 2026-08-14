@@ -224,7 +224,7 @@ export default function Cart() {
 
       // Отправляем уведомление админу через наш безопасный сервер Vercel
       try {
-        await fetch('/api/notify', {
+        const notifyRes = await fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -239,8 +239,13 @@ export default function Cart() {
             initData: WebApp.initData
           })
         });
+        if (!notifyRes.ok) {
+          const errData = await notifyRes.json();
+          alert(`Помилка відправки замовлення адміну (але в базі збережено): ${errData.error || notifyRes.statusText}`);
+        }
       } catch (e) {
         console.error("Failed to send notification", e);
+        alert('Network error: Failed to send notification to admin');
       }
     } else {
       alert("Помилка при оформленні замовлення. Спробуйте пізніше.");

@@ -166,7 +166,7 @@ export default function Admin() {
 
     // Уведомляем клиента
     try {
-      await fetch('/api/notify_client', {
+      const res = await fetch('/api/notify_client', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -176,8 +176,13 @@ export default function Admin() {
           ttn
         })
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        alert(`Помилка відправки повідомлення клієнту: ${errData.error || res.statusText}`);
+      }
     } catch (e) {
       console.error('Failed to notify client', e);
+      alert('Network error: Failed to notify client');
     }
   };
 
