@@ -48,17 +48,17 @@ export default async function handler(req: any, res: any) {
     `- ${item.title} ${item.selectedColor ? `(${item.selectedColor})` : ''} x${item.quantity}`
   ).join('\n');
 
-  const text = `🚨 *НОВЕ ЗАМОВЛЕННЯ!* 🚨
+  const text = `🚨 НОВЕ ЗАМОВЛЕННЯ! 🚨
 Від: ${order.firstName} ${order.lastName || ''} ${order.username ? `(@${order.username})` : ''}
 
-*Доставка (НП):*
+Доставка (НП):
 📞 ${order.shippingDetails?.phone || 'Не вказано'}
 📍 ${order.shippingDetails?.city || 'Не вказано'}, Відд. ${order.shippingDetails?.branch || 'Не вказано'}
 
-*Товари:*
+Товари:
 ${itemsText}
 
-*Сума:* ₴ ${order.totalPrice}
+Сума: ₴ ${order.totalPrice}
 
 Відкрийте Адмін-панель для перегляду деталей.`;
 
@@ -71,7 +71,6 @@ ${itemsText}
       body: JSON.stringify({
         chat_id: adminId,
         text: text,
-        parse_mode: 'Markdown',
       }),
     });
 
